@@ -39,7 +39,7 @@ A documentação do projeto está organizada por público e finalidade:
 
 Contém informações técnicas para desenvolvimento e manutenção do sistema:
 
-* 📄 [Guia do Programador](./programadores.md)
+* 📄 [Guia do Programador](./docs/programadores.md)
 * 🧩 [Diagrama de Classes](./docs/classes.md)
 * 🗄️ [Banco de Dados (DER)](./database.md)
 
