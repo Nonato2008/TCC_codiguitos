@@ -41,14 +41,14 @@ Contém informações técnicas para desenvolvimento e manutenção do sistema:
 
 * 📄 [Guia do Programador](./docs/programadores.md)
 * 🧩 [Diagrama de Classes](./docs/classes.md)
-* 🗄️ [Banco de Dados (DER)](./database.md)
+* 🗄️ [Banco de Dados (DER)](./docs/database.md)
 
 ### 👤 Para Clientes
 
 Documentação voltada à visão do sistema e sua utilização:
 
-* 📄 [Guia do Cliente](./clientes.md)
-* 🎨 [Design System](./design-system.md)
+* 📄 [Guia do Cliente](./docs/clientes.md)
+* 🎨 [Design System](./docs/design-system.md)
 
 ### 🛠️ Para Administradores
 
