@@ -29,7 +29,7 @@ Projeto acadêmico com o objetivo de apoiar o ensino de **back-end e front-end**
 
 ### 🗄️ Banco de Dados
 
-* SQLServer
+* MySQL
 
 ## 📂 Documentação
 
@@ -39,22 +39,22 @@ A documentação do projeto está organizada por público e finalidade:
 
 Contém informações técnicas para desenvolvimento e manutenção do sistema:
 
-* 📄 [Guia do Programador](./docs/programadores.md)
-* 🧩 [Diagrama de Classes](./docs/classes.md)
-* 🗄️ [Banco de Dados (DER)](./docs/database.md)
+* 📄 [Guia do Programador](./BACK-END/docs/programadores.md)
+* 🧩 [Diagrama de Classes](./BACK-END/docs/classes.md)
+* 🗄️ [Banco de Dados (DER)](./BACK-END/docs/database.md)
 
 ### 👤 Para Clientes
 
 Documentação voltada à visão do sistema e sua utilização:
 
-* 📄 [Guia do Cliente](./docs/clientes.md)
-* 🎨 [Design System](./docs/design-system.md)
+* 📄 [Guia do Cliente](./BACK-END/docs/clientes.md)
+* 🎨 [Design System](./BACK-END/docs/design-system.md)
 
 ### 🛠️ Para Administradores
 
 Informações sobre gerenciamento e operação do sistema:
 
-* 📄 [Guia do Administrador](./administradores.md)
+* 📄 [Guia do Administrador](./BACK-END/administradores.md)
 
 ## 📌 Observações
 
