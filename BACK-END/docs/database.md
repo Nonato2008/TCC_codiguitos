@@ -46,8 +46,10 @@ Fornecedor (1) ------ (N) Produto
 ### 📌 Descrição
 Representa uma transação de venda realizada no sistema.
 
-### 📄 Atributos
+### 📄 Atributos 
 - id (PK)
+- idPropritario (FK)
+- idVendedor (FK)
 - valorTotal
 - dataCad
 
@@ -66,7 +68,7 @@ Venda (1) ------ (N) ItemVenda
 ### 📌 Descrição
 Representa os itens associados a uma venda.
 
-### 🧾 Estrutura (Itens_Venda)
+### 🧾 Estrutura (ItemVenda)
 - id (PK)
 - idProduto(FK)
 - idVenda (FK)
@@ -81,5 +83,44 @@ Um produto pode aparecer em vários itens de venda
 ### Cardinalidade
 Produto (1) ------ (N) ItemVenda
 
+---
 
+## Entidade: Proprietario
 
+### Descrição
+Representa os donos cadastros no sistema
+
+### Atributos
+- id (PK)
+- nome
+- senha 
+- dataCad
+
+## Relacionamento: Proprietario x Vendas
+
+### Descrição
+Um proprietário pode ter várias vendas
+
+### Cardinalidade
+Proprietário (1) ------ (N) Venda
+
+---
+
+## Entidade: Vendedores
+
+### Descrição
+Representa os vendedores de uma adega
+
+### Atributos 
+- id (PK)
+- idProprietario (FK)
+- Nome
+- dataCad
+
+## Relacionamento: Vendedores x Proprietario
+
+### Descrição
+Vários vendores posssuem um proprietario
+
+### Cardinalidade
+Vendedores (N) ------ (1) Proprietario
