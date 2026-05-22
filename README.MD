@@ -47,14 +47,7 @@ Contém informações técnicas para desenvolvimento e manutenção do sistema:
 
 Documentação voltada à visão do sistema e sua utilização:
 
-* 📄 [Guia do Cliente](./BACK-END/docs/clientes.md)
 * 🎨 [Design System](./BACK-END/docs/design-system.md)
-
-### 🛠️ Para Administradores
-
-Informações sobre gerenciamento e operação do sistema:
-
-* 📄 [Guia do Administrador](./BACK-END/administradores.md)
 
 ## 📌 Observações
 
