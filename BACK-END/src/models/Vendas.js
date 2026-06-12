@@ -1,4 +1,4 @@
-export class Pedido{
+export class Vendas{
     #id;
     #clienteId;
     #subTotal;

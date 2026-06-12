@@ -1,4 +1,4 @@
-export class ItensPedido {
+export class ItensVendas {
     #id;
     #pedidoId;
     #ProdutoId;

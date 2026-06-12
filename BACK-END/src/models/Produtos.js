@@ -1,16 +1,18 @@
-export class Produtos{
+ export class Produtos{
     #idProduto;
     #idCategoria;
+    #idFornecedor;
     #nome;
     #valor;
     #vinculoImagem;
 
-    constructor (pIdCategoria, pNome, pValor, pVinculoImagem, pIdProduto){
+    constructor (pIdCategoria, pNome, pValor, pVinculoImagem, pIdProduto, pIdFornecedor = null){
         this.idCategoria = pIdCategoria;
         this.nome = pNome;
         this.valor = pValor;
         this.vinculoImagem = pVinculoImagem;
         this.idProduto = pIdProduto;
+        this.idFornecedor = pIdFornecedor;
     }
 
     //metodos acessores getters e setters 
@@ -50,16 +52,29 @@ export class Produtos{
         this.#vinculoImagem = value;
     }
 
+    get idFornecedor(){
+        return this.#idFornecedor
+    }
+    set idFornecedor(value){
+        this.#validarIdFornecedor(value);
+        this.#idFornecedor = value
+    }
+
     //metodos auxiliares
 
     #validaridProduto(value){
-        if(value & value <= 0){
+        if(!value || isNaN(Number(value)) || Number(value) <= 0){
             throw new Error ('Verifique o ID informado')
         }
     }
     #validarIdCategoria(value){
-        if(value & value <= 0){
+        if(!value || isNaN(Number(value)) || Number(value) <= 0){
             throw new Error ('Verifique o ID da Categoria')
+        }
+    }
+    #validarIdFornecedor(value){
+        if(!value || isNaN(Number(value)) || Number(value) <= 0){
+            throw new Error('Verifique o ID do Fornecedor')
         }
     }
     #validarNome(value) {
@@ -82,9 +97,9 @@ export class Produtos{
     //criação de objetos usando o design patterns FACTORY mathod
 
     static criar(dados){
-        return new Produtos(dados.idCategoria, dados.nome, dados.valor, dados.vinculoImagem, null);
+        return new Produtos(dados.idCategoria, dados.nome, dados.valor, dados.vinculoImagem, null, dados.idFornecedor ?? null);
     }
     static alterar(dados, idProduto){
-        return new Produtos(dados.idCategoria, dados.nome, dados.valor, dados.vinculoImagem, idProduto);
+        return new Produtos(dados.idCategoria, dados.nome, dados.valor, dados.vinculoImagem, idProduto, dados.idFornecedor ?? null);
     }
 }
