@@ -1,7 +1,8 @@
-import { statusPed } from "../enums/statusPedido.js";
-import { ItensPedido } from "../models/itensPedido.js";
-import { Pedido } from "../models/Pedido.js";
-import pedidoRepository from "../repositories/pedidoRepository.js";
+import { statusPed } from "../enums/statusVenda.js";
+// import { ItensPedido } from "../models/ItensVendas.js";
+import { Vendas } from "../models/Vendas.js";
+// import { Vendas } from "../models/ItensVendas.js";
+import pedidoRepository from "../repositories/vendasRepository.js";
 
 const pedidoController = {
 

@@ -19,7 +19,7 @@ const fornecedoresController = {
             const id = req.params.id;
             const {nome} = req.body;
             const vinculoImagem = req.file ? `/uploads/imagens/${req.file.filename}` : null;
-            const fornecedor = Fornecedores.alterar({nome, imagem: vinculoImagem}, id);
+            const fornecedor = Fornecedores.alterar({nome, vinculoImagem}, id);
             const result = await fornecedoresRepository.editar(fornecedor); 
             res.status(200).json({result})
         } catch (error) {
