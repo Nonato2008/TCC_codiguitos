@@ -3,14 +3,14 @@ import { connection } from "../config/Database.js";
 const fornecedoresRepository = {
     
     criar:async (fornecedor) => {
-        const sql = 'INSERT INTO fornecedores (nome) VALUES (?)'
-        const values = [fornecedor.nome];
+        const sql = 'INSERT INTO fornecedores (nome, imagem) VALUES (?)'
+        const values = [fornecedor.nome, fornecedor.imagem];
         const [rows] = await connection.execute(sql, values);
         return rows
     },
     editar:async (fornecedor) => {
-        const sql = 'UPDATE fornecedores SET nome=? WHERE id = ?;'
-        const values = [fornecedor.nome, fornecedor.id];
+        const sql = 'UPDATE fornecedores SET nome=?, imagem=? WHERE id = ?;'
+        const values = [fornecedor.nome, fornecedor.imagem, fornecedor.id];
         const [rows] = await connection.execute(sql, values);
         return rows
     },
@@ -20,7 +20,7 @@ const fornecedoresRepository = {
         const [rows] = await connection.execute(sql, values);
         return rows
     },
-    selecionar:async (id) => {
+    selecionar:async () => {
         const sql = 'SELECT * FROM fornecedores;'
         const [rows] = await connection.execute(sql);
         return rows

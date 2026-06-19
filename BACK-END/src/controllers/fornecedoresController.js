@@ -5,7 +5,8 @@ const fornecedoresController = {
     criar: async (req, res) => {
         try {
             const {nome} = req.body;
-            const fornecedor = Fornecedores.criar({nome});
+            const vinculoImagem = req.file ? `/uploads/imagens/${req.file.filename}` : null;
+            const fornecedor = Fornecedores.criar({nome, vinculoImagem});
             const result = await fornecedoresRepository.criar(fornecedor); 
             res.status(201).json({result})
         } catch (error) {
@@ -17,7 +18,8 @@ const fornecedoresController = {
         try {
             const id = req.params.id;
             const {nome} = req.body;
-            const fornecedor = Fornecedores.alterar({nome}, id);
+            const vinculoImagem = req.file ? `/uploads/imagens/${req.file.filename}` : null;
+            const fornecedor = Fornecedores.alterar({nome, imagem: vinculoImagem}, id);
             const result = await fornecedoresRepository.editar(fornecedor); 
             res.status(200).json({result})
         } catch (error) {
