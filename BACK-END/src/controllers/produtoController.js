@@ -7,9 +7,9 @@ const produtoController = {
             if (!req.file) {
                 return res.status(400).json({ message: 'Imagem não foi enviada' });
             }
-            const { idCategoria, nome, valor, idFornecedor } = req.body;
+            const { idCategoria, nome, preco, idFornecedor, status, dataVencimento } = req.body;
             const vinculoImagem = `/uploads/imagens/${req.file.filename}`;
-            const produto = Produtos.criar({ idCategoria, nome, valor, vinculoImagem, idFornecedor });
+            const produto = Produtos.criar({ idCategoria, nome, preco, vinculoImagem, idFornecedor, status, dataVencimento });
             const result = await produtosRepository.criar(produto);
             res.status(201).json({ result });
 
@@ -20,10 +20,10 @@ const produtoController = {
     },
     alterar: async (req, res) => {
         try {
-            const { idCategoria, nome, valor, idFornecedor } = req.body;
+            const { idCategoria, nome, preco, idFornecedor, status, dataVencimento } = req.body;
             const idProduto = req.params.id;
             const vinculoImagem = req.file ? req.file.filename : null;
-            const produto = Produtos.alterar({ idCategoria, nome, valor, vinculoImagem, idFornecedor }, idProduto);
+            const produto = Produtos.alterar({ idCategoria, nome, preco, vinculoImagem, idFornecedor, status, dataVencimento }, idProduto);
             const result = await produtosRepository.editar(produto);
             res.status(200).json({ result });
 
