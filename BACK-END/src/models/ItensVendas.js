@@ -69,7 +69,7 @@ export class ItensVendas {
     }
 
     #validarIdVenda(value) {
-        if (!value || value <= 0) {
+        if (value != null && value <= 0) {
             throw new Error("Verifique o ID da venda informado.");
         }
     }
@@ -87,8 +87,8 @@ export class ItensVendas {
     }
 
     #validarValor(value) {
-        if (value == null || value <= 0) {
-            throw new Error("O valor deve ser maior que zero.");
+        if (value != null && value < 0) {
+            throw new Error("O valor não pode ser negativo.");
         }
     }
 
@@ -102,19 +102,22 @@ export class ItensVendas {
 
     // Design Patterns
     static criar(dados) {
-<<<<<<< HEAD
-        return new ItensVendas(dados.idVenda, dados.idProduto, dados.qtd, dados.valor, null
+        return new ItensVendas(
+            dados.idVenda ?? null,
+            dados.idProduto ?? dados.produtoId,
+            dados.qtd ?? dados.quantidade,
+            dados.valor ?? dados.valorItem,
+            null
         );
-=======
-        return new ItensVendas(dados.produtoId, dados.quantidade, dados.valorItem, null, null);
->>>>>>> Adicionar_Vendas_e_Itens_Vendas
     }
 
     static alterar(dados, id) {
-<<<<<<< HEAD
-        return new ItensVendas(dados.idVenda, dados.idProduto, dados.qtd, dados.valor, id);
-=======
-        return new ItensVendas(dados.produtoId, dados.quantidade, dados.valorItem, id, dados.pedidoId);
->>>>>>> Adicionar_Vendas_e_Itens_Vendas
+        return new ItensVendas(
+            dados.idVenda ?? null,
+            dados.idProduto ?? dados.produtoId,
+            dados.qtd ?? dados.quantidade,
+            dados.valor ?? dados.valorItem,
+            id
+        );
     }
 }
