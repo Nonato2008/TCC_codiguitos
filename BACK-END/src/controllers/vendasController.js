@@ -1,100 +1,124 @@
-import { statusPed } from "../enums/statusVenda.js";
-// import { ItensPedido } from "../models/ItensVendas.js";
 import { Vendas } from "../models/Vendas.js";
-// import { Vendas } from "../models/ItensVendas.js";
-import pedidoRepository from "../repositories/vendasRepository.js";
+import { ItensVendas } from "../models/ItensVendas.js";
+import vendasRepository from "../repositories/vendasRepository.js";
 
-const pedidoController = {
-
+const vendasController = {
 
     criar: async (req, res) => {
         try {
-            const { clienteId, itens } = req.body;
+            const { idProprietario, idVendedor, itens } = req.body;
 
-            if (!clienteId || Number(clienteId) <= 0) {
-                return res.status(400).json({ message: "clienteId inválido" });
+            if (!idProprietario || Number(idProprietario) <= 0) {
+                return res.status(400).json({
+                    message: "Id do proprietário inválido."
+                });
+            }
+
+            if (!idVendedor || Number(idVendedor) <= 0) {
+                return res.status(400).json({
+                    message: "Id do vendedor inválido."
+                });
             }
 
             if (!Array.isArray(itens) || itens.length === 0) {
-                return res.status(400).json({ message: "Informe os itens do pedido" });
+                return res.status(400).json({
+                    message: "Informe os itens da venda."
+                });
             }
 
-            const itensPedido = itens.map(item =>
-                ItensPedido.criar({
-                    produtoId: item.produtoId,
-                    quantidade: item.quantidade
+            const itensVenda = itens.map(item =>
+                ItensVendas.criar({
+                    idVenda: null,
+                    idProduto: item.idProduto,
+                    qtd: item.qtd,
+                    valor: 0
                 })
             );
 
-            const subTotal = ItensPedido.calcularSubTotalItens(itensPedido);
-
-            const pedido = Pedido.criar({
-                clienteId,
-                subTotal,
-                status: statusPed.ABERTO
+            const venda = Vendas.criar({
+                idProprietario,
+                idVendedor,
+                valorTotal: 0
             });
 
-            const result = await pedidoRepository.criar(pedido, itensPedido);
+            const resultado = await vendasRepository.criar(venda, itensVenda);
 
-            return res.status(201).json(result);
+            return res.status(201).json(resultado);
 
         } catch (error) {
             return res.status(500).json({
-                message: "Erro ao criar pedido",
-                errorMessage: error.message
+                message: "Erro ao criar venda.",
+                error: error.message
             });
         }
     },
 
     editar: async (req, res) => {
+
         try {
+
             const { id } = req.params;
-            const { clienteId, status, itens } = req.body;
+            const { idProprietario, idVendedor, itens } = req.body;
 
             if (!id || Number(id) <= 0) {
-                return res.status(400).json({ message: "ID inválido" });
+                return res.status(400).json({
+                    message: "Id inválido."
+                });
             }
 
-            if (!clienteId || Number(clienteId) <= 0) {
-                return res.status(400).json({ message: "clienteId inválido" });
+            if (!idProprietario || Number(idProprietario) <= 0) {
+                return res.status(400).json({
+                    message: "Id do proprietário inválido."
+                });
             }
 
-            if (!Object.values(statusPed).includes(status)) {
-                return res.status(400).json({ message: "Status inválido" });
+            if (!idVendedor || Number(idVendedor) <= 0) {
+                return res.status(400).json({
+                    message: "Id do vendedor inválido."
+                });
             }
 
             if (!Array.isArray(itens) || itens.length === 0) {
-                return res.status(400).json({ message: "Informe os itens" });
+                return res.status(400).json({
+                    message: "Informe os itens da venda."
+                });
             }
 
-            const itensPedido = itens.map(item =>
-                ItensPedido.alterar({
-                    produtoId: item.produtoId,
-                    quantidade: item.quantidade
+            const itensVenda = itens.map(item =>
+                ItensVendas.alterar({
+                    idVenda: id,
+                    idProduto: item.idProduto,
+                    qtd: item.qtd,
+                    valor: 0
                 })
             );
 
-            const subTotal = ItensPedido.calcularSubTotalItens(itensPedido);
+            const venda = Vendas.alterar({
+                idProprietario,
+                idVendedor,
+                valorTotal: 0
+            }, id);
 
-            const pedido = Pedido.alterar(
-                { clienteId, subTotal, status },
-                id
-            );
-
-            const result = await pedidoRepository.editar(id, pedido, itensPedido);
+            const resultado = await vendasRepository.editar(id, venda, itensVenda);
 
             return res.status(200).json({
-                message: "Pedido atualizado",
-                data: result
+                message: "Venda atualizada com sucesso.",
+                data: resultado
             });
 
         } catch (error) {
+
             return res.status(500).json({
-                message: "Erro ao editar pedido",
-                errorMessage: error.message
+                message: "Erro ao editar venda.",
+                error: error.message
             });
+
         }
+
     },
+
+
+
 
     deletar: async (req, res) => {
         try {
@@ -251,4 +275,4 @@ const pedidoController = {
     }
 };
 
-export default pedidoController;
+export default vendasController;

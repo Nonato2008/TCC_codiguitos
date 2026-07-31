@@ -1,96 +1,112 @@
 export class ItensVendas {
     #id;
-    #pedidoId;
-    #ProdutoId;
-    #quantidade;
-    #valorItem;
+    #idVenda;
+    #idProduto;
+    #qtd;
+    #valor;
 
-    //construtor
-
-    constructor(pProdutoId, pQuantidade, pValorItem, pId, pPedidoId) {
-        this.#ProdutoId = pProdutoId;
-        this.#quantidade = pQuantidade;
-        this.#valorItem = pValorItem;
-        this.#id = pId;
-        this.#pedidoId = pPedidoId;
+    // Construtor
+    constructor(pIdVenda, pIdProduto, pQtd, pValor, pId = null) {
+        this.idVenda = pIdVenda;
+        this.idProduto = pIdProduto;
+        this.qtd = pQtd;
+        this.valor = pValor;
+        this.id = pId;
     }
 
-    //getter
+    // Getters
     get id() {
         return this.#id;
     }
-    get pedidoId() {
-        return this.#pedidoId;
+
+    get idVenda() {
+        return this.#idVenda;
     }
-    get produtoId() {
-        return this.#ProdutoId;
+
+    get idProduto() {
+        return this.#idProduto;
     }
-    get quantidade() {
-        return this.#quantidade;
+
+    get qtd() {
+        return this.#qtd;
     }
-    get valorItem() {
-        return this.#valorItem;
+
+    get valor() {
+        return this.#valor;
     }
-    //setters
+
+    // Setters
     set id(value) {
         this.#validarId(value);
-        this.#id = value
+        this.#id = value;
     }
-    set pedidoId(value) {
-        this.#validarPedidoId(value);
-        this.#pedidoId = value
+
+    set idVenda(value) {
+        this.#validarIdVenda(value);
+        this.#idVenda = value;
     }
-    set produtoId(value) {
-        this.#validarProdutoId(value);
-        this.#ProdutoId = value
+
+    set idProduto(value) {
+        this.#validarIdProduto(value);
+        this.#idProduto = value;
     }
-    set quantidade(value) {
-        this.#validarQuantidade(value);
-        this.#quantidade = value
+
+    set qtd(value) {
+        this.#validarQtd(value);
+        this.#qtd = value;
     }
-    set valorItem(value) {
+
+    set valor(value) {
         this.#validarValor(value);
-        this.#valorItem = value
+        this.#valor = value;
     }
-    //métodos auxiliares
+
+    // Métodos auxiliares
     #validarId(value) {
-        if (!value || value <= 0) {
-            throw new Error("Verifique o ID informado");
+        if (value && value <= 0) {
+            throw new Error("Verifique o ID informado.");
         }
     }
-    #validarPedidoId(value) {
+
+    #validarIdVenda(value) {
         if (!value || value <= 0) {
-            throw new Error("Verifique o ID do pedido informado");
+            throw new Error("Verifique o ID da venda informado.");
         }
     }
-    #validarProdutoId(value) {
+
+    #validarIdProduto(value) {
         if (!value || value <= 0) {
-            throw new Error("verifique o ID do produto informado");
+            throw new Error("Verifique o ID do produto informado.");
         }
     }
-    #validarQuantidade(value) {
+
+    #validarQtd(value) {
         if (!value || value <= 0) {
-            throw new Error("Não foi possivel obter a quantidade");
+            throw new Error("A quantidade deve ser maior que zero.");
         }
     }
+
     #validarValor(value) {
-        if (!value || value <= 0) {
-            throw new Error("Não foi possivel obter o valor");
+        if (value == null || value <= 0) {
+            throw new Error("O valor deve ser maior que zero.");
         }
     }
 
-    static calcularSubTotalItens(itens) {
-        return (itens.reduce(
-            (total, item) => total + (item.valorItem * item.quantidade), 0
-        ));
+    // Calcula o total dos itens da venda
+    static calcularTotalItens(itens) {
+        return itens.reduce(
+            (total, item) => total + (item.valor * item.qtd),
+            0
+        );
     }
 
-    //design patterns
-
+    // Design Patterns
     static criar(dados) {
-        return new ItensPedido(dados.produtoId, dados.quantidade, dados.valorItem, null, null);
+        return new ItensVendas(dados.idVenda, dados.idProduto, dados.qtd, dados.valor, null
+        );
     }
+
     static alterar(dados, id) {
-        return new ItensPedido(dados.produtoId, dados.quantidade, dados.valorItem, id, dados.pedidoId);
+        return new ItensVendas(dados.idVenda, dados.idProduto, dados.qtd, dados.valor, id);
     }
 }
