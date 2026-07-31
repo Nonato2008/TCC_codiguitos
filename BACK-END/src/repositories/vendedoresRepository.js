@@ -1,8 +1,5 @@
 import { connection } from "../config/Database";
 
-<<<<<<< HEAD
-
-=======
 const vendedoresRepository = {
 
     selecionarId: async (id) => {
@@ -18,4 +15,3 @@ const vendedoresRepository = {
 }
 
 export default vendedoresRepository;
->>>>>>> 6bf6865bba0d29dfd7daa06123be94080e2b51a5

@@ -271,9 +271,6 @@ const vendasController = {
                                 status
                             );
 
-<<<<<<< HEAD
-export default vendasController;
-=======
                             return res.status(200).json({
                                 message: "Status atualizado",
                                 data: result
@@ -289,4 +286,3 @@ export default vendasController;
     };
 
     export default pedidoController;
->>>>>>> 6bf6865bba0d29dfd7daa06123be94080e2b51a5
