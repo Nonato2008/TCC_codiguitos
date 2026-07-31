@@ -4,6 +4,7 @@ import pedidoController from "../controllers/vendasController.js";
 const vendasRoutes = Router();
 
 
+// Rota para criar um novo pedido
 vendasRoutes.post("/", pedidoController.criar);
 vendasRoutes.get("/", pedidoController.selecionar);
 vendasRoutes.get("/:id", pedidoController.selecionar);
