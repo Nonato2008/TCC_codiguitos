@@ -1,3 +1,4 @@
+import { statusPed } from "../enums/statusVenda.js";
 import { Produtos } from "../models/Produtos.js";
 import produtosRepository from "../repositories/produtosRepository.js";
 
@@ -7,9 +8,9 @@ const produtoController = {
             if (!req.file) {
                 return res.status(400).json({ message: 'Imagem não foi enviada' });
             }
-            const {idFornecedor, nome, preco, quantidade, status, dataVenc} = req.body;
+            const {idFornecedor, nome, preco, quantidade,dataVenc} = req.body;
             const imagem = `/uploads/imagens/${req.file.filename}`;
-            const produto = Produtos.criar({ idFornecedor, nome, preco, quantidade, status, imagem, dataVenc });
+            const produto = Produtos.criar({ idFornecedor, nome, preco, quantidade, status: statusPed.ESTOQUE, imagem, dataVenc });
             const result = await produtosRepository.criar(produto);
             res.status(201).json({ result });
 
