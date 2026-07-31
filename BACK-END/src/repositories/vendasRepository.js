@@ -10,43 +10,56 @@ const pedidoRepository = {
 
             let subTotal = 0;
 
+            // Verifica estoque e calcula subtotal
             for (const item of itens) {
-                const [produto] = await conn.execute(
-                    "SELECT preco FROM produtos WHERE id = ?",
+                const [produtoRows] = await conn.execute(
+                    "SELECT Preco, Quantidade FROM Produtos WHERE Id = ?",
                     [item.produtoId]
                 );
 
-                if (produto.length === 0) {
+                if (produtoRows.length === 0) {
                     throw new Error(`Produto ${item.produtoId} não encontrado`);
                 }
 
-                const valor = produto[0].Valor;
-                subTotal += valor * item.quantidade;
+                const preco = produtoRows[0].Preco;
+                const qtdAtual = produtoRows[0].Quantidade;
+
+                if (qtdAtual < item.quantidade) {
+                    throw new Error(`Estoque insuficiente para o produto ${item.produtoId}`);
+                }
+
+                subTotal += preco * item.quantidade;
             }
 
             const [rowsPed] = await conn.execute(
-                "INSERT INTO pedidos(, valorTotal, Status) VALUES (?, ?, ?)",
+                "INSERT INTO Pedidos (ValorTotal, Status) VALUES (?, ?)",
                 [subTotal, pedido.status]
             );
 
+            // Insere itens e decrementa estoque
             for (const item of itens) {
-                const [produto] = await conn.execute(
-                    "SELECT preco FROM produtos WHERE id = ?",
+                const [produtoRows] = await conn.execute(
+                    "SELECT Preco FROM Produtos WHERE Id = ?",
                     [item.produtoId]
                 );
 
-                const valor = produto[0].Valor;
+                const preco = produtoRows[0].Preco;
 
                 await conn.execute(
-                    `INSERT INTO itens_pedidos (pedidoId, produtoId, quantidade, valorItem)
+                    `INSERT INTO Itens_Pedidos (PedidoId, ProdutoId, Quantidade, ValorItem)
                      VALUES (?, ?, ?, ?)`,
-                    [rowsPed.insertId, item.produtoId, item.quantidade, valor]
+                    [rowsPed.insertId, item.produtoId, item.quantidade, preco]
                 );
+
+                const [alterarResultado] = await conn.execute(
+                    "UPDATE Produtos SET Quantidade = Quantidade - ? WHERE Id = ? AND Quantidade >= ?",
+                    [item.quantidade, item.produtoId, item.quantidade]
+                );
+
+                if (!alterarResultado || alterarResultado.affectedRows === 0) {
+                    throw new Error(`Falha ao atualizar estoque do produto ${item.produtoId}`);
+                }
             }
-
-            await conn.commit();
-            return { id: rowsPed.insertId, subTotal };
-
         } catch (error) {
             await conn.rollback();
             throw error;
@@ -201,33 +214,46 @@ const pedidoRepository = {
 
     adicionarItem: async (pedidoId, item) => {
         const conn = await connection.getConnection();
-
         try {
             await conn.beginTransaction();
 
-            const [produto] = await conn.execute(
-                "SELECT preco FROM produtos WHERE id = ?",
+            const [produtoRows] = await conn.execute(
+                "SELECT Preco, Quantidade FROM Produtos WHERE Id = ?",
                 [item.produtoId]
             );
 
-            if (produto.length === 0) {
+            if (produtoRows.length === 0) {
                 throw new Error("Produto não encontrado");
             }
 
-            const valor = produto[0].Valor;
+            const preco = produtoRows[0].Preco;
+            const qtdAtual = produtoRows[0].Quantidade;
+
+            if (qtdAtual < item.quantidade) {
+                throw new Error("Estoque insuficiente para esse produto");
+            }
 
             await conn.execute(
-                `INSERT INTO itens_pedidos (pedidoId, produtoId, quantidade, valorItem)
+                `INSERT INTO Itens_Pedidos (PedidoId, ProdutoId, Quantidade, ValorItem)
              VALUES (?, ?, ?, ?)`,
-                [pedidoId, item.produtoId, item.quantidade, valor]
+                [pedidoId, item.produtoId, item.quantidade, preco]
             );
 
             await conn.execute(
-                `UPDATE pedidos 
-             SET valorTotal = valorTotal + ? 
-             WHERE id = ?`,
-                [valor * item.quantidade, pedidoId]
+                `UPDATE Pedidos 
+             SET ValorTotal = ValorTotal + ? 
+             WHERE Id = ?`,
+                [preco * item.quantidade, pedidoId]
             );
+
+            const [alterarResultado] = await conn.execute(
+                "UPDATE Produtos SET Quantidade = Quantidade - ? WHERE Id = ? AND Quantidade >= ?",
+                [item.quantidade, item.produtoId, item.quantidade]
+            );
+
+            if (!alterarResultado || alterarResultado.affectedRows === 0) {
+                throw new Error("Falha ao atualizar estoque do produto");
+            }
 
             await conn.commit();
 

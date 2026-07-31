@@ -14,7 +14,7 @@ export class Produtos {
         pNome,
         pPreco,
         pQuantidade,
-        pStatus,
+        pStatus,    
         pImagem,
         pDataVenc,
         pId = null,

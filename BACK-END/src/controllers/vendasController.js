@@ -1,4 +1,5 @@
 import { statusPed } from "../enums/statusVenda.js";
+import { ItensVendas } from "../models/ItensVendas.js";
 // import { ItensPedido } from "../models/ItensVendas.js";
 import { Vendas } from "../models/Vendas.js";
 // import { Vendas } from "../models/ItensVendas.js";
@@ -9,39 +10,49 @@ const pedidoController = {
 
     criar: async (req, res) => {
         try {
-            const { clienteId, itens } = req.body;
+            const { idProprietario, idVendedor, itens } = req.body;
 
-            if (!clienteId || Number(clienteId) <= 0) {
-                return res.status(400).json({ message: "clienteId inválido" });
+            if (!idProprietario || Number(idProprietario) <= 0) {
+                return res.status(400).json({
+                    message: "Id do proprietário inválido."
+                });
+            }
+
+            if (!idVendedor || Number(idVendedor) <= 0) {
+                return res.status(400).json({
+                    message: "Id do vendedor inválido."
+                });
             }
 
             if (!Array.isArray(itens) || itens.length === 0) {
-                return res.status(400).json({ message: "Informe os itens do pedido" });
+                return res.status(400).json({
+                    message: "Informe os itens da venda."
+                });
             }
 
-            const itensPedido = itens.map(item =>
-                ItensPedido.criar({
-                    produtoId: item.produtoId,
-                    quantidade: item.quantidade
+            const itensVenda = itens.map(item =>
+                ItensVendas.criar({
+                    idVenda: null,
+                    idProduto: item.idProduto,
+                    qtd: item.qtd,
+                    valor: 0
                 })
             );
 
-            const subTotal = ItensPedido.calcularSubTotalItens(itensPedido);
-
-            const pedido = Pedido.criar({
-                clienteId,
-                subTotal,
-                status: statusPed.ABERTO
+            const venda = Vendas.criar({
+                idProprietario,
+                idVendedor,
+                valorTotal: 0
             });
 
-            const result = await pedidoRepository.criar(pedido, itensPedido);
+            const resultado = await vendasRepository.criar(venda, itensVenda);
 
-            return res.status(201).json(result);
+            return res.status(201).json(resultado);
 
         } catch (error) {
             return res.status(500).json({
-                message: "Erro ao criar pedido",
-                errorMessage: error.message
+                message: "Erro ao criar venda.",
+                error: error.message
             });
         }
     },
@@ -68,15 +79,15 @@ const pedidoController = {
             }
 
             const itensPedido = itens.map(item =>
-                ItensPedido.alterar({
+                ItensVendas.alterar({
                     produtoId: item.produtoId,
                     quantidade: item.quantidade
                 })
             );
 
-            const subTotal = ItensPedido.calcularSubTotalItens(itensPedido);
+            const subTotal = ItensVendas.calcularSubTotalItens(itensPedido);
 
-            const pedido = Pedido.alterar(
+            const pedido = Vendas.alterar(
                 { clienteId, subTotal, status },
                 id
             );
