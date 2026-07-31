@@ -1,5 +1,5 @@
 export const statusPed = {
-    ABERTO:'aberto',
-    FINALIZADO:'finalizado',
-    PENDENTE:'pendente'
+    ESTOQUE:'Em Estoque',
+    VENCIDO:'Vencido',
+    ESGOTADO:'Esgotado'
 }

@@ -7,9 +7,9 @@ const produtoController = {
             if (!req.file) {
                 return res.status(400).json({ message: 'Imagem não foi enviada' });
             }
-            const { idCategoria, nome, preco, idFornecedor, status, dataVencimento } = req.body;
-            const vinculoImagem = `/uploads/imagens/${req.file.filename}`;
-            const produto = Produtos.criar({ idCategoria, nome, preco, vinculoImagem, idFornecedor, status, dataVencimento });
+            const {idFornecedor, nome, preco, quantidade, status, dataVenc} = req.body;
+            const imagem = `/uploads/imagens/${req.file.filename}`;
+            const produto = Produtos.criar({ idFornecedor, nome, preco, quantidade, status, imagem, dataVenc });
             const result = await produtosRepository.criar(produto);
             res.status(201).json({ result });
 
@@ -20,12 +20,13 @@ const produtoController = {
     },
     alterar: async (req, res) => {
         try {
-            const { idCategoria, nome, preco, idFornecedor, status, dataVencimento } = req.body;
-            const idProduto = req.params.id;
-            const vinculoImagem = req.file ? req.file.filename : null;
-            const produto = Produtos.alterar({ idCategoria, nome, preco, vinculoImagem, idFornecedor, status, dataVencimento }, idProduto);
+            const id = req.params.id;
+            const { idFornecedor, nome, preco, quantidade, status, dataVenc } = req.body;
+          
+            const imagem = req.file ? `/uploads/imagens/${req.file.filename}` : null;
+           const produto = Produtos.alterar({ idFornecedor, nome, preco, quantidade, status, imagem, dataVenc }, id);
             const result = await produtosRepository.editar(produto);
-            res.status(200).json({ result });
+            res.status(200).json({ message: 'Produto alterado com sucesso', result });
 
         } catch (error) {
             console.error(error);

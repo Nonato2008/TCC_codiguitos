@@ -1,105 +1,180 @@
- export class Produtos{
-    #idProduto;
-    #idCategoria;
+export class Produtos {
+    #id;
     #idFornecedor;
     #nome;
-    #valor;
-    #vinculoImagem;
+    #preco;
+    #quantidade;
+    #status;
+    #imagem;
+    #dataCad;
+    #dataVenc;
 
-    constructor (pIdCategoria, pNome, pValor, pVinculoImagem, pIdProduto, pIdFornecedor = null){
-        this.idCategoria = pIdCategoria;
-        this.nome = pNome;
-        this.valor = pValor;
-        this.vinculoImagem = pVinculoImagem;
-        this.idProduto = pIdProduto;
+    constructor(
+        pIdFornecedor,
+        pNome,
+        pPreco,
+        pQuantidade,
+        pStatus,
+        pImagem,
+        pDataVenc,
+        pId = null,
+        pDataCad = null
+    ){
         this.idFornecedor = pIdFornecedor;
+        this.nome = pNome;
+        this.preco = pPreco;
+        this.quantidade = pQuantidade;
+        this.status = pStatus;
+        this.imagem = pImagem;
+        this.dataVenc = pDataVenc;
+        this.id = pId;
+        this.dataCad = pDataCad;
     }
 
-    //metodos acessores getters e setters 
-    get idProduto(){
-        return this.#idProduto
+    // Getters e Setters
+
+    get id(){
+        return this.#id;
     }
-    set idProduto(value){
-        this.#validaridProduto(value);
-        this.#idProduto = value;
+    set id(value){
+        if(value !== null && value !== undefined){
+            this.#validarId(value);
+        }
+        this.#id = value;
     }
-    get idCategoria(){
-        return this.#idCategoria
+
+    get idFornecedor(){
+        return this.#idFornecedor;
     }
-    set idCategoria(value){
-        this.#validarIdCategoria(value);
-        this.#idCategoria = value
+    set idFornecedor(value){
+        this.#validarIdFornecedor(value);
+        this.#idFornecedor = Number(value);
     }
+
     get nome(){
         return this.#nome;
     }
     set nome(value){
         this.#validarNome(value);
-        this.#nome = value;
-    }
-    get valor(){
-        return this.#valor
-    }
-    set valor(value){
-        this.#validarValor(value)
-        this.#valor = Number(value)
-    }
-    get vinculoImagem(){
-        return this.#vinculoImagem
-    }
-    set vinculoImagem(value){
-        this.#validarPathImagem(value);
-        this.#vinculoImagem = value;
+        this.#nome = value.trim();
     }
 
-    get idFornecedor(){
-        return this.#idFornecedor
+    get preco(){
+        return this.#preco;
     }
-    set idFornecedor(value){
-        this.#validarIdFornecedor(value);
-        this.#idFornecedor = value
+    set preco(value){
+        this.#validarPreco(value);
+        this.#preco = Number(value);
     }
 
-    //metodos auxiliares
+    get quantidade(){
+        return this.#quantidade;
+    }
+    set quantidade(value){
+        this.#validarQuantidade(value);
+        this.#quantidade = Number(value);
+    }
 
-    #validaridProduto(value){
-        if(!value || isNaN(Number(value)) || Number(value) <= 0){
-            throw new Error ('Verifique o ID informado')
+    get status(){
+        return this.#status;
+    }
+    set status(value){
+        this.#validarStatus(value);
+        this.#status = value;
+    }
+
+    get imagem(){
+        return this.#imagem;
+    }
+    set imagem(value){
+        this.#validarImagem(value);
+        this.#imagem = value;
+    }
+
+    get dataCad(){
+        return this.#dataCad;
+    }
+    set dataCad(value){
+        this.#dataCad = value;
+    }
+
+    get dataVenc(){
+        return this.#dataVenc;
+    }
+    set dataVenc(value){
+        this.#validarDataVenc(value);
+        this.#dataVenc = value;
+    }
+
+    // Métodos de validação
+
+    #validarId(value){
+        if(isNaN(Number(value)) || Number(value) <= 0){
+            throw new Error("Verifique o ID informado.");
         }
     }
-    #validarIdCategoria(value){
-        if(!value || isNaN(Number(value)) || Number(value) <= 0){
-            throw new Error ('Verifique o ID da Categoria')
-        }
-    }
+
     #validarIdFornecedor(value){
-        if(!value || isNaN(Number(value)) || Number(value) <= 0){
-            throw new Error('Verifique o ID do Fornecedor')
-        }
-    }
-    #validarNome(value) {
-        if(!value || value.trim().length < 3 || value.trim().length > 45 ){
-            throw new Error ('O campo nome é obrigatório e deve ter entre 3 a 45 caracteres');           
-        }
-    }
-    #validarValor(value) {
-        if (value === undefined || value === null || isNaN(Number(value)) || Number(value) <= 0) {
-            throw new Error('O campo valor é obrigatório e deve ser numérico maior que zero');
+        if(isNaN(Number(value)) || Number(value) <= 0){
+            throw new Error("Verifique o ID do fornecedor.");
         }
     }
 
-    #validarPathImagem(value) {
-        if (!value){
-            throw new Error('Impossivel enviar a imagem');
+    #validarNome(value){
+        if(!value || value.trim().length < 3 || value.trim().length > 45){
+            throw new Error("O nome deve possuir entre 3 e 45 caracteres.");
         }
     }
 
-    //criação de objetos usando o design patterns FACTORY mathod
+    #validarPreco(value){
+        if(value === null || value === undefined || isNaN(Number(value)) || Number(value) <= 0){
+            throw new Error("O preço deve ser maior que zero.");
+        }
+    }
+
+    #validarQuantidade(value){
+        if(isNaN(Number(value)) || Number(value) < 0){
+            throw new Error("A quantidade deve ser um número maior ou igual a zero.");
+        }
+    }
+
+    #validarStatus(value){
+        const statusValidos = [
+            "Em Estoque",
+            "Vencido",
+            "Esgotado"
+        ];
+
+        if(!statusValidos.includes(value)){
+            throw new Error("Status inválido.");
+        }
+    }
+
+    #validarImagem(value){
+        if(!value || value.trim() === ""){
+            throw new Error("A imagem é obrigatória.");
+        }
+    }
+
+    #validarDataVenc(value){
+        if(!value){
+            throw new Error("A data de vencimento é obrigatória.");
+        }
+
+        const data = new Date(value);
+
+        if(isNaN(data.getTime())){
+            throw new Error("Data de vencimento inválida.");
+        }
+    }
+
+    // Factory Methods
 
     static criar(dados){
-        return new Produtos(dados.idCategoria, dados.nome, dados.valor, dados.vinculoImagem, null, dados.idFornecedor ?? null);
+        return new Produtos(dados.idFornecedor, dados.nome, dados.preco, dados.quantidade,dados.status, dados.imagem, dados.dataVenc);
     }
-    static alterar(dados, idProduto){
-        return new Produtos(dados.idCategoria, dados.nome, dados.valor, dados.vinculoImagem, idProduto, dados.idFornecedor ?? null);
+
+    static alterar(dados, id){
+        return new Produtos(dados.idFornecedor, dados.nome, dados.preco, dados.quantidade,dados.status, dados.imagem, dados.dataVenc, id);
     }
 }
