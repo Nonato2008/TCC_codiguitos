@@ -1,0 +1,1 @@
+import {buscarProdutos} from '../../services/tcc.api';

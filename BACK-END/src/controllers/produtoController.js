@@ -2,15 +2,24 @@ import { statusPed } from "../enums/statusVenda.js";
 import { Produtos } from "../models/Produtos.js";
 import produtosRepository from "../repositories/produtosRepository.js";
 
+const definirStatusPorQuantidade = (quantidade, statusRecebido) => {
+    if (Number(quantidade) <= 0) {
+        return statusPed.ESGOTADO;
+    }
+
+    return statusRecebido || statusPed.ESTOQUE;
+};
+
 const produtoController = {
     inserir: async (req, res) => {
         try {
             if (!req.file) {
                 return res.status(400).json({ message: 'Imagem não foi enviada' });
             }
-            const {idFornecedor, nome, preco, quantidade,dataVenc} = req.body;
+            const { idFornecedor, nome, preco, quantidade, dataVenc } = req.body;
             const imagem = `/uploads/imagens/${req.file.filename}`;
-            const produto = Produtos.criar({ idFornecedor, nome, preco, quantidade, status: statusPed.ESTOQUE, imagem, dataVenc });
+            const status = definirStatusPorQuantidade(quantidade);
+            const produto = Produtos.criar({ idFornecedor, nome, preco, quantidade, status, imagem, dataVenc });
             const result = await produtosRepository.criar(produto);
             res.status(201).json({ result });
 
@@ -23,9 +32,10 @@ const produtoController = {
         try {
             const id = req.params.id;
             const { idFornecedor, nome, preco, quantidade, status, dataVenc } = req.body;
-          
+
             const imagem = req.file ? `/uploads/imagens/${req.file.filename}` : null;
-           const produto = Produtos.alterar({ idFornecedor, nome, preco, quantidade, status, imagem, dataVenc }, id);
+            const statusAtualizado = definirStatusPorQuantidade(quantidade, status);
+            const produto = Produtos.alterar({ idFornecedor, nome, preco, quantidade, status: statusAtualizado, imagem, dataVenc }, id);
             const result = await produtosRepository.editar(produto);
             res.status(200).json({ message: 'Produto alterado com sucesso', result });
 
