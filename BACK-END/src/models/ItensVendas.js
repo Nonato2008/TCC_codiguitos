@@ -88,9 +88,9 @@ export class ItensVendas {
     //design patterns
 
     static criar(dados) {
-        return new ItensPedido(dados.produtoId, dados.quantidade, dados.valorItem, null, null);
+        return new ItensVendas(dados.produtoId, dados.quantidade, dados.valorItem, null, null);
     }
     static alterar(dados, id) {
-        return new ItensPedido(dados.produtoId, dados.quantidade, dados.valorItem, id, dados.pedidoId);
+        return new ItensVendas(dados.produtoId, dados.quantidade, dados.valorItem, id, dados.pedidoId);
     }
 }

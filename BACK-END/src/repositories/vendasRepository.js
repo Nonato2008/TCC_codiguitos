@@ -1,113 +1,165 @@
 import { connection } from "../config/Database.js";
 
-const pedidoRepository = {
+const vendasRepository = {
 
-    criar: async (pedido, itens) => {
+    criar: async (venda, itens) => {
         const conn = await connection.getConnection();
 
         try {
+
             await conn.beginTransaction();
 
-            let subTotal = 0;
+            let valorTotal = 0;
 
+            // Calcula o valor total da venda
             for (const item of itens) {
+
                 const [produto] = await conn.execute(
-                    "SELECT preco FROM produtos WHERE id = ?",
-                    [item.produtoId]
+                    "SELECT Preco FROM Produtos WHERE Id = ?",
+                    [item.idProduto]
                 );
 
                 if (produto.length === 0) {
-                    throw new Error(`Produto ${item.produtoId} não encontrado`);
+                    throw new Error(`Produto ${item.idProduto} não encontrado.`);
                 }
 
-                const valor = produto[0].Valor;
-                subTotal += valor * item.quantidade;
+                const preco = produto[0].Preco;
+
+                item.valor = preco;
+
+                valorTotal += preco * item.qtd;
             }
 
-            const [rowsPed] = await conn.execute(
-                "INSERT INTO pedidos(, valorTotal, Status) VALUES (?, ?, ?)",
-                [subTotal, pedido.status]
+            // Insere a venda
+            const [vendaRows] = await conn.execute(
+                `INSERT INTO Vendas
+                (IdProprietario, IdVendedor, ValorTotal)
+                VALUES (?, ?, ?)`,
+                [
+                    venda.idProprietario,
+                    venda.idVendedor,
+                    valorTotal
+                ]
             );
 
+            // Insere os itens
             for (const item of itens) {
-                const [produto] = await conn.execute(
-                    "SELECT preco FROM produtos WHERE id = ?",
-                    [item.produtoId]
-                );
-
-                const valor = produto[0].Valor;
 
                 await conn.execute(
-                    `INSERT INTO itens_pedidos (pedidoId, produtoId, quantidade, valorItem)
-                     VALUES (?, ?, ?, ?)`,
-                    [rowsPed.insertId, item.produtoId, item.quantidade, valor]
+                    `INSERT INTO Itens_vendas
+                    (IdVenda, IdProduto, Qtd, Valor)
+                    VALUES (?, ?, ?, ?)`,
+                    [
+                        vendaRows.insertId,
+                        item.idProduto,
+                        item.qtd,
+                        item.valor
+                    ]
                 );
+
             }
 
             await conn.commit();
-            return { id: rowsPed.insertId, subTotal };
+
+            return {
+                id: vendaRows.insertId,
+                valorTotal
+            };
 
         } catch (error) {
+
             await conn.rollback();
             throw error;
+
         } finally {
+
             conn.release();
+
         }
     },
 
-    editar: async (id, pedido, itens) => {
+    editar: async (id, venda, itens) => {
+
         const conn = await connection.getConnection();
 
         try {
+
             await conn.beginTransaction();
 
-            let subTotal = 0;
+            let valorTotal = 0;
 
             for (const item of itens) {
+
                 const [produto] = await conn.execute(
-                    "SELECT preco FROM produtos WHERE id = ?",
-                    [item.produtoId]
+                    "SELECT Preco FROM Produtos WHERE Id = ?",
+                    [item.idProduto]
                 );
 
                 if (produto.length === 0) {
-                    throw new Error(`Produto ${item.produtoId} não encontrado`);
+                    throw new Error(`Produto ${item.idProduto} não encontrado.`);
                 }
 
-                const valor = produto[0].Valor;
-                subTotal += valor * item.quantidade;
+                const preco = produto[0].Preco;
+
+                item.valor = preco;
+
+                valorTotal += preco * item.qtd;
             }
 
             await conn.execute(
-                "UPDATE pedidos SET valorTotal = ?, Status = ? WHERE id = ?",
-                [pedido.clienteId, subTotal, pedido.status, id]
+                `UPDATE Vendas
+                SET IdProprietario = ?,
+                    IdVendedor = ?,
+                    ValorTotal = ?
+                WHERE Id = ?`,
+                [
+                    venda.idProprietario,
+                    venda.idVendedor,
+                    valorTotal,
+                    id
+                ]
             );
 
+            // Remove os itens antigos
+            await conn.execute(
+                "DELETE FROM Itens_vendas WHERE IdVenda = ?",
+                [id]
+            );
 
+            // Insere novamente
             for (const item of itens) {
-                const [produto] = await conn.execute(
-                    "SELECT preco FROM produtos WHERE id = ?",
-                    [item.produtoId]
-                );
-
-                const valor = produto[0].Valor;
 
                 await conn.execute(
-                    `INSERT INTO itens_pedidos (pedidoId, produtoId, quantidade, valorItem)
-                     VALUES (?, ?, ?, ?)`,
-                    [id, item.produtoId, item.quantidade, valor]
+                    `INSERT INTO Itens_vendas
+                    (IdVenda, IdProduto, Qtd, Valor)
+                    VALUES (?, ?, ?, ?)`,
+                    [
+                        id,
+                        item.idProduto,
+                        item.qtd,
+                        item.valor
+                    ]
                 );
+
             }
 
             await conn.commit();
-            return { id, subTotal };
+
+            return {
+                id,
+                valorTotal
+            };
 
         } catch (error) {
+
             await conn.rollback();
             throw error;
+
         } finally {
+
             conn.release();
-        }
-    },
+
+        }},
 
     deletar: async (id) => {
         const conn = await connection.getConnection();
@@ -343,4 +395,4 @@ const pedidoRepository = {
     }
 }
 
-export default pedidoRepository;
+export default vendasRepository;
