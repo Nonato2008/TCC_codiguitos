@@ -83,10 +83,21 @@ export class Vendas {
 
     // Design Patterns
     static criar(dados) {
+<<<<<<< HEAD
         return new Vendas(dados.idProprietario, dados.idVendedor, dados.valorTotal, null);
     }
 
     static alterar(dados, id) {
         return new Vendas(dados.idProprietario,dados.idVendedor, dados.valorTotal,id);
+=======
+        return new Vendas(dados.idProprietario,dados.idVendedor,
+            dados.valorTotal,
+            null
+        );
+    }
+
+    static alterar(dados, id) {
+        return new Vendas(dados.idProprietario, dados.idVendedor, dados.valorTotal, id);
+>>>>>>> Adicionar_Vendas_e_Itens_Vendas
     }
 }

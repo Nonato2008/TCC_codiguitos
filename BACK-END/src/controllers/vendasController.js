@@ -1,6 +1,6 @@
 import { Vendas } from "../models/Vendas.js";
-import { ItensVendas } from "../models/ItensVendas.js";
-import vendasRepository from "../repositories/vendasRepository.js";
+// import { Vendas } from "../models/ItensVendas.js";
+import pedidoRepository from "../repositories/vendasRepository.js";
 
 const vendasController = {
 
@@ -112,13 +112,8 @@ const vendasController = {
                 message: "Erro ao editar venda.",
                 error: error.message
             });
-
         }
-
     },
-
-
-
 
     deletar: async (req, res) => {
         try {

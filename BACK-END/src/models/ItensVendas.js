@@ -102,11 +102,19 @@ export class ItensVendas {
 
     // Design Patterns
     static criar(dados) {
+<<<<<<< HEAD
         return new ItensVendas(dados.idVenda, dados.idProduto, dados.qtd, dados.valor, null
         );
+=======
+        return new ItensVendas(dados.produtoId, dados.quantidade, dados.valorItem, null, null);
+>>>>>>> Adicionar_Vendas_e_Itens_Vendas
     }
 
     static alterar(dados, id) {
+<<<<<<< HEAD
         return new ItensVendas(dados.idVenda, dados.idProduto, dados.qtd, dados.valor, id);
+=======
+        return new ItensVendas(dados.produtoId, dados.quantidade, dados.valorItem, id, dados.pedidoId);
+>>>>>>> Adicionar_Vendas_e_Itens_Vendas
     }
 }
