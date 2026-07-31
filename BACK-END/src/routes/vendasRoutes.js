@@ -7,7 +7,7 @@ const vendasRoutes = Router();
 // Rota para criar um novo pedido
 vendasRoutes.post("/", pedidoController.criar);
 vendasRoutes.get("/", pedidoController.selecionar);
-vendasRoutes.get("/:id", pedidoController.selecionar);
+vendasRoutes.get("/:id", pedidoController.selecionarId);
 vendasRoutes.put("/:id", pedidoController.editar);
 vendasRoutes.delete("/:id", pedidoController.deletar);
 vendasRoutes.post("/:id/item", pedidoController.adicionarItem);
