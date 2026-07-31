@@ -7,5 +7,6 @@ fornecedoresRoutes.post('/', uploadImage, fornecedoresController.criar);
 fornecedoresRoutes.put('/:id', uploadImage, fornecedoresController.editar);
 fornecedoresRoutes.delete('/:id', fornecedoresController.deletar);
 fornecedoresRoutes.get('/', fornecedoresController.selecionar);
+fornecedoresRoutes.get('/:id', fornecedoresController.selecionarId);
 
 export default fornecedoresRoutes;

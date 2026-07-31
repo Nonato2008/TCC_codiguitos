@@ -1,18 +1,19 @@
-export class Vendedores {
+export class Proprietario {
     #id;
     #nome;
+    #senha;
     #dataCad;
-    #idProprietario;
 
-    //construtor
-    constructor (
-        pNome, 
-        pIdProprietario, 
-        pId
-    ){
-        this.#nome = pNome;
-        this.#idProprietario = pIdProprietario;
-        this.#id = pId;
+    constructor(
+        id = null,
+        nome,
+        senha,
+        dataCad = null
+    ) {
+        this.id = id;
+        this.nome = nome;
+        this.senha = senha;
+        this.dataCad = dataCad;
     }
 
     get id() {
@@ -33,6 +34,17 @@ export class Vendedores {
     set nome(value) {
         this.#validarNome(value);
         this.#nome = value.trim();
+    }
+
+    get senha() {
+        return this.#senha;
+    }
+
+    set senha(value) {
+        if (!value || value.trim().length < 6) {
+            throw new Error("A senha deve possuir pelo menos 6 caracteres.");
+        }
+        this.#senha = value;
     }
 
     get dataCad() {
@@ -56,19 +68,20 @@ export class Vendedores {
     }
 
     static criar(dados) {
-        return new Vendedores(
+        return new Proprietario(
+            dados.id,
             dados.nome,
-            dados.idProprietario,
-            dados.id    
+            dados.senha,
+            dados.dataCad
         );
     }
 
     static alterar(dados, id) {
-        return new Vendedores(
+        return new Proprietario(
+            id,
             dados.nome,
-            dados.idProprietario,
-            id
+            dados.senha,
+            dados.dataCad
         );
     }
 }
-

@@ -289,6 +289,19 @@ const vendasRepository = {
 
         return rows;
     },
+    selecionarId: async (id) => {
+        const sql =`
+            SELECT *
+            FROM pedidos 
+            WHERE id = ?
+            `;
+
+        const values = [id];
+
+        const [rows] = await connection.execute(sql, values);
+        
+        return rows;
+    },
 
     adicionarItem: async (pedidoId, item) => {
         const conn = await connection.getConnection();
