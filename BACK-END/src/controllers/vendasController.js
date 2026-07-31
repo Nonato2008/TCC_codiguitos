@@ -4,9 +4,10 @@ import { Vendas } from "../models/Vendas.js";
 // import { Vendas } from "../models/ItensVendas.js";
 import pedidoRepository from "../repositories/vendasRepository.js";
 
+// CRUD - Create, Read, Update, Delete
 const pedidoController = {
 
-
+    // Create - POST
     criar: async (req, res) => {
         try {
             const { clienteId, itens } = req.body;
@@ -46,6 +47,7 @@ const pedidoController = {
         }
     },
 
+    // Update - PUT
     editar: async (req, res) => {
         try {
             const { id } = req.params;
@@ -96,6 +98,7 @@ const pedidoController = {
         }
     },
 
+    // Delete - DELETE
     deletar: async (req, res) => {
         try {
             const { id } = req.params;
@@ -119,6 +122,7 @@ const pedidoController = {
         }
     },
 
+    // Read - GET
     selecionar: async (req, res) => {
         try {
             const result = await pedidoRepository.selecionar();
@@ -131,6 +135,7 @@ const pedidoController = {
         }
     },
 
+    // Create - PUT by ID
     adicionarItem: async (req, res) => {
         try {
             const { id } = req.params;
@@ -161,6 +166,7 @@ const pedidoController = {
         }
     },
 
+    // Update - PUT by ID
     editarItem: async (req, res) => {
         try {
             const { id, itemId } = req.params;
@@ -189,6 +195,7 @@ const pedidoController = {
         }
     },
 
+    // Delete - Delete by ID
     removerItem: async (req, res) => {
         try {
             const { id, itemId } = req.params;
@@ -219,6 +226,7 @@ const pedidoController = {
         }
     },
 
+    // Update - PUT status by ID
     editarStatus: async (req, res) => {
         try {
             const { id } = req.params;

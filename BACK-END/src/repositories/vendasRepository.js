@@ -1,8 +1,10 @@
 import { connection } from "../config/Database.js";
 
+// CRUD - Create, Read, Update, Delete
 const pedidoRepository = {
 
-    criar: async (pedido, itens) => {
+    // Create - POST
+    criar: async (pedido, itens) => { 
         const conn = await connection.getConnection();
 
         try {
@@ -10,25 +12,30 @@ const pedidoRepository = {
 
             let subTotal = 0;
 
+            // Calcular o subtotal dos itens
             for (const item of itens) {
                 const [produto] = await conn.execute(
                     "SELECT preco FROM produtos WHERE id = ?",
                     [item.produtoId]
                 );
 
+                // Verificar se o produto existe
                 if (produto.length === 0) {
                     throw new Error(`Produto ${item.produtoId} não encontrado`);
                 }
 
+                // Calcular o subtotal
                 const valor = produto[0].Valor;
                 subTotal += valor * item.quantidade;
             }
 
+            // Inserir o pedido
             const [rowsPed] = await conn.execute(
                 "INSERT INTO pedidos(, valorTotal, Status) VALUES (?, ?, ?)",
                 [subTotal, pedido.status]
             );
 
+            // Inserir os itens do pedido
             for (const item of itens) {
                 const [produto] = await conn.execute(
                     "SELECT preco FROM produtos WHERE id = ?",
@@ -37,6 +44,7 @@ const pedidoRepository = {
 
                 const valor = produto[0].Valor;
 
+                // Inserir o item do pedido
                 await conn.execute(
                     `INSERT INTO itens_pedidos (pedidoId, produtoId, quantidade, valorItem)
                      VALUES (?, ?, ?, ?)`,
@@ -55,6 +63,7 @@ const pedidoRepository = {
         }
     },
 
+    // Update - PUT
     editar: async (id, pedido, itens) => {
         const conn = await connection.getConnection();
 
@@ -63,26 +72,30 @@ const pedidoRepository = {
 
             let subTotal = 0;
 
+            // Calcular o subtotal dos itens
             for (const item of itens) {
                 const [produto] = await conn.execute(
                     "SELECT preco FROM produtos WHERE id = ?",
                     [item.produtoId]
                 );
 
+                // Verificar se o produto existe
                 if (produto.length === 0) {
                     throw new Error(`Produto ${item.produtoId} não encontrado`);
                 }
 
+                // Calcular o subtotal
                 const valor = produto[0].Valor;
                 subTotal += valor * item.quantidade;
             }
 
+            // Atualizar o pedido
             await conn.execute(
                 "UPDATE pedidos SET valorTotal = ?, Status = ? WHERE id = ?",
                 [pedido.clienteId, subTotal, pedido.status, id]
             );
 
-
+            // Atualizar os itens do pedido
             for (const item of itens) {
                 const [produto] = await conn.execute(
                     "SELECT preco FROM produtos WHERE id = ?",
@@ -90,7 +103,7 @@ const pedidoRepository = {
                 );
 
                 const valor = produto[0].Valor;
-
+                
                 await conn.execute(
                     `INSERT INTO itens_pedidos (pedidoId, produtoId, quantidade, valorItem)
                      VALUES (?, ?, ?, ?)`,
@@ -98,6 +111,7 @@ const pedidoRepository = {
                 );
             }
 
+            // Commit da transação
             await conn.commit();
             return { id, subTotal };
 
@@ -109,22 +123,26 @@ const pedidoRepository = {
         }
     },
 
+    // Delete - DELETE
     deletar: async (id) => {
         const conn = await connection.getConnection();
 
         try {
             await conn.beginTransaction();
 
+            // Deletar os itens do pedido
             await conn.execute(
                 "DELETE FROM itens_pedidos WHERE pedidoId = ?",
                 [id]
             );
 
+            // Deletar o pedido
             await conn.execute(
                 "DELETE FROM pedidos WHERE id = ?",
                 [id]
             );
 
+            // Commit da transação
             await conn.commit();
             return { id };
 
@@ -135,26 +153,31 @@ const pedidoRepository = {
             conn.release();
         }
     },
+
     removerItem: async (pedidoId, itemId) => {
         const conn = await connection.getConnection();
 
         try {
             await conn.beginTransaction();
 
+            // Verificar se o item existe no pedido
             const [item] = await conn.execute(
                 "SELECT * FROM itens_pedidos WHERE id = ? AND pedidoId = ?",
                 [itemId, pedidoId]
             );
 
+            // Se o item não existir, lançar um erro
             if (item.length === 0) {
                 throw new Error("Item não encontrado no pedido");
             }
 
+            // Deletar o item do pedido
             await conn.execute(
                 "DELETE FROM itens_pedidos WHERE id = ?",
                 [itemId]
             );
 
+            // Recalcular o subtotal do pedido
             const [itens] = await conn.execute(
                 "SELECT quantidade, valorItem FROM itens_pedidos WHERE pedidoId = ?",
                 [pedidoId]
@@ -162,10 +185,12 @@ const pedidoRepository = {
 
             let subTotal = 0;
 
+            // Calcular o subtotal dos itens restantes
             itens.forEach(i => {
                 subTotal += i.Quatidade * i.valorItem;
             });
 
+            // Atualizar o subtotal do pedido
             await conn.execute(
                 "UPDATE pedidos SET valorTotal = ? WHERE id = ?",
                 [subTotal, pedidoId]
@@ -183,7 +208,10 @@ const pedidoRepository = {
         }
     },
 
+    
     selecionar: async () => {
+
+        // Selecionar todos os pedidos com seus itens
         const [rows] = await connection.execute(`
             SELECT 
                 p.*,
@@ -199,29 +227,34 @@ const pedidoRepository = {
         return rows;
     },
 
+   // 
     adicionarItem: async (pedidoId, item) => {
         const conn = await connection.getConnection();
 
         try {
             await conn.beginTransaction();
 
+            // Pegar o preço do produto
             const [produto] = await conn.execute(
                 "SELECT preco FROM produtos WHERE id = ?",
                 [item.produtoId]
             );
 
+            // Verificar se o preço do produto nao é nulo
             if (produto.length === 0) {
                 throw new Error("Produto não encontrado");
             }
 
             const valor = produto[0].Valor;
 
+            // Inserir o item do pedido
             await conn.execute(
                 `INSERT INTO itens_pedidos (pedidoId, produtoId, quantidade, valorItem)
              VALUES (?, ?, ?, ?)`,
                 [pedidoId, item.produtoId, item.quantidade, valor]
             );
 
+            // Atualizar o subtotal do pedido
             await conn.execute(
                 `UPDATE pedidos 
              SET valorTotal = valorTotal + ? 
@@ -241,36 +274,43 @@ const pedidoRepository = {
         }
     },
 
+    // Update - PUT by ID
     editarItem: async (pedidoId, itemId, quantidade) => {
         const conn = await connection.getConnection();
 
         try {
             await conn.beginTransaction();
 
+            // Validar a quantidade
             if (quantidade === undefined || quantidade <= 0) {
                 throw new Error("Quantidade inválida");
             }
 
+    
             const [item] = await conn.execute(
                 "SELECT * FROM itens_pedidos WHERE id = ? AND pedidoId = ?",
                 [itemId, pedidoId]
             );
 
+            // Se o item não existir, lançar um erro
             if (item.length === 0) {
                 throw new Error("Item não encontrado no pedido");
             }
 
+            // Pegar o preço do produto
             const [produto] = await conn.execute(
                 "SELECT preco FROM produtos WHERE idProduto = ?",
                 [item[0].ProdutoId]
             );
 
+            // Verificar se o produto existe
             if (!produto || produto.length === 0) {
                 throw new Error("Produto não encontrado");
             }
 
             const valor = produto[0].Valor;
 
+            // Atualizar a quantidade e o valor do item
             await conn.execute(
                 `UPDATE itens_pedidos 
              SET quantidade = ?, valorItem = ? 
@@ -289,6 +329,7 @@ const pedidoRepository = {
                 subTotal += i.Quatidade * i.valorItem;
             });
 
+            // Atualizar o subtotal do pedido
             await conn.execute(
                 "UPDATE pedidos SET valorTotal = ? WHERE id = ?",
                 [subTotal, pedidoId]
@@ -344,3 +385,19 @@ const pedidoRepository = {
 }
 
 export default pedidoRepository;
+
+
+
+
+
+
+
+
+//  ⡴⣶⣿⡄⠀⠀⠀⠀⠀⠀⠀⡤⠞⠉⢳⠀⠀⠀⠀
+// ⢀⡇⠘⠋⠓⣆⠀⠀⠀⣀⣠⠞⠀⢀⣴⣫⠶⠚⠛⣷
+// ⣿⠀⠒⠘⣠⡾⢀⡴⠋⠉⠀⠀⠀⠉⠋⠁⢀⣠⠶⠃
+// ⠈⠙⣏⣿⢧⢿⡏⠀⠀⢠⠄⠀⠀⠀⠀⠀⢻⡀⠀⠀
+// ⠀⠀⠉⠘⣟⣾⡄⠀⠀⠀⠈⠓⠘⠃⣀⠀⢈⡇⠀⠀
+// ⠀⠀⠀⠀⢿⠉⠛⠦⠀⠀⠀⠀⠀⠀⠀⣠⡞⠁⠀⠀
+// ⠀⠀⠀⠀⠘⢧⡀⠀⠀⠀⠀⠀⠀⠘⠋⠉⢙⡆⠀⠀
+// ⠀⠀⠀⠀⠀⠀⢻⠀⠀⠀⠀⠀⠀⠀⡤⠖⠋

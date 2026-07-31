@@ -1,9 +1,11 @@
 import { Fornecedores } from "../models/Fornecedores.js";
 import fornecedoresRepository from "../repositories/fornecedoresRepository.js";
 
+
 const fornecedoresController = {
 
-
+// CRUD - Create, Read, Update, Delete
+// Create - POST
 criar: async (req, res) => {
 
     try {
@@ -53,7 +55,7 @@ criar: async (req, res) => {
 
 },
 
-
+// Update - PUT
 editar: async (req, res) => {
 
     try {
@@ -107,7 +109,7 @@ editar: async (req, res) => {
 
 },
 
-
+// Delete - DELETE
 deletar: async (req, res) => {
 
     try {
@@ -138,7 +140,7 @@ deletar: async (req, res) => {
 
 },
 
-
+// Read - GET
 selecionar: async (req, res) => {
 
     try {
@@ -167,7 +169,7 @@ selecionar: async (req, res) => {
 
 },
 
-
+// Read - GET by ID
 selecionarId: async (req, res) => {
 
     try {
