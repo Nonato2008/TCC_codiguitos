@@ -1,133 +1,101 @@
-import vendasRepository from "../repositories/vendasRepository.js";
 import { statusPed } from "../enums/statusVenda.js";
+// import { ItensPedido } from "../models/ItensVendas.js";
+import { Vendas } from "../models/Vendas.js";
+// import { Vendas } from "../models/ItensVendas.js";
+import pedidoRepository from "../repositories/vendasRepository.js";
 
-const vendasController = {
+const pedidoController = {
 
-    // Cria uma nova venda
+
     criar: async (req, res) => {
         try {
-            const { idProprietario, idVendedor, itens } = req.body;
+            const { clienteId, itens } = req.body;
 
-            // Valida o id do proprietário
-            if (!idProprietario || Number(idProprietario) <= 0) {
-                return res.status(400).json({
-                    message: "Id do proprietário inválido."
-                });
+            if (!clienteId || Number(clienteId) <= 0) {
+                return res.status(400).json({ message: "clienteId inválido" });
             }
 
-            // Valida o id do vendedor
-            if (!idVendedor || Number(idVendedor) <= 0) {
-                return res.status(400).json({
-                    message: "Id do vendedor inválido."
-                });
-            }
-
-            // Valida se foram enviados itens
             if (!Array.isArray(itens) || itens.length === 0) {
-                return res.status(400).json({
-                    message: "Informe os itens da venda."
-                });
+                return res.status(400).json({ message: "Informe os itens do pedido" });
             }
 
-            // Normaliza os nomes dos campos dos itens
-            const itensVenda = itens.map(item => ({
-                idProduto: item.idProduto ?? item.produtoId,
-                qtd: item.qtd ?? item.quantidade
-            }));
+            const itensPedido = itens.map(item =>
+                ItensPedido.criar({
+                    produtoId: item.produtoId,
+                    quantidade: item.quantidade
+                })
+            );
 
-            // Valida cada item
-            for (const item of itensVenda) {
-                if (!item.idProduto || Number(item.idProduto) <= 0) {
-                    return res.status(400).json({ message: "Id do produto inválido." });
-                }
-                if (!item.qtd || Number(item.qtd) <= 0) {
-                    return res.status(400).json({ message: "Quantidade inválida." });
-                }
-            }
+            const subTotal = ItensPedido.calcularSubTotalItens(itensPedido);
 
-            const venda = {
-                idProprietario: Number(idProprietario),
-                idVendedor: Number(idVendedor)
-            };
+            const pedido = Pedido.criar({
+                clienteId,
+                subTotal,
+                status: statusPed.ABERTO
+            });
 
-            const resultado = await vendasRepository.criar(venda, itensVenda);
+            const result = await pedidoRepository.criar(pedido, itensPedido);
 
-            return res.status(201).json(resultado);
+            return res.status(201).json(result);
 
         } catch (error) {
             return res.status(500).json({
-                message: "Erro ao criar venda.",
-                error: error.message
+                message: "Erro ao criar pedido",
+                errorMessage: error.message
             });
         }
     },
 
-    // Edita uma venda completa
     editar: async (req, res) => {
         try {
             const { id } = req.params;
-            const { idProprietario, idVendedor, itens } = req.body;
+            const { clienteId, status, itens } = req.body;
 
             if (!id || Number(id) <= 0) {
-                return res.status(400).json({
-                    message: "Id inválido."
-                });
+                return res.status(400).json({ message: "ID inválido" });
             }
 
-            if (!idProprietario || Number(idProprietario) <= 0) {
-                return res.status(400).json({
-                    message: "Id do proprietário inválido."
-                });
+            if (!clienteId || Number(clienteId) <= 0) {
+                return res.status(400).json({ message: "clienteId inválido" });
             }
 
-            if (!idVendedor || Number(idVendedor) <= 0) {
-                return res.status(400).json({
-                    message: "Id do vendedor inválido."
-                });
+            if (!Object.values(statusPed).includes(status)) {
+                return res.status(400).json({ message: "Status inválido" });
             }
 
             if (!Array.isArray(itens) || itens.length === 0) {
-                return res.status(400).json({
-                    message: "Informe os itens da venda."
-                });
+                return res.status(400).json({ message: "Informe os itens" });
             }
 
-            // Normaliza os nomes dos campos dos itens
-            const itensVenda = itens.map(item => ({
-                idProduto: item.idProduto ?? item.produtoId,
-                qtd: item.qtd ?? item.quantidade
-            }));
+            const itensPedido = itens.map(item =>
+                ItensPedido.alterar({
+                    produtoId: item.produtoId,
+                    quantidade: item.quantidade
+                })
+            );
 
-            for (const item of itensVenda) {
-                if (!item.idProduto || Number(item.idProduto) <= 0) {
-                    return res.status(400).json({ message: "Id do produto inválido." });
-                }
-                if (!item.qtd || Number(item.qtd) <= 0) {
-                    return res.status(400).json({ message: "Quantidade inválida." });
-                }
-            }
+            const subTotal = ItensPedido.calcularSubTotalItens(itensPedido);
 
-            const venda = {
-                idProprietario: Number(idProprietario),
-                idVendedor: Number(idVendedor)
-            };
+            const pedido = Pedido.alterar(
+                { clienteId, subTotal, status },
+                id
+            );
 
-            const resultado = await vendasRepository.editar(Number(id), venda, itensVenda);
+            const result = await pedidoRepository.editar(id, pedido, itensPedido);
 
             return res.status(200).json({
-                message: "Venda atualizada com sucesso.",
-                data: resultado
+                message: "Pedido atualizado",
+                data: result
             });
 
         } catch (error) {
             return res.status(500).json({
-                message: "Erro ao editar venda.",
-                error: error.message
+                message: "Erro ao editar pedido",
+                errorMessage: error.message
             });
         }
     },
 
-    // Deleta uma venda
     deletar: async (req, res) => {
         try {
             const { id } = req.params;
@@ -136,7 +104,7 @@ const vendasController = {
                 return res.status(400).json({ message: "ID inválido" });
             }
 
-            const result = await vendasRepository.deletar(Number(id));
+            const result = await pedidoRepository.deletar(Number(id));
 
             return res.status(200).json({
                 message: "Pedido deletado",
@@ -151,10 +119,9 @@ const vendasController = {
         }
     },
 
-    // Lista todas as vendas
     selecionar: async (req, res) => {
         try {
-            const result = await vendasRepository.selecionar();
+            const result = await pedidoRepository.selecionar();
             return res.status(200).json(result);
         } catch (error) {
             return res.status(500).json({
@@ -164,19 +131,14 @@ const vendasController = {
         }
     },
 
-    // Busca uma venda pelo ID
     selecionarId: async (req, res) => {
         try {
-            const { id } = req.params;
+            const  id  = req.params; 
 
-            if (!id || Number(id) <= 0) {
-                return res.status(400).json({ message: "ID inválido" });
-            }
-
-            const result = await vendasRepository.selecionarId(Number(id));
+            const result = await pedidoRepository.selecionarId(Number(id));
             return res.status(200).json(result);
 
-        } catch (error) {
+        }catch (error) {
             return res.status(500).json({
                 message: "Erro ao buscar pedido",
                 errorMessage: error.message
@@ -184,143 +146,124 @@ const vendasController = {
         }
     },
 
-    // Adiciona um item em uma venda existente
-    adicionarItem: async (req, res) => {
-        try {
-            const { id } = req.params;
-            const { produtoId, quantidade, idProduto, qtd } = req.body;
+        adicionarItem: async (req, res) => {
+            try {
+                const { id } = req.params;
+                const { produtoId, quantidade } = req.body;
 
-            if (!id || Number(id) <= 0) {
-                return res.status(400).json({ message: "Pedido inválido" });
+                if (!id || Number(id) <= 0) {
+                    return res.status(400).json({ message: "Pedido inválido" });
+                }
+
+                if (!produtoId || !quantidade || quantidade <= 0) {
+                    return res.status(400).json({ message: "Dados do item inválidos" });
+                }
+
+                const item = ItensPedido.criar({ produtoId, quantidade });
+
+                const result = await pedidoRepository.adicionarItem(id, item);
+
+                return res.status(200).json({
+                    message: "Item adicionado",
+                    data: result
+                });
+
+            } catch (error) {
+                return res.status(500).json({
+                    message: "Erro ao adicionar item",
+                    errorMessage: error.message
+                });
             }
+        },
 
-            // Aceita tanto produtoId/quantidade quanto idProduto/qtd
-            const produto = produtoId ?? idProduto;
-            const qtde = quantidade ?? qtd;
+            editarItem: async (req, res) => {
+                try {
+                    const { id, itemId } = req.params;
+                    const { quantidade } = req.body;
 
-            if (!produto || Number(produto) <= 0 || !qtde || Number(qtde) <= 0) {
-                return res.status(400).json({ message: "Dados do item inválidos" });
-            }
+                    if (!quantidade || quantidade <= 0) {
+                        return res.status(400).json({ message: "Quantidade inválida" });
+                    }
 
-            const item = {
-                idProduto: Number(produto),
-                qtd: Number(qtde)
-            };
+                    const result = await pedidoRepository.editarItem(
+                        Number(id),
+                        Number(itemId),
+                        quantidade
+                    );
 
-            const result = await vendasRepository.adicionarItem(Number(id), item);
+                    return res.status(200).json({
+                        message: "Item atualizado",
+                        data: result
+                    });
 
-            return res.status(200).json({
-                message: "Item adicionado",
-                data: result
-            });
+                } catch (error) {
+                    return res.status(500).json({
+                        message: "Erro ao editar item",
+                        errorMessage: error.message
+                    });
+                }
+            },
 
-        } catch (error) {
-            return res.status(500).json({
-                message: "Erro ao adicionar item",
-                errorMessage: error.message
-            });
-        }
-    },
+                removerItem: async (req, res) => {
+                    try {
+                        const { id, itemId } = req.params;
 
-    // Altera a quantidade de um item
-    editarItem: async (req, res) => {
-        try {
-            const { id, itemId } = req.params;
-            const { quantidade } = req.body;
+                        if (!id || Number(id) <= 0) {
+                            return res.status(400).json({ message: "Pedido inválido" });
+                        }
 
-            if (!id || Number(id) <= 0) {
-                return res.status(400).json({ message: "Pedido inválido" });
-            }
+                        if (!itemId || Number(itemId) <= 0) {
+                            return res.status(400).json({ message: "Item inválido" });
+                        }
 
-            if (!itemId || Number(itemId) <= 0) {
-                return res.status(400).json({ message: "Item inválido" });
-            }
+                        const result = await pedidoRepository.removerItem(
+                            Number(id),
+                            Number(itemId)
+                        );
 
-            if (!quantidade || Number(quantidade) <= 0) {
-                return res.status(400).json({ message: "Quantidade inválida" });
-            }
+                        return res.status(200).json({
+                            message: "Item removido",
+                            data: result
+                        });
 
-            const result = await vendasRepository.editarItem(
-                Number(id),
-                Number(itemId),
-                Number(quantidade)
-            );
+                    } catch (error) {
+                        return res.status(500).json({
+                            message: "Erro ao remover item",
+                            errorMessage: error.message
+                        });
+                    }
+                },
 
-            return res.status(200).json({
-                message: "Item atualizado",
-                data: result
-            });
+                    editarStatus: async (req, res) => {
+                        try {
+                            const { id } = req.params;
+                            const { status } = req.body;
 
-        } catch (error) {
-            return res.status(500).json({
-                message: "Erro ao editar item",
-                errorMessage: error.message
-            });
-        }
-    },
+                            if (!id || Number(id) <= 0) {
+                                return res.status(400).json({ message: "ID inválido" });
+                            }
 
-    // Remove um item da venda
-    removerItem: async (req, res) => {
-        try {
-            const { id, itemId } = req.params;
+                            if (!Object.values(statusPed).includes(status)) {
+                                return res.status(400).json({ message: "Status inválido" });
+                            }
 
-            if (!id || Number(id) <= 0) {
-                return res.status(400).json({ message: "Pedido inválido" });
-            }
+                            const result = await pedidoRepository.editarStatus(
+                                Number(id),
+                                status
+                            );
 
-            if (!itemId || Number(itemId) <= 0) {
-                return res.status(400).json({ message: "Item inválido" });
-            }
+                            return res.status(200).json({
+                                message: "Status atualizado",
+                                data: result
+                            });
 
-            const result = await vendasRepository.removerItem(
-                Number(id),
-                Number(itemId)
-            );
+                        } catch (error) {
+                            return res.status(500).json({
+                                message: "Erro ao atualizar status",
+                                errorMessage: error.message
+                            });
+                        }
+                    }
+    };
 
-            return res.status(200).json({
-                message: "Item removido",
-                data: result
-            });
-
-        } catch (error) {
-            return res.status(500).json({
-                message: "Erro ao remover item",
-                errorMessage: error.message
-            });
-        }
-    },
-
-    // Altera o status da venda
-    editarStatus: async (req, res) => {
-        try {
-            const { id } = req.params;
-            const { status } = req.body;
-
-            if (!id || Number(id) <= 0) {
-                return res.status(400).json({ message: "ID inválido" });
-            }
-
-            if (!Object.values(statusPed).includes(status)) {
-                return res.status(400).json({ message: "Status inválido" });
-            }
-
-            const result = await vendasRepository.editarStatus(
-                Number(id),
-                status
-            );
-
-            return res.status(200).json({
-                message: "Status atualizado",
-                data: result
-            });
-
-        } catch (error) {
-            return res.status(500).json({
-                message: "Erro ao atualizar status",
-                errorMessage: error.message
-            });
-        }
-    }
-};
-
-export default vendasController;
+    export default pedidoController;

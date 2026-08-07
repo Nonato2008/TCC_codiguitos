@@ -1,67 +1,25 @@
-import { Vendedores } from "../models/Vendedores.js";
+import { Vendedores } from "../models/Vendedores";
 import vendedoresRepository from "../repositories/vendedoresRepository.js";
 
 const vendedoresController = {
 
     selecionarId: async (req, res) => {
         try {
-            const id = req.params.id;
+            const id = req.params;
 
-            const result = await vendedoresRepository.selecionarId(id);
+            const result = await vendedoresRepository.selecionarId(Number(id));
             return res.status(200).json(result);
         } catch (error) {
             return res.status(404).json({ message: "Vendedor não encontrado", errorMessage: error.message });    
         }
     },
-     criar: async (req, res) => {
+    selecionar: async (res) => {
         try {
-            const { nome, idProprietario } = req.body;
-            const vendedor = Vendedores.criar({
-
-            nome,
-            idProprietario
-        });
-
-
-        const result =
-            await vendedoresRepository.criar(vendedor);
-
-
-        res.status(201).json({
-
-            message: 'Vendedor criado com sucesso',
-
-            result
-
-        });
+            const result = await vendedoresRepository.selecionar({result});
+            res.status(200).json
         } catch (error) {
-            res.status(400).json({ message: 'Erro ao criar vendedor', error: error.message });
-        }
-    },
-    editar: async (req, res) => {
-        try {
-            const id = req.params.id;
-            const { nome, idProprietario } = req.body;
-            const vendedor = Vendedores.alterar({
-
-            nome,
-            idProprietario
-        }, id);
-
-
-        const result =
-            await vendedoresRepository.editar(vendedor);
-
-
-        res.status(200).json({
-
-            message: 'Vendedor alterado com sucesso',
-
-            result
-
-        });
-        } catch (error) {
-            res.status(400).json({ message: 'Erro ao alterar proprietário', error: error.message });
+            console.error(error);
+            res.status(500).json({ message: 'Erro ao selecionar vendedores', errorMessage: error.message})
         }
     }
 }

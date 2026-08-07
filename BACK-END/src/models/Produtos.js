@@ -14,7 +14,7 @@ export class Produtos {
         pNome,
         pPreco,
         pQuantidade,
-        pStatus,    
+        pStatus,
         pImagem,
         pDataVenc,
         pId = null,
@@ -175,6 +175,6 @@ export class Produtos {
     }
 
     static alterar(dados, id){
-        return new Produtos(dados.idFornecedor, dados.nome, dados.preco, dados.quantidade,dados.status, dados.imagem, dados.dataVenc,id);
+        return new Produtos(dados.idFornecedor, dados.nome, dados.preco, dados.quantidade,dados.status, dados.imagem, dados.dataVenc, id);
     }
 }

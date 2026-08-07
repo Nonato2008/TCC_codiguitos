@@ -2,109 +2,111 @@ import { connection } from "../config/Database.js";
 
 const produtosRepository = {
 
-    criar: async (produto) => {
 
-        const sql = `
-            INSERT INTO Produtos
-            (
-                Nome,
-                Preco,
-                Quantidade,
-                Status,
-                Imagem,
-                DataVenc,
-                IdFornecedor
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        `;
+criar: async (produto) => {
 
-        const values = [
-            produto.nome,
-            produto.preco,
-            produto.quantidade,
-            produto.status,
-            produto.imagem,
-            produto.dataVenc,
-            produto.idFornecedor
-        ];
+    const sql = `
+        INSERT INTO Produtos
+        (
+            Nome,
+            Preco,
+            Quantidade,
+            Status,
+            Imagem,
+            DataVenc,
+            IdFornecedor
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
 
-        const [rows] = await connection.execute(sql, values);
+    const values = [
+        produto.nome,
+        produto.preco,
+        produto.quantidade,
+        produto.status,
+        produto.imagem,
+        produto.dataVenc,
+        produto.idFornecedor
+    ];
 
-        return rows;
-    },
+    const [rows] = await connection.execute(sql, values);
 
-    editar: async (produto) => {
+    return rows;
+},
 
-        const sql = `
-            UPDATE Produtos
-            SET
-                Nome = ?,
-                Preco = ?,
-                Quantidade = ?,
-                Status = ?,
-                Imagem = ?,
-                DataVenc = ?,
-                IdFornecedor = ?
-            WHERE Id = ?
-        `;
 
-        const values = [
-            produto.nome,
-            produto.preco,
-            produto.quantidade,
-            produto.status,
-            produto.imagem,
-            produto.dataVenc,
-            produto.idFornecedor,
-            produto.id
-        ];
+editar: async (produto) => {
 
-        const [rows] = await connection.execute(sql, values);
+    const sql = `
+        UPDATE Produtos
+        SET
+            Nome = ?,
+            Preco = ?,
+            Quantidade = ?,
+            Status = ?,
+            Imagem = ?,
+            DataVenc = ?,
+            IdFornecedor = ?
+        WHERE Id = ?
+    `;
 
-        return rows;
-    },
+    const values = [
+        produto.nome,
+        produto.preco,
+        produto.quantidade,
+        produto.status,
+        produto.imagem,
+        produto.dataVenc,
+        produto.idFornecedor,
+        produto.id
+    ];
 
-    deletar: async (id) => {
+    const [rows] = await connection.execute(sql, values);
 
-        const sql = `
-            DELETE FROM Produtos
-            WHERE Id = ?
-        `;
+    return rows;
+},
 
-        const values = [id];
 
-        const [rows] = await connection.execute(sql, values);
+deletar: async (id) => {
 
-        return rows;
-    },
+    const sql = `
+        DELETE FROM Produtos
+        WHERE Id = ?
+    `;
 
-    selecionar: async () => {
+    const values = [id];
 
-        const sql = `
-            SELECT *
-            FROM Produtos
-            ORDER BY Nome ASC
-        `;
+    const [rows] = await connection.execute(sql, values);
 
-        const [rows] = await connection.execute(sql);
+    return rows;
+},
 
-        return rows;
-    },
 
-    selecionarId: async (id) => {
+selecionar: async () => {
+    const sql = `
+        SELECT *
+        FROM Produtos
+    `;
+    const [rows] = await connection.execute(sql);
+    return rows;
+},
 
-        const sql = `
-            SELECT *
-            FROM Produtos
-            WHERE Id = ?
-        `;
 
-        const values = [id];
+selecionarId: async (id) => {
 
-        const [rows] = await connection.execute(sql, values);
+    const sql = `
+        SELECT *
+        FROM Produtos
+        WHERE Id = ?
+    `;
 
-        return rows;
-    }
+    const values = [id];
+
+    const [rows] = await connection.execute(sql, values);
+
+    return rows;
+}
+
 
 };
 

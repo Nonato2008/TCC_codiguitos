@@ -1,95 +1,71 @@
-export class Vendas {
+export class Vendas{
     #id;
-    #idProprietario;
-    #idVendedor;
-    #valorTotal;
-    #dataCad;
+    #clienteId;
+    #subTotal;
+    #status;
+    #dataCad
 
-    // Construtor
-    constructor(pIdProprietario, pIdVendedor, pValorTotal, pId, pDataCad = null) {
-        this.idProprietario = pIdProprietario;
-        this.idVendedor = pIdVendedor;
-        this.valorTotal = pValorTotal;
-        this.id = pId;
-        this.#dataCad = pDataCad;
+    //construtor
+
+    constructor (pClienteId, pSubTotal, pStatus, pId){
+        this.#clienteId = pClienteId;
+        this.#subTotal = pSubTotal;
+        this.#status = pStatus;
+        this.#id = pId;
     }
 
-    // Getters
-    get id() {
+    //getter
+    get id (){
         return this.#id;
     }
-
-    get idProprietario() {
-        return this.#idProprietario;
+    get clienteId (){
+        return this.#clienteId;
     }
-
-    get idVendedor() {
-        return this.#idVendedor;
+    get subTotal (){
+        return this.#subTotal;
     }
-
-    get valorTotal() {
-        return this.#valorTotal;
+    get status (){
+        return this.#status;
     }
-
-    get dataCad() {
-        return this.#dataCad;
-    }
-
-    // Setters
-    set id(value) {
+    //setters
+    set id(value){
         this.#validarId(value);
-        this.#id = value;
+        this.#id = value
     }
-
-    set idProprietario(value) {
-        this.#validarIdProprietario(value);
-        this.#idProprietario = value;
+    set clienteId(value){
+        this.#validarClienteId(value);
+        this.#clienteId = value
     }
-
-    set idVendedor(value) {
-        this.#validarIdVendedor(value);
-        this.#idVendedor = value;
+    set subTotal(value){
+        this.#validarSubTotal(value);
+        this.#subTotal = value
     }
-
-    set valorTotal(value) {
-        this.#validarValorTotal(value);
-        this.#valorTotal = value;
+    set status(value){
+        this.#status = value
     }
-
-    // Métodos auxiliares
-    #validarId(value) {
-        if (value && value <= 0) {
-            throw new Error("Verifique o ID informado.");
+    //métodos auxiliares
+    #validarId(value){
+        if(value && value<=0){
+            throw new Error("Verifique o ID informado");
+        }
+    }    
+    #validarClienteId(value){
+        if(value && value<=0){
+            throw new Error("Verifique o ID do cliente informado");
+        }
+    }    
+    #validarSubTotal(value){
+        if(value && value<=0){
+            throw new Error("Não foi possivel obter o subtotal");
         }
     }
 
-    #validarIdProprietario(value) {
-        if (!value || value <= 0) {
-            throw new Error("Verifique o ID do proprietário informado.");
-        }
-    }
+    //design patterns
 
-    #validarIdVendedor(value) {
-        if (!value || value <= 0) {
-            throw new Error("Verifique o ID do vendedor informado.");
-        }
+    static criar(dados){
+        return new Pedido(dados.clienteId, dados.subTotal, dados.status, null);
     }
-
-    #validarValorTotal(value) {
-        if (value == null || value <= 0) {
-            throw new Error("O valor total deve ser maior que zero.");
-        }
-    }
-
-    // Design Patterns
-    static criar(dados) {
-        return new Vendas(dados.idProprietario,dados.idVendedor,
-            dados.valorTotal,
-            null
-        );
-    }
-
-    static alterar(dados, id) {
-        return new Vendas(dados.idProprietario, dados.idVendedor, dados.valorTotal, id);
+    static alterar(dados, id){
+        return new Pedido(dados.clienteId, dados.subTotal, dados.status, id);
     }
 }

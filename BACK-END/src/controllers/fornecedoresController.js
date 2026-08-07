@@ -118,7 +118,7 @@ deletar: async (req, res) => {
         await fornecedoresRepository.deletar(id);
 
 
-        res.status(204).json({message: 'Fornecedor deletado com sucesso!gi'});
+        res.status(204).send();
 
 
     } catch (error) {
