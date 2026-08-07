@@ -12,6 +12,15 @@ const vendedoresRepository = {
         return rows[0];
     
     },
+    selecionar: async () => {
+        const [rows] = await connection.execute(`
+            SELECT *
+            FROM vendedores
+            ORDER BY vendedores.Id    
+        `);
+        return rows;
+    },
+    
      criar: async (vendedor) => {
 
     const sql = `

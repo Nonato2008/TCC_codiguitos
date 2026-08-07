@@ -13,6 +13,15 @@ const vendedoresController = {
             return res.status(404).json({ message: "Vendedor não encontrado", errorMessage: error.message });    
         }
     },
+    selecionar: async (res) => {
+        try {
+            const result = await vendedoresRepository.selecionar({result});
+            res.status(200).json
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: 'Erro ao selecionar vendedores', errorMessage: error.message})
+        }
+    },
      criar: async (req, res) => {
         try {
             const { nome, idProprietario } = req.body;
@@ -66,4 +75,4 @@ const vendedoresController = {
     }
 }
 
-export default vendedoresController;
+export default vendedoresController; 

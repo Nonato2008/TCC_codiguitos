@@ -1,4 +1,3 @@
-import { statusPed } from "../enums/statusVenda.js";
 import { Produtos } from "../models/Produtos.js";
 import produtosRepository from "../repositories/produtosRepository.js";
 
@@ -8,9 +7,9 @@ const produtoController = {
             if (!req.file) {
                 return res.status(400).json({ message: 'Imagem não foi enviada' });
             }
-            const {idFornecedor, nome, preco, quantidade, dataVenc} = req.body;
+            const {idFornecedor, nome, preco, quantidade, status, dataVenc} = req.body;
             const imagem = `/uploads/imagens/${req.file.filename}`;
-            const produto = Produtos.criar({ idFornecedor, nome, preco, quantidade, status: statusPed.ESTOQUE, imagem, dataVenc });
+            const produto = Produtos.criar({ idFornecedor, nome, preco, quantidade, status, imagem, dataVenc });
             const result = await produtosRepository.criar(produto);
             res.status(201).json({ result });
 
@@ -28,7 +27,6 @@ const produtoController = {
            const produto = Produtos.alterar({ idFornecedor, nome, preco, quantidade, status, imagem, dataVenc }, id);
             const result = await produtosRepository.editar(produto);
             res.status(200).json({ message: 'Produto alterado com sucesso', result });
-            console.log(result)
 
         } catch (error) {
             console.error(error);
@@ -39,14 +37,14 @@ const produtoController = {
         try {
             const id = req.params.id;
             await produtosRepository.deletar(id);
-            res.status(204).json({message: 'Produto deletado com sucesso!'});
+            res.status(204).send();
 
         } catch (error) {
             console.error(error);
             res.status(500).json({ message: 'Erro ao deletar produto', errorMessage: error.message });
         }
     },
-    selecionar: async (req, res) => {
+    selecionar: async (res) => {
         try {
             const result = await produtosRepository.selecionar();
             res.status(200).json({ result });
