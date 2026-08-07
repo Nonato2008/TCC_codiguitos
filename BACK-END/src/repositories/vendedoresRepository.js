@@ -1,4 +1,4 @@
-import { connection } from "../config/Database";
+import { connection } from "../config/Database.js";
 
 const vendedoresRepository = {
 

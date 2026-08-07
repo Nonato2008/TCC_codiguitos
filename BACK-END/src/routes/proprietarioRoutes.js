@@ -1,5 +1,5 @@
 import { Router } from "express";
-import proprietariosController from "../controllers/proprietariosController";
+import proprietariosController from "../controllers/proprietariosController.js";
 
 const proprietarioRoutes = Router();
 

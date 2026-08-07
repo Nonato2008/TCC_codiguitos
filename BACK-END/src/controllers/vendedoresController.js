@@ -1,4 +1,4 @@
-import { Vendedores } from "../models/Vendedores";
+import { Vendedores } from "../models/Vendedores.js";
 import vendedoresRepository from "../repositories/vendedoresRepository.js";
 
 const vendedoresController = {

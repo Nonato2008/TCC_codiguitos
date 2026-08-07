@@ -1,4 +1,4 @@
-import { Proprietario } from "../models/Proprietario";
+import { Proprietario } from "../models/Proprietario.js";
 import proprietariosRepository from "../repositories/proprietarioRepository.js";
 
 const proprietariosController  = {
