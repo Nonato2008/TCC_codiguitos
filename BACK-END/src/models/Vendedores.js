@@ -35,6 +35,16 @@ export class Vendedores {
         this.#nome = value.trim();
     }
 
+    get idProprietario() {
+        return this.#idProprietario;
+    }
+    set idProprietario(value) {
+        if (value !== null && value !== undefined) {
+            this.#validarIdProprietario(value);
+        }
+        this.#idProprietario = value === null || value === undefined ? null : Number(value);
+    }
+
     get dataCad() {
         return this.#dataCad;
     }
@@ -52,6 +62,11 @@ export class Vendedores {
     #validarNome(value) {
         if (!value || value.trim().length < 3 || value.trim().length > 45) {
             throw new Error("O nome deve possuir entre 3 e 45 caracteres.");
+        }
+    }
+      #validarIdProprietario(value) {
+        if (isNaN(Number(value)) || Number(value) <= 0) {
+            throw new Error("Verifique o ID informado.");
         }
     }
 
