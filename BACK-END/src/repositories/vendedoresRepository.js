@@ -1,4 +1,4 @@
-import { connection } from "../config/Database";
+import { connection } from "../config/Database.js";
 
 const vendedoresRepository = {
 
@@ -10,8 +10,8 @@ const vendedoresRepository = {
         const values = [id]
         const [rows] = await connection.execute(sql, values);
         return rows[0];
-    }, 
     
+    },
     selecionar: async () => {
         const [rows] = await connection.execute(`
             SELECT *
@@ -19,7 +19,50 @@ const vendedoresRepository = {
             ORDER BY vendedores.Id    
         `);
         return rows;
-    }
+    },
+    
+     criar: async (vendedor) => {
+
+    const sql = `
+        INSERT INTO Vendedores
+        (
+            IdProprietario,
+            Nome
+        )
+        VALUES (?, ?)
+    `;
+
+    const values = [
+        vendedor.idProprietario,
+        vendedor.nome,
+    ];
+
+    const [rows] = await connection.execute(sql, values);
+
+    return rows;
+},
+
+
+editar: async (vendedor) => {
+
+    const sql = `
+        UPDATE Vendedores
+            SET
+            idProprietario = ?,
+            Nome = ?
+            WHERE Id = ?
+    `;
+
+    const values = [
+        vendedor.idProprietario,
+        vendedor.nome,
+        vendedor.id
+    ];
+
+    const [rows] = await connection.execute(sql, values);
+
+    return rows;
+},
 }
 
 export default vendedoresRepository;
