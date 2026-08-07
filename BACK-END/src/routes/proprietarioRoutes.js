@@ -1,10 +1,9 @@
 import { Router } from "express";
-import proprietariosController from "../controllers/proprietariosController.js";
+import proprietariosController from "../controllers/proprietariosController";
 
 const proprietarioRoutes = Router();
 
 proprietarioRoutes.get("/:id", proprietariosController.selecionarId);
-proprietarioRoutes.put("/:id", proprietariosController.editar);
-proprietarioRoutes.post("/", proprietariosController.criar);
+proprietarioRoutes.get("/", proprietariosController.selecionar);
 
 export default proprietarioRoutes;

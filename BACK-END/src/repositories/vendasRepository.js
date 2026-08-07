@@ -1,143 +1,51 @@
 import { connection } from "../config/Database.js";
 
-const vendasRepository = {
+const pedidoRepository = {
 
-    criar: async (venda, itens) => {
+    criar: async (pedido, itens) => {
         const conn = await connection.getConnection();
 
         try {
             await conn.beginTransaction();
 
-            let valorTotal = 0;
-
-            if (!Array.isArray(itens) || itens.length === 0) {
-                throw new Error("A venda deve possuir pelo menos um item.");
-            }
+            let subTotal = 0;
 
             for (const item of itens) {
-
-                if (!item.idProduto || !item.qtd || Number(item.qtd) <= 0) {
-                    throw new Error("Produto ou quantidade inválida.");
-                }
-
-                const [produtoRows] = await conn.execute(
-                    `SELECT Id, Preco, Quantidade, Status, DataVenc
-                     FROM Produtos
-                     WHERE Id = ?
-                     FOR UPDATE`,
-                    [item.idProduto]
+                const [produto] = await conn.execute(
+                    "SELECT preco FROM produtos WHERE id = ?",
+                    [item.produtoId]
                 );
 
-                if (produtoRows.length === 0) {
-                    throw new Error(
-                        `Produto ${item.idProduto} não encontrado.`
-                    );
+                if (produto.length === 0) {
+                    throw new Error(`Produto ${item.produtoId} não encontrado`);
                 }
 
-                const produto = produtoRows[0];
-
-                const hoje = new Date();
-                hoje.setHours(0, 0, 0, 0);
-
-                const vencimento = new Date(produto.DataVenc);
-                vencimento.setHours(0, 0, 0, 0);
-
-                if (vencimento < hoje) {
-                    await conn.execute(
-                        `UPDATE Produtos
-                         SET Status = 'Vencido'
-                         WHERE Id = ?`,
-                        [item.idProduto]
-                    );
-
-                    throw new Error(
-                        `O produto ${item.idProduto} está vencido e não pode ser vendido.`
-                    );
-                }
-
-                if (Number(produto.Quantidade) <= 0) {
-                    await conn.execute(
-                        `UPDATE Produtos
-                         SET Status = 'Esgotado'
-                         WHERE Id = ?`,
-                        [item.idProduto]
-                    );
-
-                    throw new Error(
-                        `O produto ${item.idProduto} está esgotado.`
-                    );
-                }
-
-                if (Number(item.qtd) > Number(produto.Quantidade)) {
-                    throw new Error(
-                        `Estoque insuficiente para o produto ${item.idProduto}. Disponível: ${produto.Quantidade}.`
-                    );
-                }
-
-                const preco = Number(produto.Preco);
-
-                item.valor = preco;
-                valorTotal += preco * Number(item.qtd);
+                const valor = produto[0].Valor;
+                subTotal += valor * item.quantidade;
             }
 
-            const [vendaRows] = await conn.execute(
-                `INSERT INTO Vendas
-                    (IdProprietario, IdVendedor, ValorTotal)
-                 VALUES (?, ?, ?)`,
-                [
-                    venda.idProprietario,
-                    venda.idVendedor,
-                    valorTotal
-                ]
+            const [rowsPed] = await conn.execute(
+                "INSERT INTO pedidos(, valorTotal, Status) VALUES (?, ?, ?)",
+                [subTotal, pedido.status]
             );
 
-            const vendaId = vendaRows.insertId;
-
             for (const item of itens) {
+                const [produto] = await conn.execute(
+                    "SELECT preco FROM produtos WHERE id = ?",
+                    [item.produtoId]
+                );
+
+                const valor = produto[0].Valor;
 
                 await conn.execute(
-                    `INSERT INTO Itens_vendas
-                        (IdVenda, IdProduto, Qtd, Valor)
+                    `INSERT INTO itens_pedidos (pedidoId, produtoId, quantidade, valorItem)
                      VALUES (?, ?, ?, ?)`,
-                    [
-                        vendaId,
-                        item.idProduto,
-                        item.qtd,
-                        item.valor
-                    ]
+                    [rowsPed.insertId, item.produtoId, item.quantidade, valor]
                 );
-
-                const [alterarResultado] = await conn.execute(
-                    `UPDATE Produtos
-                     SET Quantidade = Quantidade - ?,
-                         Status = CASE
-                             WHEN Quantidade - ? <= 0
-                                 THEN 'Esgotado'
-                             ELSE 'Em Estoque'
-                         END
-                     WHERE Id = ?
-                       AND Quantidade >= ?`,
-                    [
-                        item.qtd,
-                        item.qtd,
-                        item.idProduto,
-                        item.qtd
-                    ]
-                );
-
-                if (alterarResultado.affectedRows === 0) {
-                    throw new Error(
-                        `Falha ao atualizar estoque do produto ${item.idProduto}.`
-                    );
-                }
             }
 
             await conn.commit();
-
-            return {
-                id: vendaId,
-                valorTotal
-            };
+            return { id: rowsPed.insertId, subTotal };
 
         } catch (error) {
             await conn.rollback();
@@ -147,176 +55,51 @@ const vendasRepository = {
         }
     },
 
-    editar: async (id, venda, itens) => {
+    editar: async (id, pedido, itens) => {
         const conn = await connection.getConnection();
 
         try {
             await conn.beginTransaction();
 
-            if (!Array.isArray(itens) || itens.length === 0) {
-                throw new Error("A venda deve possuir pelo menos um item.");
-            }
-
-            const [itensAntigos] = await conn.execute(
-                `SELECT IdProduto, Qtd
-                 FROM Itens_vendas
-                 WHERE IdVenda = ?
-                 FOR UPDATE`,
-                [id]
-            );
-
-            for (const item of itensAntigos) {
-                await conn.execute(
-                    `UPDATE Produtos
-                     SET Quantidade = Quantidade + ?,
-                         Status = CASE
-                             WHEN DataVenc < CURDATE()
-                                 THEN 'Vencido'
-                             ELSE 'Em Estoque'
-                         END
-                     WHERE Id = ?`,
-                    [
-                        item.Qtd,
-                        item.IdProduto
-                    ]
-                );
-            }
-
-            let valorTotal = 0;
+            let subTotal = 0;
 
             for (const item of itens) {
-
-                if (!item.idProduto || !item.qtd || Number(item.qtd) <= 0) {
-                    throw new Error("Produto ou quantidade inválida.");
-                }
-
-                const [produtoRows] = await conn.execute(
-                    `SELECT Id, Preco, Quantidade, Status, DataVenc
-                     FROM Produtos
-                     WHERE Id = ?
-                     FOR UPDATE`,
-                    [item.idProduto]
+                const [produto] = await conn.execute(
+                    "SELECT preco FROM produtos WHERE id = ?",
+                    [item.produtoId]
                 );
 
-                if (produtoRows.length === 0) {
-                    throw new Error(
-                        `Produto ${item.idProduto} não encontrado.`
-                    );
+                if (produto.length === 0) {
+                    throw new Error(`Produto ${item.produtoId} não encontrado`);
                 }
 
-                const produto = produtoRows[0];
-
-                const hoje = new Date();
-                hoje.setHours(0, 0, 0, 0);
-
-                const vencimento = new Date(produto.DataVenc);
-                vencimento.setHours(0, 0, 0, 0);
-
-                if (vencimento < hoje) {
-                    await conn.execute(
-                        `UPDATE Produtos
-                         SET Status = 'Vencido'
-                         WHERE Id = ?`,
-                        [item.idProduto]
-                    );
-
-                    throw new Error(
-                        `O produto ${item.idProduto} está vencido e não pode ser vendido.`
-                    );
-                }
-
-                if (Number(produto.Quantidade) <= 0) {
-                    await conn.execute(
-                        `UPDATE Produtos
-                         SET Status = 'Esgotado'
-                         WHERE Id = ?`,
-                        [item.idProduto]
-                    );
-
-                    throw new Error(
-                        `O produto ${item.idProduto} está esgotado.`
-                    );
-                }
-
-                if (Number(item.qtd) > Number(produto.Quantidade)) {
-                    throw new Error(
-                        `Estoque insuficiente para o produto ${item.idProduto}. Disponível: ${produto.Quantidade}.`
-                    );
-                }
-
-                const preco = Number(produto.Preco);
-
-                item.valor = preco;
-                valorTotal += preco * Number(item.qtd);
+                const valor = produto[0].Valor;
+                subTotal += valor * item.quantidade;
             }
 
             await conn.execute(
-                `UPDATE Vendas
-                 SET IdProprietario = ?,
-                     IdVendedor = ?,
-                     ValorTotal = ?
-                 WHERE Id = ?`,
-                [
-                    venda.idProprietario,
-                    venda.idVendedor,
-                    valorTotal,
-                    id
-                ]
+                "UPDATE pedidos SET valorTotal = ?, Status = ? WHERE id = ?",
+                [pedido.clienteId, subTotal, pedido.status, id]
             );
 
-            await conn.execute(
-                `DELETE FROM Itens_vendas
-                 WHERE IdVenda = ?`,
-                [id]
-            );
 
             for (const item of itens) {
+                const [produto] = await conn.execute(
+                    "SELECT preco FROM produtos WHERE id = ?",
+                    [item.produtoId]
+                );
+
+                const valor = produto[0].Valor;
 
                 await conn.execute(
-                    `INSERT INTO Itens_vendas
-                        (IdVenda, IdProduto, Qtd, Valor)
+                    `INSERT INTO itens_pedidos (pedidoId, produtoId, quantidade, valorItem)
                      VALUES (?, ?, ?, ?)`,
-                    [
-                        id,
-                        item.idProduto,
-                        item.qtd,
-                        item.valor
-                    ]
+                    [id, item.produtoId, item.quantidade, valor]
                 );
-
-                const [resultado] = await conn.execute(
-                    `UPDATE Produtos
-                     SET Quantidade = Quantidade - ?,
-                         Status = CASE
-                             WHEN Quantidade - ? <= 0
-                                 THEN 'Esgotado'
-                             WHEN DataVenc < CURDATE()
-                                 THEN 'Vencido'
-                             ELSE 'Em Estoque'
-                         END
-                     WHERE Id = ?
-                       AND Quantidade >= ?`,
-                    [
-                        item.qtd,
-                        item.qtd,
-                        item.idProduto,
-                        item.qtd
-                    ]
-                );
-
-                if (resultado.affectedRows === 0) {
-                    throw new Error(
-                        `Falha ao atualizar estoque do produto ${item.idProduto}.`
-                    );
-                }
             }
 
             await conn.commit();
-
-            return {
-                id,
-                valorTotal
-            };
+            return { id, subTotal };
 
         } catch (error) {
             await conn.rollback();
@@ -332,45 +115,17 @@ const vendasRepository = {
         try {
             await conn.beginTransaction();
 
-            const [itens] = await conn.execute(
-                `SELECT IdProduto, Qtd
-                 FROM Itens_vendas
-                 WHERE IdVenda = ?
-                 FOR UPDATE`,
-                [id]
-            );
-
-            for (const item of itens) {
-                await conn.execute(
-                    `UPDATE Produtos
-                     SET Quantidade = Quantidade + ?,
-                         Status = CASE
-                             WHEN DataVenc < CURDATE()
-                                 THEN 'Vencido'
-                             ELSE 'Em Estoque'
-                         END
-                     WHERE Id = ?`,
-                    [
-                        item.Qtd,
-                        item.IdProduto
-                    ]
-                );
-            }
-
             await conn.execute(
-                `DELETE FROM Itens_vendas
-                 WHERE IdVenda = ?`,
+                "DELETE FROM itens_pedidos WHERE pedidoId = ?",
                 [id]
             );
 
             await conn.execute(
-                `DELETE FROM Vendas
-                 WHERE Id = ?`,
+                "DELETE FROM pedidos WHERE id = ?",
                 [id]
             );
 
             await conn.commit();
-
             return { id };
 
         } catch (error) {
@@ -380,84 +135,45 @@ const vendasRepository = {
             conn.release();
         }
     },
-
-    removerItem: async (vendaId, itemId) => {
+    removerItem: async (pedidoId, itemId) => {
         const conn = await connection.getConnection();
 
         try {
             await conn.beginTransaction();
 
-            const [itemRows] = await conn.execute(
-                `SELECT *
-                 FROM Itens_vendas
-                 WHERE Id = ?
-                   AND IdVenda = ?
-                 FOR UPDATE`,
-                [
-                    itemId,
-                    vendaId
-                ]
+            const [item] = await conn.execute(
+                "SELECT * FROM itens_pedidos WHERE id = ? AND pedidoId = ?",
+                [itemId, pedidoId]
             );
 
-            if (itemRows.length === 0) {
-                throw new Error("Item não encontrado na venda.");
+            if (item.length === 0) {
+                throw new Error("Item não encontrado no pedido");
             }
 
-            const item = itemRows[0];
-
             await conn.execute(
-                `UPDATE Produtos
-                 SET Quantidade = Quantidade + ?,
-                     Status = CASE
-                         WHEN DataVenc < CURDATE()
-                             THEN 'Vencido'
-                         ELSE 'Em Estoque'
-                     END
-                 WHERE Id = ?`,
-                [
-                    item.Qtd,
-                    item.IdProduto
-                ]
-            );
-
-            await conn.execute(
-                `DELETE FROM Itens_vendas
-                 WHERE Id = ?`,
+                "DELETE FROM itens_pedidos WHERE id = ?",
                 [itemId]
             );
 
             const [itens] = await conn.execute(
-                `SELECT Qtd, Valor
-                 FROM Itens_vendas
-                 WHERE IdVenda = ?`,
-                [vendaId]
+                "SELECT quantidade, valorItem FROM itens_pedidos WHERE pedidoId = ?",
+                [pedidoId]
             );
 
-            let valorTotal = 0;
+            let subTotal = 0;
 
-            for (const itemVenda of itens) {
-                valorTotal +=
-                    Number(itemVenda.Qtd) *
-                    Number(itemVenda.Valor);
-            }
+            itens.forEach(i => {
+                subTotal += i.Quatidade * i.valorItem;
+            });
 
             await conn.execute(
-                `UPDATE Vendas
-                 SET ValorTotal = ?
-                 WHERE Id = ?`,
-                [
-                    valorTotal,
-                    vendaId
-                ]
+                "UPDATE pedidos SET valorTotal = ? WHERE id = ?",
+                [subTotal, pedidoId]
             );
 
             await conn.commit();
 
-            return {
-                vendaId,
-                itemId,
-                valorTotal
-            };
+            return { pedidoId, itemId, subTotal };
 
         } catch (error) {
             await conn.rollback();
@@ -468,158 +184,61 @@ const vendasRepository = {
     },
 
     selecionar: async () => {
-
         const [rows] = await connection.execute(`
-            SELECT
-                v.*,
-                i.Id AS itemId,
-                i.IdProduto,
-                i.Qtd,
-                i.Valor
-            FROM Vendas v
-            LEFT JOIN Itens_vendas i
-                ON i.IdVenda = v.Id
-            ORDER BY v.Id DESC, i.Id ASC
+            SELECT *
+            FROM vendas
+            ORDER BY vendas.Id
         `);
 
         return rows;
     },
-
     selecionarId: async (id) => {
+        const sql =`
+            SELECT *
+            FROM pedidos 
+            WHERE id = ?
+            `;
 
-        const [rows] = await connection.execute(
-            `SELECT *
-             FROM Vendas
-             WHERE Id = ?`,
-            [id]
-        );
+        const values = [id];
 
-        return rows[0] ?? null;
+        const [rows] = await connection.execute(sql, values);
+        
+        return rows;
     },
 
-    adicionarItem: async (vendaId, item) => {
+    adicionarItem: async (pedidoId, item) => {
         const conn = await connection.getConnection();
 
         try {
             await conn.beginTransaction();
 
-            const produtoId = item.produtoId ?? item.idProduto;
-            const quantidade = Number(
-                item.quantidade ?? item.qtd
+            const [produto] = await conn.execute(
+                "SELECT preco FROM produtos WHERE id = ?",
+                [item.produtoId]
             );
 
-            if (!produtoId || !quantidade || quantidade <= 0) {
-                throw new Error("Produto ou quantidade inválida.");
+            if (produto.length === 0) {
+                throw new Error("Produto não encontrado");
             }
 
-            const [produtoRows] = await conn.execute(
-                `SELECT Id, Preco, Quantidade, Status, DataVenc
-                 FROM Produtos
-                 WHERE Id = ?
-                 FOR UPDATE`,
-                [produtoId]
-            );
-
-            if (produtoRows.length === 0) {
-                throw new Error("Produto não encontrado.");
-            }
-
-            const produto = produtoRows[0];
-
-            const hoje = new Date();
-            hoje.setHours(0, 0, 0, 0);
-
-            const vencimento = new Date(produto.DataVenc);
-            vencimento.setHours(0, 0, 0, 0);
-
-            if (vencimento < hoje) {
-
-                await conn.execute(
-                    `UPDATE Produtos
-                     SET Status = 'Vencido'
-                     WHERE Id = ?`,
-                    [produtoId]
-                );
-
-                throw new Error(
-                    "Produto vencido e não pode ser vendido."
-                );
-            }
-
-            if (Number(produto.Quantidade) <= 0) {
-
-                await conn.execute(
-                    `UPDATE Produtos
-                     SET Status = 'Esgotado'
-                     WHERE Id = ?`,
-                    [produtoId]
-                );
-
-                throw new Error(
-                    "Produto esgotado e não pode ser vendido."
-                );
-            }
-
-            if (quantidade > Number(produto.Quantidade)) {
-                throw new Error(
-                    `Estoque insuficiente. Disponível: ${produto.Quantidade}.`
-                );
-            }
-
-            const valor = Number(produto.Preco);
-
-            const [result] = await conn.execute(
-                `INSERT INTO Itens_vendas
-                    (IdVenda, IdProduto, Qtd, Valor)
-                 VALUES (?, ?, ?, ?)`,
-                [
-                    vendaId,
-                    produtoId,
-                    quantidade,
-                    valor
-                ]
-            );
-
-            const [alterarResultado] = await conn.execute(
-                `UPDATE Produtos
-                 SET Quantidade = Quantidade - ?,
-                     Status = CASE
-                         WHEN Quantidade - ? <= 0
-                             THEN 'Esgotado'
-                         ELSE 'Em Estoque'
-                     END
-                 WHERE Id = ?
-                   AND Quantidade >= ?`,
-                [
-                    quantidade,
-                    quantidade,
-                    produtoId,
-                    quantidade
-                ]
-            );
-
-            if (alterarResultado.affectedRows === 0) {
-                throw new Error(
-                    "Falha ao atualizar estoque do produto."
-                );
-            }
+            const valor = produto[0].Valor;
 
             await conn.execute(
-                `UPDATE Vendas
-                 SET ValorTotal = ValorTotal + ?
-                 WHERE Id = ?`,
-                [
-                    valor * quantidade,
-                    vendaId
-                ]
+                `INSERT INTO itens_pedidos (pedidoId, produtoId, quantidade, valorItem)
+             VALUES (?, ?, ?, ?)`,
+                [pedidoId, item.produtoId, item.quantidade, valor]
+            );
+
+            await conn.execute(
+                `UPDATE pedidos 
+             SET valorTotal = valorTotal + ? 
+             WHERE id = ?`,
+                [valor * item.quantidade, pedidoId]
             );
 
             await conn.commit();
 
-            return {
-                vendaId,
-                itemId: result.insertId
-            };
+            return { pedidoId };
 
         } catch (error) {
             await conn.rollback();
@@ -629,157 +248,62 @@ const vendasRepository = {
         }
     },
 
-    editarItem: async (vendaId, itemId, quantidade) => {
+    editarItem: async (pedidoId, itemId, quantidade) => {
         const conn = await connection.getConnection();
 
         try {
             await conn.beginTransaction();
 
-            quantidade = Number(quantidade);
-
-            if (!Number.isInteger(quantidade) || quantidade <= 0) {
-                throw new Error("Quantidade inválida.");
+            if (quantidade === undefined || quantidade <= 0) {
+                throw new Error("Quantidade inválida");
             }
 
-            const [itemRows] = await conn.execute(
-                `SELECT *
-                 FROM Itens_vendas
-                 WHERE Id = ?
-                   AND IdVenda = ?
-                 FOR UPDATE`,
-                [
-                    itemId,
-                    vendaId
-                ]
+            const [item] = await conn.execute(
+                "SELECT * FROM itens_pedidos WHERE id = ? AND pedidoId = ?",
+                [itemId, pedidoId]
             );
 
-            if (itemRows.length === 0) {
-                throw new Error(
-                    "Item não encontrado na venda."
-                );
+            if (item.length === 0) {
+                throw new Error("Item não encontrado no pedido");
             }
 
-            const itemAtual = itemRows[0];
-
-            const [produtoRows] = await conn.execute(
-                `SELECT Id, Preco, Quantidade, Status, DataVenc
-                 FROM Produtos
-                 WHERE Id = ?
-                 FOR UPDATE`,
-                [itemAtual.IdProduto]
+            const [produto] = await conn.execute(
+                "SELECT preco FROM produtos WHERE idProduto = ?",
+                [item[0].ProdutoId]
             );
 
-            if (produtoRows.length === 0) {
-                throw new Error("Produto não encontrado.");
+            if (!produto || produto.length === 0) {
+                throw new Error("Produto não encontrado");
             }
 
-            const produto = produtoRows[0];
+            const valor = produto[0].Valor;
 
             await conn.execute(
-                `UPDATE Produtos
-                 SET Quantidade = Quantidade + ?
-                 WHERE Id = ?`,
-                [
-                    itemAtual.Qtd,
-                    itemAtual.IdProduto
-                ]
-            );
-
-            const hoje = new Date();
-            hoje.setHours(0, 0, 0, 0);
-
-            const vencimento = new Date(produto.DataVenc);
-            vencimento.setHours(0, 0, 0, 0);
-
-            if (vencimento < hoje) {
-
-                await conn.execute(
-                    `UPDATE Produtos
-                     SET Status = 'Vencido'
-                     WHERE Id = ?`,
-                    [itemAtual.IdProduto]
-                );
-
-                throw new Error(
-                    "Produto vencido e não pode ser vendido."
-                );
-            }
-
-            const [estoqueRows] = await conn.execute(
-                `SELECT Quantidade
-                 FROM Produtos
-                 WHERE Id = ?
-                 FOR UPDATE`,
-                [itemAtual.IdProduto]
-            );
-
-            const estoqueDisponivel =
-                Number(estoqueRows[0].Quantidade);
-
-            if (quantidade > estoqueDisponivel) {
-                throw new Error(
-                    `Estoque insuficiente. Disponível: ${estoqueDisponivel}.`
-                );
-            }
-
-            await conn.execute(
-                `UPDATE Itens_vendas
-                 SET Qtd = ?
-                 WHERE Id = ?`,
-                [
-                    quantidade,
-                    itemId
-                ]
-            );
-
-            await conn.execute(
-                `UPDATE Produtos
-                 SET Quantidade = Quantidade - ?,
-                     Status = CASE
-                         WHEN Quantidade - ? <= 0
-                             THEN 'Esgotado'
-                         ELSE 'Em Estoque'
-                     END
-                 WHERE Id = ?`,
-                [
-                    quantidade,
-                    quantidade,
-                    itemAtual.IdProduto
-                ]
+                `UPDATE itens_pedidos 
+             SET quantidade = ?, valorItem = ? 
+             WHERE id = ?`,
+                [quantidade, valor, itemId]
             );
 
             const [itens] = await conn.execute(
-                `SELECT Qtd, Valor
-                 FROM Itens_vendas
-                 WHERE IdVenda = ?`,
-                [vendaId]
+                "SELECT quantidade, valorItem FROM itens_pedidos WHERE pedidoId = ?",
+                [pedidoId]
             );
 
-            let valorTotal = 0;
+            let subTotal = 0;
 
-            for (const item of itens) {
-                valorTotal +=
-                    Number(item.Qtd) *
-                    Number(item.Valor);
-            }
+            itens.forEach(i => {
+                subTotal += i.Quatidade * i.valorItem;
+            });
 
             await conn.execute(
-                `UPDATE Vendas
-                 SET ValorTotal = ?
-                 WHERE Id = ?`,
-                [
-                    valorTotal,
-                    vendaId
-                ]
+                "UPDATE pedidos SET valorTotal = ? WHERE id = ?",
+                [subTotal, pedidoId]
             );
 
             await conn.commit();
 
-            return {
-                vendaId,
-                itemId,
-                valorTotal
-            };
+            return { pedidoId, itemId, subTotal };
 
         } catch (error) {
             await conn.rollback();
@@ -796,36 +320,26 @@ const vendasRepository = {
             await conn.beginTransaction();
 
             if (!status) {
-                throw new Error("Status inválido.");
+                throw new Error("Status inválido");
             }
 
-            const [vendaRows] = await conn.execute(
-                `SELECT *
-                 FROM Vendas
-                 WHERE Id = ?`,
+            const [pedido] = await conn.execute(
+                "SELECT * FROM pedidos WHERE id = ?",
                 [id]
             );
 
-            if (vendaRows.length === 0) {
-                throw new Error("Venda não encontrada.");
+            if (pedido.length === 0) {
+                throw new Error("Pedido não encontrado");
             }
 
             await conn.execute(
-                `UPDATE Vendas
-                 SET Status = ?
-                 WHERE Id = ?`,
-                [
-                    status,
-                    id
-                ]
+                "UPDATE pedidos SET Status = ? WHERE id = ?",
+                [status, id]
             );
 
             await conn.commit();
 
-            return {
-                id,
-                status
-            };
+            return { id, status };
 
         } catch (error) {
             await conn.rollback();
@@ -834,6 +348,6 @@ const vendasRepository = {
             conn.release();
         }
     }
-};
+}
 
-export default vendasRepository;
+export default pedidoRepository;
