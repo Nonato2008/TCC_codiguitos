@@ -10,7 +10,7 @@ const produtoController = {
             }
             const {idFornecedor, nome, preco, quantidade, dataVenc} = req.body;
             const imagem = `/uploads/imagens/${req.file.filename}`;
-            const produto = Produtos.criar({ idFornecedor, nome, preco, quantidade, status:statusPed.ESTOQUE, imagem, dataVenc });
+            const produto = Produtos.criar({ idFornecedor, nome, preco, quantidade, status: statusPed.ESTOQUE, imagem, dataVenc });
             const result = await produtosRepository.criar(produto);
             res.status(201).json({ result });
 
@@ -28,6 +28,7 @@ const produtoController = {
            const produto = Produtos.alterar({ idFornecedor, nome, preco, quantidade, status, imagem, dataVenc }, id);
             const result = await produtosRepository.editar(produto);
             res.status(200).json({ message: 'Produto alterado com sucesso', result });
+            console.log(result)
 
         } catch (error) {
             console.error(error);
@@ -38,14 +39,14 @@ const produtoController = {
         try {
             const id = req.params.id;
             await produtosRepository.deletar(id);
-            res.status(204).send();
+            res.status(204).json({message: 'Produto deletado com sucesso!'});
 
         } catch (error) {
             console.error(error);
             res.status(500).json({ message: 'Erro ao deletar produto', errorMessage: error.message });
         }
     },
-    selecionar: async (res) => {
+    selecionar: async (req, res) => {
         try {
             const result = await produtosRepository.selecionar();
             res.status(200).json({ result });

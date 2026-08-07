@@ -72,7 +72,7 @@ export class Proprietario {
             dados.id,
             dados.nome,
             dados.senha,
-            dados.dataCad
+            null
         );
     }
 
@@ -81,7 +81,7 @@ export class Proprietario {
             id,
             dados.nome,
             dados.senha,
-            dados.dataCad
+            null
         );
     }
 }
