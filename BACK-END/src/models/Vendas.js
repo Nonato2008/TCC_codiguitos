@@ -63,9 +63,9 @@ export class Vendas{
     //design patterns
 
     static criar(dados){
-        return new Pedido(dados.clienteId, dados.subTotal, dados.status, null);
+        return new Vendas(dados.clienteId, dados.subTotal, dados.status, null);
     }
     static alterar(dados, id){
-        return new Pedido(dados.clienteId, dados.subTotal, dados.status, id);
+        return new Vendas(dados.clienteId, dados.subTotal, dados.status, id);
     }
 }

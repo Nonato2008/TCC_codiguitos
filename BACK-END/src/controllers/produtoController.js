@@ -1,3 +1,4 @@
+import { statusPed } from "../enums/statusVenda.js";
 import { Produtos } from "../models/Produtos.js";
 import produtosRepository from "../repositories/produtosRepository.js";
 
@@ -9,7 +10,7 @@ const produtoController = {
             }
             const {idFornecedor, nome, preco, quantidade, status, dataVenc} = req.body;
             const imagem = `/uploads/imagens/${req.file.filename}`;
-            const produto = Produtos.criar({ idFornecedor, nome, preco, quantidade, status, imagem, dataVenc });
+            const produto = Produtos.criar({ idFornecedor, nome, preco, quantidade, status:statusPed.ESTOQUE, imagem, dataVenc });
             const result = await produtosRepository.criar(produto);
             res.status(201).json({ result });
 
@@ -44,7 +45,7 @@ const produtoController = {
             res.status(500).json({ message: 'Erro ao deletar produto', errorMessage: error.message });
         }
     },
-    selecionar: async (res) => {
+    selecionar: async (req, res) => {
         try {
             const result = await produtosRepository.selecionar();
             res.status(200).json({ result });

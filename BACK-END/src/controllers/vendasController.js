@@ -1,47 +1,65 @@
 import { statusPed } from "../enums/statusVenda.js";
-// import { ItensPedido } from "../models/ItensVendas.js";
+import { ItensVendas } from "../models/ItensVendas.js";
 import { Vendas } from "../models/Vendas.js";
-// import { Vendas } from "../models/ItensVendas.js";
-import pedidoRepository from "../repositories/vendasRepository.js";
+import vendasRepository from "../repositories/vendasRepository.js";
 
-const pedidoController = {
+const vendaController = {
 
 
     criar: async (req, res) => {
         try {
-            const { clienteId, itens } = req.body;
+            const { idProprietario, idVendedor, itens } = req.body;
 
-            if (!clienteId || Number(clienteId) <= 0) {
-                return res.status(400).json({ message: "clienteId inválido" });
+            // Valida o id do proprietário
+            if (!idProprietario || Number(idProprietario) <= 0) {
+                return res.status(400).json({
+                    message: "Id do proprietário inválido."
+                });
             }
 
+            // Valida o id do vendedor
+            if (!idVendedor || Number(idVendedor) <= 0) {
+                return res.status(400).json({
+                    message: "Id do vendedor inválido."
+                });
+            }
+
+            // Valida se foram enviados itens
             if (!Array.isArray(itens) || itens.length === 0) {
-                return res.status(400).json({ message: "Informe os itens do pedido" });
+                return res.status(400).json({
+                    message: "Informe os itens da venda."
+                });
             }
 
-            const itensPedido = itens.map(item =>
-                ItensPedido.criar({
-                    produtoId: item.produtoId,
-                    quantidade: item.quantidade
-                })
-            );
+            // Normaliza os nomes dos campos dos itens
+            const itensVenda = itens.map(item => ({
+                idProduto: item.idProduto ?? item.produtoId,
+                qtd: item.qtd ?? item.quantidade
+            }));
 
-            const subTotal = ItensPedido.calcularSubTotalItens(itensPedido);
+            // Valida cada item
+            for (const item of itensVenda) {
+                if (!item.idProduto || Number(item.idProduto) <= 0) {
+                    return res.status(400).json({ message: "Id do produto inválido." });
+                }
+                if (!item.qtd || Number(item.qtd) <= 0) {
+                    return res.status(400).json({ message: "Quantidade inválida." });
+                }
+            }
 
-            const pedido = Pedido.criar({
-                clienteId,
-                subTotal,
-                status: statusPed.ABERTO
-            });
+            const venda = {
+                idProprietario: Number(idProprietario),
+                idVendedor: Number(idVendedor)
+            };
 
-            const result = await pedidoRepository.criar(pedido, itensPedido);
+            const resultado = await vendasRepository.criar(venda, itensVenda);
 
-            return res.status(201).json(result);
+            return res.status(201).json(resultado);
 
         } catch (error) {
             return res.status(500).json({
-                message: "Erro ao criar pedido",
-                errorMessage: error.message
+                message: "Erro ao criar venda.",
+                error: error.message
             });
         }
     },
@@ -67,24 +85,24 @@ const pedidoController = {
                 return res.status(400).json({ message: "Informe os itens" });
             }
 
-            const itensPedido = itens.map(item =>
-                ItensPedido.alterar({
+            const itensVenda = itens.map(item =>
+                ItensVendas.alterar({
                     produtoId: item.produtoId,
                     quantidade: item.quantidade
                 })
             );
 
-            const subTotal = ItensPedido.calcularSubTotalItens(itensPedido);
+            const subTotal = ItensVendas.calcularSubTotalItens(itensVenda);
 
-            const pedido = Pedido.alterar(
+            const venda = Vendas.alterar(
                 { clienteId, subTotal, status },
                 id
             );
 
-            const result = await pedidoRepository.editar(id, pedido, itensPedido);
+            const result = await vendasRepository.editar(id, venda, itensVenda);
 
             return res.status(200).json({
-                message: "Pedido atualizado",
+                message: "Venda atualizada",
                 data: result
             });
 
@@ -104,10 +122,10 @@ const pedidoController = {
                 return res.status(400).json({ message: "ID inválido" });
             }
 
-            const result = await pedidoRepository.deletar(Number(id));
+            const result = await vendasRepository.deletar(Number(id));
 
             return res.status(200).json({
-                message: "Pedido deletado",
+                message: "Venda deletada",
                 data: result
             });
 
@@ -121,11 +139,11 @@ const pedidoController = {
 
     selecionar: async (req, res) => {
         try {
-            const result = await pedidoRepository.selecionar();
+            const result = await vendasRepository.selecionar();
             return res.status(200).json(result);
         } catch (error) {
             return res.status(500).json({
-                message: "Erro ao buscar pedidos",
+                message: "Erro ao buscar vendas",
                 errorMessage: error.message
             });
         }
@@ -133,9 +151,9 @@ const pedidoController = {
 
     selecionarId: async (req, res) => {
         try {
-            const  id  = req.params; 
+            const  id  = req.params.id; 
 
-            const result = await pedidoRepository.selecionarId(Number(id));
+            const result = await vendasRepository.selecionarId(id);
             return res.status(200).json(result);
 
         }catch (error) {
@@ -152,16 +170,16 @@ const pedidoController = {
                 const { produtoId, quantidade } = req.body;
 
                 if (!id || Number(id) <= 0) {
-                    return res.status(400).json({ message: "Pedido inválido" });
+                    return res.status(400).json({ message: "Venda inválida" });
                 }
 
                 if (!produtoId || !quantidade || quantidade <= 0) {
                     return res.status(400).json({ message: "Dados do item inválidos" });
                 }
 
-                const item = ItensPedido.criar({ produtoId, quantidade });
+                const item = ItensVendas.criar({ produtoId, quantidade });
 
-                const result = await pedidoRepository.adicionarItem(id, item);
+                const result = await vendasRepository.adicionarItem(id, item);
 
                 return res.status(200).json({
                     message: "Item adicionado",
@@ -185,7 +203,7 @@ const pedidoController = {
                         return res.status(400).json({ message: "Quantidade inválida" });
                     }
 
-                    const result = await pedidoRepository.editarItem(
+                    const result = await vendasRepository.editarItem(
                         Number(id),
                         Number(itemId),
                         quantidade
@@ -209,14 +227,14 @@ const pedidoController = {
                         const { id, itemId } = req.params;
 
                         if (!id || Number(id) <= 0) {
-                            return res.status(400).json({ message: "Pedido inválido" });
+                            return res.status(400).json({ message: "Venda inválida" });
                         }
 
                         if (!itemId || Number(itemId) <= 0) {
                             return res.status(400).json({ message: "Item inválido" });
                         }
 
-                        const result = await pedidoRepository.removerItem(
+                        const result = await vendasRepository.removerItem(
                             Number(id),
                             Number(itemId)
                         );
@@ -247,7 +265,7 @@ const pedidoController = {
                                 return res.status(400).json({ message: "Status inválido" });
                             }
 
-                            const result = await pedidoRepository.editarStatus(
+                            const result = await vendasRepository.editarStatus(
                                 Number(id),
                                 status
                             );
@@ -266,4 +284,4 @@ const pedidoController = {
                     }
     };
 
-    export default pedidoController;
+    export default vendaController;
