@@ -1,7 +1,7 @@
 import { connection } from "../config/Database.js";
 
-const itensVendasRepository = { 
-   
+const itensVendasRepository = {
+
     selecionarId: async (id) => {
 
         const sql = `
@@ -16,7 +16,7 @@ const itensVendasRepository = {
 
         return rows[0];
 
-}
+    }
 }
 
 export default itensVendasRepository;

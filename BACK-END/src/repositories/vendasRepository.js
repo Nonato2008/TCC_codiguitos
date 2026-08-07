@@ -185,15 +185,9 @@ const pedidoRepository = {
 
     selecionar: async () => {
         const [rows] = await connection.execute(`
-            SELECT 
-                p.*,
-                i.id as itemId,
-                i.produtoId,
-                i.quantidade,
-                i.valorItem
-            FROM pedidos p
-            LEFT JOIN itens_pedidos i ON i.pedidoId = p.id
-            ORDER BY p.id DESC, i.id ASC
+            SELECT *
+            FROM vendas
+            ORDER BY vendas.Id
         `);
 
         return rows;
