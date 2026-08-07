@@ -7,7 +7,7 @@ const vendasRepository = {
 
         try {
             await conn.beginTransaction();
-
+  
             let valorTotal = 0;
 
             for (const item of itens) {
