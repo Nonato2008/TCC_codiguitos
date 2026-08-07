@@ -2,6 +2,7 @@ import { connection } from "../config/Database.js";
 
 const vendasRepository = {
 
+    // Cria uma nova venda com seus itens e baixa o estoque
     criar: async (venda, itens) => {
         const conn = await connection.getConnection();
 
@@ -10,10 +11,10 @@ const vendasRepository = {
 
             let valorTotal = 0;
 
-            // Verifica estoque e calcula subtotal
+            // Verifica se o produto existe e se tem estoque suficiente
             for (const item of itens) {
                 const [produtoRows] = await conn.execute(
-                    "SELECT Preco FROM Produtos WHERE Id = ?",
+                    "SELECT Preco, Quantidade FROM Produtos WHERE Id = ?",
                     [item.idProduto]
                 );
 
@@ -21,11 +22,20 @@ const vendasRepository = {
                     throw new Error(`Produto ${item.idProduto} não encontrado.`);
                 }
 
-                const preco = produtoRows[0].Preco;
+                const produto = produtoRows[0];
+
+                // Impede a venda se não houver estoque
+                if (produto.Quantidade < item.qtd) {
+                    throw new Error(`Estoque insuficiente para o produto ${item.idProduto}.`);
+                }
+
+                // Guarda o preço e soma no total da venda
+                const preco = produto.Preco;
                 item.valor = preco;
                 valorTotal += preco * item.qtd;
             }
 
+            // Insere a venda na tabela Vendas
             const [vendaRows] = await conn.execute(
                 `INSERT INTO Vendas (IdProprietario, IdVendedor, ValorTotal)
                  VALUES (?, ?, ?)`,
@@ -34,6 +44,7 @@ const vendasRepository = {
 
             const vendaId = vendaRows.insertId;
 
+            // Insere cada item e baixa o estoque
             for (const item of itens) {
                 await conn.execute(
                     `INSERT INTO Itens_vendas (IdVenda, IdProduto, Qtd, Valor)
@@ -41,13 +52,14 @@ const vendasRepository = {
                     [vendaId, item.idProduto, item.qtd, item.valor]
                 );
 
+                // Baixa a quantidade do produto no estoque
                 const [alterarResultado] = await conn.execute(
                     "UPDATE Produtos SET Quantidade = Quantidade - ? WHERE Id = ? AND Quantidade >= ?",
-                    [item.quantidade, item.produtoId, item.quantidade]
+                    [item.qtd, item.idProduto, item.qtd]
                 );
 
                 if (!alterarResultado || alterarResultado.affectedRows === 0) {
-                    throw new Error(`Falha ao atualizar estoque do produto ${item.produtoId}`);
+                    throw new Error(`Falha ao atualizar estoque do produto ${item.idProduto}`);
                 }
             }
 
@@ -66,17 +78,32 @@ const vendasRepository = {
         }
     },
 
+    // Edita uma venda existente (troca itens e ajusta estoque)
     editar: async (id, venda, itens) => {
         const conn = await connection.getConnection();
 
         try {
             await conn.beginTransaction();
 
+            // Devolve o estoque dos itens que serão removidos
+            const [itensAntigos] = await conn.execute(
+                "SELECT IdProduto, Qtd FROM Itens_vendas WHERE IdVenda = ?",
+                [id]
+            );
+
+            for (const itemAntigo of itensAntigos) {
+                await conn.execute(
+                    "UPDATE Produtos SET Quantidade = Quantidade + ? WHERE Id = ?",
+                    [itemAntigo.Qtd, itemAntigo.IdProduto]
+                );
+            }
+
+            // Calcula o novo valor total e valida estoque dos novos itens
             let valorTotal = 0;
 
             for (const item of itens) {
                 const [produtoRows] = await conn.execute(
-                    "SELECT Preco FROM Produtos WHERE Id = ?",
+                    "SELECT Preco, Quantidade FROM Produtos WHERE Id = ?",
                     [item.idProduto]
                 );
 
@@ -84,11 +111,18 @@ const vendasRepository = {
                     throw new Error(`Produto ${item.idProduto} não encontrado.`);
                 }
 
-                const preco = produtoRows[0].Preco;
+                const produto = produtoRows[0];
+
+                if (produto.Quantidade < item.qtd) {
+                    throw new Error(`Estoque insuficiente para o produto ${item.idProduto}.`);
+                }
+
+                const preco = produto.Preco;
                 item.valor = preco;
                 valorTotal += preco * item.qtd;
             }
 
+            // Atualiza os dados da venda
             await conn.execute(
                 `UPDATE Vendas
                  SET IdProprietario = ?,
@@ -98,17 +132,28 @@ const vendasRepository = {
                 [venda.idProprietario, venda.idVendedor, valorTotal, id]
             );
 
+            // Remove os itens antigos
             await conn.execute(
                 "DELETE FROM Itens_vendas WHERE IdVenda = ?",
                 [id]
             );
 
+            // Insere os novos itens e baixa o estoque
             for (const item of itens) {
                 await conn.execute(
                     `INSERT INTO Itens_vendas (IdVenda, IdProduto, Qtd, Valor)
                      VALUES (?, ?, ?, ?)`,
                     [id, item.idProduto, item.qtd, item.valor]
                 );
+
+                const [alterarResultado] = await conn.execute(
+                    "UPDATE Produtos SET Quantidade = Quantidade - ? WHERE Id = ? AND Quantidade >= ?",
+                    [item.qtd, item.idProduto, item.qtd]
+                );
+
+                if (!alterarResultado || alterarResultado.affectedRows === 0) {
+                    throw new Error(`Falha ao atualizar estoque do produto ${item.idProduto}`);
+                }
             }
 
             await conn.commit();
@@ -126,12 +171,27 @@ const vendasRepository = {
         }
     },
 
+    // Deleta a venda e devolve o estoque dos itens
     deletar: async (id) => {
         const conn = await connection.getConnection();
 
         try {
             await conn.beginTransaction();
 
+            // Devolve o estoque de todos os itens da venda
+            const [itens] = await conn.execute(
+                "SELECT IdProduto, Qtd FROM Itens_vendas WHERE IdVenda = ?",
+                [id]
+            );
+
+            for (const item of itens) {
+                await conn.execute(
+                    "UPDATE Produtos SET Quantidade = Quantidade + ? WHERE Id = ?",
+                    [item.Qtd, item.IdProduto]
+                );
+            }
+
+            // Remove os itens e depois a venda
             await conn.execute(
                 "DELETE FROM Itens_vendas WHERE IdVenda = ?",
                 [id]
@@ -154,12 +214,14 @@ const vendasRepository = {
         }
     },
 
+    // Remove um item específico da venda e devolve o estoque
     removerItem: async (vendaId, itemId) => {
         const conn = await connection.getConnection();
 
         try {
             await conn.beginTransaction();
 
+            // Busca o item para saber a quantidade e o produto
             const [itemRows] = await conn.execute(
                 "SELECT * FROM Itens_vendas WHERE Id = ? AND IdVenda = ?",
                 [itemId, vendaId]
@@ -169,11 +231,21 @@ const vendasRepository = {
                 throw new Error("Item não encontrado na venda");
             }
 
+            const item = itemRows[0];
+
+            // Devolve a quantidade ao estoque
+            await conn.execute(
+                "UPDATE Produtos SET Quantidade = Quantidade + ? WHERE Id = ?",
+                [item.Qtd, item.IdProduto]
+            );
+
+            // Remove o item
             await conn.execute(
                 "DELETE FROM Itens_vendas WHERE Id = ?",
                 [itemId]
             );
 
+            // Recalcula o valor total da venda
             const [itens] = await conn.execute(
                 "SELECT Qtd, Valor FROM Itens_vendas WHERE IdVenda = ?",
                 [vendaId]
@@ -201,6 +273,7 @@ const vendasRepository = {
         }
     },
 
+    // Lista todas as vendas com seus itens
     selecionar: async () => {
         const [rows] = await connection.execute(`
             SELECT 
@@ -217,6 +290,7 @@ const vendasRepository = {
         return rows;
     },
 
+    // Busca uma venda pelo ID
     selecionarId: async (id) => {
         const sql = `
             SELECT *
@@ -230,38 +304,49 @@ const vendasRepository = {
         return rows[0] ?? null;
     },
 
+    // Adiciona um novo item em uma venda já existente
     adicionarItem: async (vendaId, item) => {
         const conn = await connection.getConnection();
         try {
             await conn.beginTransaction();
 
+            // Busca o produto e valida estoque
             const [produtoRows] = await conn.execute(
-                "SELECT Preco FROM Produtos WHERE Id = ?",
-                [item.produtoId]
+                "SELECT Preco, Quantidade FROM Produtos WHERE Id = ?",
+                [item.idProduto]
             );
 
             if (!produtoRows || produtoRows.length === 0) {
                 throw new Error("Produto não encontrado");
             }
 
-            const valor = produtoRows[0].Preco;
+            const produto = produtoRows[0];
 
+            if (produto.Quantidade < item.qtd) {
+                throw new Error("Estoque insuficiente");
+            }
+
+            const valor = produto.Preco;
+
+            // Insere o item
             const [result] = await conn.execute(
                 `INSERT INTO Itens_vendas (IdVenda, IdProduto, Qtd, Valor)
                  VALUES (?, ?, ?, ?)`,
-                [vendaId, item.produtoId, item.quantidade, valor]
+                [vendaId, item.idProduto, item.qtd, valor]
             );
 
+            // Atualiza o valor total da venda
             await conn.execute(
                 `UPDATE Vendas 
                  SET ValorTotal = ValorTotal + ? 
                  WHERE Id = ?`,
-                [valor * item.quantidade, vendaId]
+                [valor * item.qtd, vendaId]
             );
 
+            // Baixa o estoque
             const [alterarResultado] = await conn.execute(
                 "UPDATE Produtos SET Quantidade = Quantidade - ? WHERE Id = ? AND Quantidade >= ?",
-                [item.quantidade, item.produtoId, item.quantidade]
+                [item.qtd, item.idProduto, item.qtd]
             );
 
             if (!alterarResultado || alterarResultado.affectedRows === 0) {
@@ -280,6 +365,7 @@ const vendasRepository = {
         }
     },
 
+    // Altera a quantidade de um item e ajusta o estoque
     editarItem: async (vendaId, itemId, quantidade) => {
         const conn = await connection.getConnection();
 
@@ -290,6 +376,7 @@ const vendasRepository = {
                 throw new Error("Quantidade inválida");
             }
 
+            // Busca o item atual
             const [itemRows] = await conn.execute(
                 "SELECT * FROM Itens_vendas WHERE Id = ? AND IdVenda = ?",
                 [itemId, vendaId]
@@ -299,7 +386,39 @@ const vendasRepository = {
                 throw new Error("Item não encontrado na venda");
             }
 
-            const valor = itemRows[0].Valor;
+            const itemAtual = itemRows[0];
+            const diferenca = quantidade - itemAtual.Qtd;
+
+            // Ajusta o estoque de acordo com a diferença
+            if (diferenca > 0) {
+                // Quantidade aumentou → precisa ter estoque
+                const [produtoRows] = await conn.execute(
+                    "SELECT Quantidade FROM Produtos WHERE Id = ?",
+                    [itemAtual.IdProduto]
+                );
+
+                if (!produtoRows || produtoRows.length === 0) {
+                    throw new Error("Produto não encontrado");
+                }
+
+                if (produtoRows[0].Quantidade < diferenca) {
+                    throw new Error("Estoque insuficiente");
+                }
+
+                await conn.execute(
+                    "UPDATE Produtos SET Quantidade = Quantidade - ? WHERE Id = ? AND Quantidade >= ?",
+                    [diferenca, itemAtual.IdProduto, diferenca]
+                );
+            } else if (diferenca < 0) {
+                // Quantidade diminuiu → devolve ao estoque
+                await conn.execute(
+                    "UPDATE Produtos SET Quantidade = Quantidade + ? WHERE Id = ?",
+                    [Math.abs(diferenca), itemAtual.IdProduto]
+                );
+            }
+
+            // Atualiza a quantidade do item
+            const valor = itemAtual.Valor;
 
             await conn.execute(
                 `UPDATE Itens_vendas 
@@ -308,6 +427,7 @@ const vendasRepository = {
                 [quantidade, valor, itemId]
             );
 
+            // Recalcula o valor total da venda
             const [itens] = await conn.execute(
                 "SELECT Qtd, Valor FROM Itens_vendas WHERE IdVenda = ?",
                 [vendaId]
@@ -335,6 +455,7 @@ const vendasRepository = {
         }
     },
 
+    // Altera apenas o status da venda
     editarStatus: async (id, status) => {
         const conn = await connection.getConnection();
 
