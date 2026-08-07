@@ -11,10 +11,10 @@ const vendasRepository = {
 
             let valorTotal = 0;
 
-            // Verifica se o produto existe e se tem estoque suficiente
+            // Busca o preço de cada produto e calcula o total
             for (const item of itens) {
                 const [produtoRows] = await conn.execute(
-                    "SELECT Preco, Quantidade FROM Produtos WHERE Id = ?",
+                    "SELECT Preco FROM Produtos WHERE Id = ?",
                     [item.idProduto]
                 );
 
@@ -22,15 +22,7 @@ const vendasRepository = {
                     throw new Error(`Produto ${item.idProduto} não encontrado.`);
                 }
 
-                const produto = produtoRows[0];
-
-                // Impede a venda se não houver estoque
-                if (produto.Quantidade < item.qtd) {
-                    throw new Error(`Estoque insuficiente para o produto ${item.idProduto}.`);
-                }
-
-                // Guarda o preço e soma no total da venda
-                const preco = produto.Preco;
+                const preco = produtoRows[0].Preco;
                 item.valor = preco;
                 valorTotal += preco * item.qtd;
             }
@@ -53,14 +45,10 @@ const vendasRepository = {
                 );
 
                 // Baixa a quantidade do produto no estoque
-                const [alterarResultado] = await conn.execute(
-                    "UPDATE Produtos SET Quantidade = Quantidade - ? WHERE Id = ? AND Quantidade >= ?",
-                    [item.qtd, item.idProduto, item.qtd]
+                await conn.execute(
+                    "UPDATE Produtos SET Quantidade = Quantidade - ? WHERE Id = ?",
+                    [item.qtd, item.idProduto]
                 );
-
-                if (!alterarResultado || alterarResultado.affectedRows === 0) {
-                    throw new Error(`Falha ao atualizar estoque do produto ${item.idProduto}`);
-                }
             }
 
             await conn.commit();
@@ -98,12 +86,12 @@ const vendasRepository = {
                 );
             }
 
-            // Calcula o novo valor total e valida estoque dos novos itens
+            // Calcula o novo valor total
             let valorTotal = 0;
 
             for (const item of itens) {
                 const [produtoRows] = await conn.execute(
-                    "SELECT Preco, Quantidade FROM Produtos WHERE Id = ?",
+                    "SELECT Preco FROM Produtos WHERE Id = ?",
                     [item.idProduto]
                 );
 
@@ -111,13 +99,7 @@ const vendasRepository = {
                     throw new Error(`Produto ${item.idProduto} não encontrado.`);
                 }
 
-                const produto = produtoRows[0];
-
-                if (produto.Quantidade < item.qtd) {
-                    throw new Error(`Estoque insuficiente para o produto ${item.idProduto}.`);
-                }
-
-                const preco = produto.Preco;
+                const preco = produtoRows[0].Preco;
                 item.valor = preco;
                 valorTotal += preco * item.qtd;
             }
@@ -146,14 +128,10 @@ const vendasRepository = {
                     [id, item.idProduto, item.qtd, item.valor]
                 );
 
-                const [alterarResultado] = await conn.execute(
-                    "UPDATE Produtos SET Quantidade = Quantidade - ? WHERE Id = ? AND Quantidade >= ?",
-                    [item.qtd, item.idProduto, item.qtd]
+                await conn.execute(
+                    "UPDATE Produtos SET Quantidade = Quantidade - ? WHERE Id = ?",
+                    [item.qtd, item.idProduto]
                 );
-
-                if (!alterarResultado || alterarResultado.affectedRows === 0) {
-                    throw new Error(`Falha ao atualizar estoque do produto ${item.idProduto}`);
-                }
             }
 
             await conn.commit();
@@ -310,9 +288,9 @@ const vendasRepository = {
         try {
             await conn.beginTransaction();
 
-            // Busca o produto e valida estoque
+            // Busca o preço do produto
             const [produtoRows] = await conn.execute(
-                "SELECT Preco, Quantidade FROM Produtos WHERE Id = ?",
+                "SELECT Preco FROM Produtos WHERE Id = ?",
                 [item.idProduto]
             );
 
@@ -320,13 +298,7 @@ const vendasRepository = {
                 throw new Error("Produto não encontrado");
             }
 
-            const produto = produtoRows[0];
-
-            if (produto.Quantidade < item.qtd) {
-                throw new Error("Estoque insuficiente");
-            }
-
-            const valor = produto.Preco;
+            const valor = produtoRows[0].Preco;
 
             // Insere o item
             const [result] = await conn.execute(
@@ -344,14 +316,10 @@ const vendasRepository = {
             );
 
             // Baixa o estoque
-            const [alterarResultado] = await conn.execute(
-                "UPDATE Produtos SET Quantidade = Quantidade - ? WHERE Id = ? AND Quantidade >= ?",
-                [item.qtd, item.idProduto, item.qtd]
+            await conn.execute(
+                "UPDATE Produtos SET Quantidade = Quantidade - ? WHERE Id = ?",
+                [item.qtd, item.idProduto]
             );
-
-            if (!alterarResultado || alterarResultado.affectedRows === 0) {
-                throw new Error("Falha ao atualizar estoque do produto");
-            }
 
             await conn.commit();
 
@@ -391,23 +359,10 @@ const vendasRepository = {
 
             // Ajusta o estoque de acordo com a diferença
             if (diferenca > 0) {
-                // Quantidade aumentou → precisa ter estoque
-                const [produtoRows] = await conn.execute(
-                    "SELECT Quantidade FROM Produtos WHERE Id = ?",
-                    [itemAtual.IdProduto]
-                );
-
-                if (!produtoRows || produtoRows.length === 0) {
-                    throw new Error("Produto não encontrado");
-                }
-
-                if (produtoRows[0].Quantidade < diferenca) {
-                    throw new Error("Estoque insuficiente");
-                }
-
+                // Quantidade aumentou → baixa estoque
                 await conn.execute(
-                    "UPDATE Produtos SET Quantidade = Quantidade - ? WHERE Id = ? AND Quantidade >= ?",
-                    [diferenca, itemAtual.IdProduto, diferenca]
+                    "UPDATE Produtos SET Quantidade = Quantidade - ? WHERE Id = ?",
+                    [diferenca, itemAtual.IdProduto]
                 );
             } else if (diferenca < 0) {
                 // Quantidade diminuiu → devolve ao estoque
