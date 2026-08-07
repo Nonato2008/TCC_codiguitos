@@ -1,7 +1,6 @@
 import { statusPed } from "../enums/statusVenda.js";
 import { Produtos } from "../models/Produtos.js";
 import produtosRepository from "../repositories/produtosRepository.js";
-import { statusPed } from "../enums/statusVenda.js";
 
 const calcularStatus = (quantidade, dataVenc) => {
 
@@ -28,27 +27,9 @@ const produtoController = {
                     message: "Imagem não foi enviada"
                 });
             }
-<<<<<<< HEAD
-
-            const {
-                idFornecedor, nome, preco, quantidade, dataVenc
-            } = req.body;
-
-            const imagem = `/uploads/imagens/${req.file.filename}`;
-            const status = calcularStatus(
-                quantidade,
-                dataVenc
-            );
-
-            const produto = Produtos.criar({
-                idFornecedor, nome, preco, quantidade, status, imagem, dataVenc
-            });
-
-=======
             const {idFornecedor, nome, preco, quantidade, dataVenc} = req.body;
             const imagem = `/uploads/imagens/${req.file.filename}`;
             const produto = Produtos.criar({ idFornecedor, nome, preco, quantidade, status: statusPed.ESTOQUE, imagem, dataVenc });
->>>>>>> 1085abdace7bac03f3fa2f4e7ec6fc16e176141b
             const result = await produtosRepository.criar(produto);
             res.status(201).json({
                 message: "Produto cadastrado com sucesso.",
@@ -86,15 +67,8 @@ const produtoController = {
             }, id);
 
             const result = await produtosRepository.editar(produto);
-<<<<<<< HEAD
-            res.status(200).json({
-                message: "Produto alterado com sucesso.",
-                result
-            });
-=======
             res.status(200).json({ message: 'Produto alterado com sucesso', result });
             console.log(result)
->>>>>>> 1085abdace7bac03f3fa2f4e7ec6fc16e176141b
 
         } catch (error) {
             console.error(error);
@@ -120,10 +94,6 @@ const produtoController = {
         }
     },
     selecionar: async (req, res) => {
-<<<<<<< HEAD
-
-=======
->>>>>>> 1085abdace7bac03f3fa2f4e7ec6fc16e176141b
         try {
             const result = await produtosRepository.selecionar();
             res.status(200).json({
