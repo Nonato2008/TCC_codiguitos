@@ -345,42 +345,6 @@ const pedidoRepository = {
         } finally {
             conn.release();
         }
-    },
-
-    editarStatus: async (id, status) => {
-        const conn = await connection.getConnection();
-
-        try {
-            await conn.beginTransaction();
-
-            if (!status) {
-                throw new Error("Status inválido");
-            }
-
-            const [pedido] = await conn.execute(
-                "SELECT * FROM pedidos WHERE id = ?",
-                [id]
-            );
-
-            if (pedido.length === 0) {
-                throw new Error("Pedido não encontrado");
-            }
-
-            await conn.execute(
-                "UPDATE pedidos SET Status = ? WHERE id = ?",
-                [status, id]
-            );
-
-            await conn.commit();
-
-            return { id, status };
-
-        } catch (error) {
-            await conn.rollback();
-            throw error;
-        } finally {
-            conn.release();
-        }
     }
 }
 

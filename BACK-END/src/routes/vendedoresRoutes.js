@@ -7,5 +7,6 @@ vendedoresRoutes.get("/:id", vendedoresController.selecionarId);
 vendedoresRoutes.get("/", vendedoresController.selecionar);
 vendedoresRoutes.post("/", vendedoresController.criar);
 vendedoresRoutes.put("/:id", vendedoresController.editar);
+vendedoresRoutes.delete("/:id", vendedoresController.deletar);
 
 export default vendedoresRoutes;
