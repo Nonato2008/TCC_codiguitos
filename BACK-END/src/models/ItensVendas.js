@@ -1,26 +1,26 @@
 export class ItensVendas {
     #id;
-    #pedidoId;
+    #vendaId;
     #ProdutoId;
     #quantidade;
     #valorItem;
 
     //construtor
 
-    constructor(pProdutoId, pQuantidade, pValorItem, pId, pPedidoId) {
+    constructor(pProdutoId, pQuantidade, pValorItem, pId, pVendaId) {
         this.#ProdutoId = pProdutoId;
         this.#quantidade = pQuantidade;
         this.#valorItem = pValorItem;
         this.#id = pId;
-        this.#pedidoId = pPedidoId;
+        this.#vendaId = pVendaId;
     }
 
     //getter
     get id() {
         return this.#id;
     }
-    get pedidoId() {
-        return this.#pedidoId;
+    get vendaId() {
+        return this.#vendaId;
     }
     get produtoId() {
         return this.#ProdutoId;
@@ -36,9 +36,9 @@ export class ItensVendas {
         this.#validarId(value);
         this.#id = value
     }
-    set pedidoId(value) {
-        this.#validarPedidoId(value);
-        this.#pedidoId = value
+    set vendaId(value) {
+        this.#validarVendaId(value);
+        this.#vendaId = value
     }
     set produtoId(value) {
         this.#validarProdutoId(value);
@@ -58,9 +58,9 @@ export class ItensVendas {
             throw new Error("Verifique o ID informado");
         }
     }
-    #validarPedidoId(value) {
+    #validarVendaId(value) {
         if (!value || value <= 0) {
-            throw new Error("Verifique o ID do pedido informado");
+            throw new Error("Verifique o ID da venda informado");
         }
     }
     #validarProdutoId(value) {
@@ -88,9 +88,9 @@ export class ItensVendas {
     //design patterns
 
     static criar(dados) {
-        return new ItensPedido(dados.produtoId, dados.quantidade, dados.valorItem, null, null);
+        return new ItensVendas(dados.produtoId, dados.quantidade, dados.valorItem, null, null);
     }
     static alterar(dados, id) {
-        return new ItensPedido(dados.produtoId, dados.quantidade, dados.valorItem, id, dados.pedidoId);
+        return new ItensVendas(dados.produtoId, dados.quantidade, dados.valorItem, id, dados.vendaId ?? dados.pedidoId);
     }
 }
