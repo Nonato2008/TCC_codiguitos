@@ -4,7 +4,7 @@ import { connection } from "../config/Database.js";
 const pedidoRepository = {
 
     // Create - POST
-    criar: async (pedido, itens) => { 
+    criar: async (pedido, itens) => {
         const conn = await connection.getConnection();
 
         try {
@@ -103,7 +103,7 @@ const pedidoRepository = {
                 );
 
                 const valor = produto[0].Valor;
-                
+
                 await conn.execute(
                     `INSERT INTO itens_pedidos (pedidoId, produtoId, quantidade, valorItem)
                      VALUES (?, ?, ?, ?)`,
@@ -208,7 +208,7 @@ const pedidoRepository = {
         }
     },
 
-    
+
     selecionar: async () => {
 
         // Selecionar todos os pedidos com seus itens
@@ -227,7 +227,7 @@ const pedidoRepository = {
         return rows;
     },
 
-   // 
+    // 
     adicionarItem: async (pedidoId, item) => {
         const conn = await connection.getConnection();
 
@@ -286,7 +286,7 @@ const pedidoRepository = {
                 throw new Error("Quantidade inválida");
             }
 
-    
+
             const [item] = await conn.execute(
                 "SELECT * FROM itens_pedidos WHERE id = ? AND pedidoId = ?",
                 [itemId, pedidoId]

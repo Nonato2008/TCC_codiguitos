@@ -4,6 +4,7 @@ export class Proprietario {
     #senha;
     #dataCad;
 
+    // construtor
     constructor(
         id = null,
         nome,
@@ -16,6 +17,7 @@ export class Proprietario {
         this.dataCad = dataCad;
     }
 
+    // Getters e Setters
     get id() {
         return this.#id;
     }

@@ -1,11 +1,12 @@
 import { connection } from "../config/Database.js";
 
 const produtosRepository = {
+// CRUD - Create, Read, Update, Delete
 
+    //Create - POST____________________________________________________________________
+    criar: async (produto) => {
 
-criar: async (produto) => {
-
-    const sql = `
+        const sql = `
         INSERT INTO Produtos
         (
             Nome,
@@ -19,25 +20,25 @@ criar: async (produto) => {
         VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
 
-    const values = [
-        produto.nome,
-        produto.preco,
-        produto.quantidade,
-        produto.status,
-        produto.imagem,
-        produto.dataVenc,
-        produto.idFornecedor
-    ];
+        const values = [
+            produto.nome,
+            produto.preco,
+            produto.quantidade,
+            produto.status,
+            produto.imagem,
+            produto.dataVenc,
+            produto.idFornecedor
+        ];
 
-    const [rows] = await connection.execute(sql, values);
+        const [rows] = await connection.execute(sql, values);
 
-    return rows;
-},
+        return rows;
+    },
 
+    // Update - PUT____________________________________________________________________
+    editar: async (produto) => {
 
-editar: async (produto) => {
-
-    const sql = `
+        const sql = `
         UPDATE Produtos
         SET
             Nome = ?,
@@ -50,62 +51,62 @@ editar: async (produto) => {
         WHERE Id = ?
     `;
 
-    const values = [
-        produto.nome,
-        produto.preco,
-        produto.quantidade,
-        produto.status,
-        produto.imagem,
-        produto.dataVenc,
-        produto.idFornecedor,
-        produto.id
-    ];
+        const values = [
+            produto.nome,
+            produto.preco,
+            produto.quantidade,
+            produto.status,
+            produto.imagem,
+            produto.dataVenc,
+            produto.idFornecedor,
+            produto.id
+        ];
 
-    const [rows] = await connection.execute(sql, values);
+        const [rows] = await connection.execute(sql, values);
 
-    return rows;
-},
+        return rows;
+    },
 
+    // Delete - DELETE____________________________________________________________________
+    deletar: async (id) => {
 
-deletar: async (id) => {
-
-    const sql = `
+        const sql = `
         DELETE FROM Produtos
         WHERE Id = ?
     `;
 
-    const values = [id];
+        const values = [id];
 
-    const [rows] = await connection.execute(sql, values);
+        const [rows] = await connection.execute(sql, values);
 
-    return rows;
-},
+        return rows;
+    },
 
-
-selecionar: async () => {
-    const sql = `
+    // Read - GET____________________________________________________________________
+    selecionar: async () => {
+        const sql = `
         SELECT *
         FROM Produtos
     `;
-    const [rows] = await connection.execute(sql);
-    return rows;
-},
+        const [rows] = await connection.execute(sql);
+        return rows;
+    },
 
+    // Read - GET by ID____________________________________________________________________
+    selecionarId: async (id) => {
 
-selecionarId: async (id) => {
-
-    const sql = `
+        const sql = `
         SELECT *
         FROM Produtos
         WHERE Id = ?
     `;
 
-    const values = [id];
+        const values = [id];
 
-    const [rows] = await connection.execute(sql, values);
+        const [rows] = await connection.execute(sql, values);
 
-    return rows;
-}
+        return rows;
+    }
 
 
 };

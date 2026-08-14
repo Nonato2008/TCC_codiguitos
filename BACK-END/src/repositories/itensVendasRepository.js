@@ -2,6 +2,7 @@ import { connection } from "../config/Database.js";
 
 const itensVendasRepository = {
 
+    // Read - GET by ID____________________________________________________________________
     selecionarId: async (id) => {
 
         const sql = `

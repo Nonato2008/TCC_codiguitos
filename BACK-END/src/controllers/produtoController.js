@@ -2,6 +2,7 @@ import { statusPed } from "../enums/statusVenda.js";
 import { Produtos } from "../models/Produtos.js";
 import produtosRepository from "../repositories/produtosRepository.js";
 
+// Função para calcular o status do produto com base na quantidade e na data de vencimento
 const calcularStatus = (quantidade, dataVenc) => {
 
     const hoje = new Date();
@@ -11,9 +12,11 @@ const calcularStatus = (quantidade, dataVenc) => {
     vencimento.setHours(0, 0, 0, 0);
 
     if (vencimento < hoje) {
+
         return statusPed.VENCIDO;
     }
     if (Number(quantidade) <= 0) {
+
         return statusPed.ESGOTADO;
     }
     return statusPed.ESTOQUE;
@@ -21,30 +24,38 @@ const calcularStatus = (quantidade, dataVenc) => {
 
 const produtoController = {
 
-    // Create - POST
+    // Create - POST__________________________________________________________________________
     inserir: async (req, res) => {
         try {
             if (!req.file) {
+
                 return res.status(400).json({ message: 'Imagem não foi enviada' });
             }
-            const {idFornecedor, nome, preco, quantidade, dataVenc} = req.body;
+
+            const { idFornecedor, nome, preco, quantidade, dataVenc } = req.body;
+
             const imagem = `/uploads/imagens/${req.file.filename}`;
+
             const produto = Produtos.criar({ idFornecedor, nome, preco, quantidade, status: calcularStatus(quantidade, dataVenc), imagem, dataVenc });
+
             const result = await produtosRepository.criar(produto);
+
             res.status(201).json({ result });
 
         } catch (error) {
+
             console.error(error);
             res.status(500).json({ message: 'Erro ao inserir produto', errorMessage: error.message });
         }
     },
 
-    // Update - PUT
+    // Update - PUT_________________________________________________________________________
     alterar: async (req, res) => {
         try {
             const id = req.params.id;
 
             const {
+
                 idFornecedor, nome, preco, quantidade, dataVenc
             } = req.body;
 
@@ -53,19 +64,23 @@ const produtoController = {
                 : null;
 
             const status = calcularStatus(
+
                 quantidade,
                 dataVenc
             );
 
             const produto = Produtos.alterar({
+
                 idFornecedor, nome, preco, quantidade, status, imagem, dataVenc
             }, id);
 
             const result = await produtosRepository.editar(produto);
+
             res.status(200).json({ message: 'Produto alterado com sucesso', result });
             console.log(result)
 
         } catch (error) {
+
             console.error(error);
             res.status(500).json({
                 message: "Erro ao alterar produto",
@@ -74,36 +89,49 @@ const produtoController = {
         }
     },
 
-    // Delete - DELETE
+    // Delete - DELETE_________________________________________________________________________
     deletar: async (req, res) => {
+
         try {
+
             const id = req.params.id;
+
             await produtosRepository.deletar(id);
             res.status(200).json({ message: 'Produto deletado com sucesso' });
 
         } catch (error) {
+
             console.error(error);
             res.status(500).json({ message: 'Erro ao deletar produto', errorMessage: error.message });
         }
-   },
+    },
     selecionar: async (req, res) => {
+
         try {
+
             const result = await produtosRepository.selecionar();
+
             res.status(200).json({ result });
 
         } catch (error) {
+
             console.error(error);
             res.status(500).json({ message: 'Erro ao selecionar produtos', errorMessage: error.message });
         }
     },
 
-    // Read - GET by ID
+    // Read - GET by ID____________________________________________________________________
     selecionarId: async (req, res) => {
+
         try {
+
             const id = req.params.id;
+
             const result = await produtosRepository.selecionarId(id);
+
             res.status(200).json({ result });
         } catch (error) {
+
             console.error(error);
             res.status(500).json({ message: 'Erro ao selecionar produtos', errorMessage: error.message });
         }
