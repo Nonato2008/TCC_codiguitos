@@ -25,9 +25,9 @@ const produtoController = {
             if (!req.file) {
                 return res.status(400).json({ message: 'Imagem não foi enviada' });
             }
-            const {idFornecedor, nome, preco, quantidade, status, dataVenc} = req.body;
+            const {idFornecedor, nome, preco, quantidade, dataVenc} = req.body;
             const imagem = `/uploads/imagens/${req.file.filename}`;
-            const produto = Produtos.criar({ idFornecedor, nome, preco, quantidade, status:statusPed.ESTOQUE, imagem, dataVenc });
+            const produto = Produtos.criar({ idFornecedor, nome, preco, quantidade, status: calcularStatus(quantidade, dataVenc), imagem, dataVenc });
             const result = await produtosRepository.criar(produto);
             res.status(201).json({ result });
 
@@ -73,7 +73,7 @@ const produtoController = {
         try {
             const id = req.params.id;
             await produtosRepository.deletar(id);
-            res.status(204).send();
+            res.status(204).json({ message: 'Produto deletado com sucesso' });
 
         } catch (error) {
             console.error(error);

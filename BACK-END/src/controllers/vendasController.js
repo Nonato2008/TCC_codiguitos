@@ -64,52 +64,63 @@ const vendaController = {
         }
     },
 
-    editar: async (req, res) => {
+     editar: async (req, res) => {
         try {
             const { id } = req.params;
-            const { clienteId, status, itens } = req.body;
+            const { idProprietario, idVendedor, itens } = req.body;
 
             if (!id || Number(id) <= 0) {
-                return res.status(400).json({ message: "ID inválido" });
+                return res.status(400).json({
+                    message: "Id inválido."
+                });
             }
 
-            if (!clienteId || Number(clienteId) <= 0) {
-                return res.status(400).json({ message: "clienteId inválido" });
+            if (!idProprietario || Number(idProprietario) <= 0) {
+                return res.status(400).json({
+                    message: "Id do proprietário inválido."
+                });
             }
 
-            if (!Object.values(statusPed).includes(status)) {
-                return res.status(400).json({ message: "Status inválido" });
+            if (!idVendedor || Number(idVendedor) <= 0) {
+                return res.status(400).json({
+                   
+                    message: "Id do vendedor inválido."
+                });
             }
 
-            if (!Array.isArray(itens) || itens.length === 0) {
-                return res.status(400).json({ message: "Informe os itens" });
+
+            // Normaliza os nomes dos campos dos itens
+            const itensVenda = itens.map(item => ({
+                idVenda: Number(id),
+                idProduto: item.idProduto ?? item.produtoId,
+                qtd: item.qtd ?? item.quantidade
+            }));
+
+            for (const item of itensVenda) {
+                if (!item.idProduto || Number(item.idProduto) <= 0) {
+                    return res.status(400).json({ message: "Id do produto inválido." });
+                }
+                if (!item.qtd || Number(item.qtd) <= 0) {
+                    return res.status(400).json({ message: "Quantidade inválida." });
+                }
             }
 
-            const itensVenda = itens.map(item =>
-                ItensVendas.alterar({
-                    produtoId: item.produtoId,
-                    quantidade: item.quantidade
-                })
-            );
+            const venda = {
+                idProprietario: Number(idProprietario),
+                idVendedor: Number(idVendedor)
+            };
 
-            const subTotal = ItensVendas.calcularSubTotalItens(itensVenda);
-
-            const venda = Vendas.alterar(
-                { clienteId, subTotal, status },
-                id
-            );
-
-            const result = await vendasRepository.editar(id, venda, itensVenda);
+            const resultado = await vendasRepository.editar(Number(id), venda, itensVenda);
 
             return res.status(200).json({
-                message: "Venda atualizada",
-                data: result
+                message: "Venda atualizada com sucesso.",
+                data: resultado
             });
 
         } catch (error) {
             return res.status(500).json({
-                message: "Erro ao editar pedido",
-                errorMessage: error.message
+                message: "Erro ao atualizar venda.",
+                error: error.message
             });
         }
     },
