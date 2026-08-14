@@ -2,9 +2,6 @@ import { statusPed } from "../enums/statusVenda.js";
 import { Produtos } from "../models/Produtos.js";
 import produtosRepository from "../repositories/produtosRepository.js";
 
-<<<<<<< HEAD
-// CRUD - Create, Read, Update, Delete
-=======
 const calcularStatus = (quantidade, dataVenc) => {
 
     const hoje = new Date();
@@ -22,7 +19,6 @@ const calcularStatus = (quantidade, dataVenc) => {
     return statusPed.ESTOQUE;
 };
 
->>>>>>> 5cb4b1ef6ba11a4d4c4de67e303d3e701eee0bda
 const produtoController = {
 
     // Create - POST
@@ -89,14 +85,8 @@ const produtoController = {
             console.error(error);
             res.status(500).json({ message: 'Erro ao deletar produto', errorMessage: error.message });
         }
-    },
-<<<<<<< HEAD
-
-    // Read - GET
-    selecionar: async (res) => {
-=======
+   },
     selecionar: async (req, res) => {
->>>>>>> 5cb4b1ef6ba11a4d4c4de67e303d3e701eee0bda
         try {
             const result = await produtosRepository.selecionar();
             res.status(200).json({ result });

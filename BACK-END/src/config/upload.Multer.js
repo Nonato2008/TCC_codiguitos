@@ -10,7 +10,7 @@ const verificarDir = (dir) => {
     fs.mkdirSync(dir, { recursive: true });
   }
 }
-
+// 
 const createMulter = ({ pasta, tiposPermitidos, tamanhoArquivo}) => {
     const pastaFinal = path.join(baseUploadDir, pasta);
     verificarDir(pastaFinal);

@@ -3,12 +3,7 @@ import { ItensVendas } from "../models/ItensVendas.js";
 import { Vendas } from "../models/Vendas.js";
 import vendasRepository from "../repositories/vendasRepository.js";
 
-<<<<<<< HEAD
-// CRUD - Create, Read, Update, Delete
-const pedidoController = {
-=======
 const vendaController = {
->>>>>>> 5cb4b1ef6ba11a4d4c4de67e303d3e701eee0bda
 
     // Create - POST
     criar: async (req, res) => {
@@ -69,12 +64,7 @@ const vendaController = {
         }
     },
 
-<<<<<<< HEAD
-    // Update - PUT
-    editar: async (req, res) => {
-=======
      editar: async (req, res) => {
->>>>>>> 5cb4b1ef6ba11a4d4c4de67e303d3e701eee0bda
         try {
             const { id } = req.params;
             const { idProprietario, idVendedor, itens } = req.body;
@@ -172,12 +162,7 @@ const vendaController = {
         }
     },
 
-<<<<<<< HEAD
-    // Create - PUT by ID
-    adicionarItem: async (req, res) => {
-=======
     selecionarId: async (req, res) => {
->>>>>>> 5cb4b1ef6ba11a4d4c4de67e303d3e701eee0bda
         try {
             const  id  = req.params.id; 
 
@@ -192,18 +177,10 @@ const vendaController = {
         }
     },
 
-<<<<<<< HEAD
-    // Update - PUT by ID
-    editarItem: async (req, res) => {
-        try {
-            const { id, itemId } = req.params;
-            const { quantidade } = req.body;
-=======
         adicionarItem: async (req, res) => {
             try {
                 const { id } = req.params;
                 const { produtoId, quantidade } = req.body;
->>>>>>> 5cb4b1ef6ba11a4d4c4de67e303d3e701eee0bda
 
                 if (!id || Number(id) <= 0) {
                     return res.status(400).json({ message: "Venda inválida" });
@@ -245,17 +222,10 @@ const vendaController = {
                         quantidade
                     );
 
-<<<<<<< HEAD
-    // Delete - Delete by ID
-    removerItem: async (req, res) => {
-        try {
-            const { id, itemId } = req.params;
-=======
                     return res.status(200).json({
                         message: "Item atualizado",
                         data: result
                     });
->>>>>>> 5cb4b1ef6ba11a4d4c4de67e303d3e701eee0bda
 
                 } catch (error) {
                     return res.status(500).json({
@@ -282,18 +252,10 @@ const vendaController = {
                             Number(itemId)
                         );
 
-<<<<<<< HEAD
-    // Update - PUT status by ID
-    editarStatus: async (req, res) => {
-        try {
-            const { id } = req.params;
-            const { status } = req.body;
-=======
                         return res.status(200).json({
                             message: "Item removido",
                             data: result
                         });
->>>>>>> 5cb4b1ef6ba11a4d4c4de67e303d3e701eee0bda
 
                     } catch (error) {
                         return res.status(500).json({
