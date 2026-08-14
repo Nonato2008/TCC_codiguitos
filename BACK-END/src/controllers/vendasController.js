@@ -261,38 +261,7 @@ const vendaController = {
                             errorMessage: error.message
                         });
                     }
-                },
-
-                    editarStatus: async (req, res) => {
-                        try {
-                            const { id } = req.params;
-                            const { status } = req.body;
-
-                            if (!id || Number(id) <= 0) {
-                                return res.status(400).json({ message: "ID inválido" });
-                            }
-
-                            if (!Object.values(statusPed).includes(status)) {
-                                return res.status(400).json({ message: "Status inválido" });
-                            }
-
-                            const result = await vendasRepository.editarStatus(
-                                Number(id),
-                                status
-                            );
-
-                            return res.status(200).json({
-                                message: "Status atualizado",
-                                data: result
-                            });
-
-                        } catch (error) {
-                            return res.status(500).json({
-                                message: "Erro ao atualizar status",
-                                errorMessage: error.message
-                            });
-                        }
-                    }
-    };
+                }
+            };
 
     export default vendaController;

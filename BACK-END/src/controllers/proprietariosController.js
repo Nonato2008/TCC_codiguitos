@@ -75,9 +75,18 @@ const proprietariosController = {
         } catch (error) {
             res.status(400).json({ message: 'Erro ao alterar proprietário', error: error.message });
         }
-    }
+    },
+    deletar: async (req, res) => {
+        try {
+            const id = req.params.id;
+            await proprietariosRepository.deletar(id);
+            res.status(200).json({ message: 'Proprietário deletado com sucesso' }); 
 
-}
+}         catch (error) {
+            res.status(500).json({ message: 'Erro ao deletar proprietário', errorMessage: error.message });
+        }
+    }
+    }
 
 
 export default proprietariosController;

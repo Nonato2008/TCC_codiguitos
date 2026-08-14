@@ -13,6 +13,4 @@ vendasRoutes.delete("/:id", vendaController.deletar);
 vendasRoutes.post("/:id/item", vendaController.adicionarItem);
 vendasRoutes.put("/:id/item/:itemId", vendaController.editarItem);
 vendasRoutes.delete("/:id/item/:itemId", vendaController.removerItem);
-vendasRoutes.patch("/:id/status", vendaController.editarStatus);
-
 export default vendasRoutes;

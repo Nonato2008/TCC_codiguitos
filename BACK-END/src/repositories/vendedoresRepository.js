@@ -63,6 +63,14 @@ editar: async (vendedor) => {
 
     return rows;
 },
+deletar : async (id) => {
+    const sql = `
+        DELETE FROM Vendedores
+        WHERE Id = ?
+    `;
+    const values = [id];
+    await connection.execute(sql, values);
+    }
 }
 
 export default vendedoresRepository;

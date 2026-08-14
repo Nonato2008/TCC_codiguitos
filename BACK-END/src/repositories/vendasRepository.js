@@ -787,52 +787,6 @@ const vendasRepository = {
         } finally {
             conn.release();
         }
-    },
-
-    editarStatus: async (id, status) => {
-        const conn = await connection.getConnection();
-
-        try {
-            await conn.beginTransaction();
-
-            if (!status) {
-                throw new Error("Status inválido.");
-            }
-
-            const [vendaRows] = await conn.execute(
-                `SELECT *
-                 FROM Vendas
-                 WHERE Id = ?`,
-                [id]
-            );
-
-            if (vendaRows.length === 0) {
-                throw new Error("Venda não encontrada.");
-            }
-
-            await conn.execute(
-                `UPDATE Vendas
-                 SET Status = ?
-                 WHERE Id = ?`,
-                [
-                    status,
-                    id
-                ]
-            );
-
-            await conn.commit();
-
-            return {
-                id,
-                status
-            };
-
-        } catch (error) {
-            await conn.rollback();
-            throw error;
-        } finally {
-            conn.release();
-        }
     }
 };
 

@@ -73,7 +73,7 @@ const produtoController = {
         try {
             const id = req.params.id;
             await produtosRepository.deletar(id);
-            res.status(204).json({ message: 'Produto deletado com sucesso' });
+            res.status(200).json({ message: 'Produto deletado com sucesso' });
 
         } catch (error) {
             console.error(error);
