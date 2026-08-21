@@ -1,18 +1,19 @@
-export class Vendedores {
+export class Proprietario {
     #id;
     #nome;
+    #senha;
     #dataCad;
-    #idProprietario;
 
-    //construtor
-    constructor (
-        pNome, 
-        pIdProprietario, 
-        pId
-    ){
-        this.#nome = pNome;
-        this.#idProprietario = pIdProprietario;
-        this.#id = pId;
+    constructor(
+        id = null,
+        nome,
+        senha,
+        dataCad = null
+    ) {
+        this.id = id;
+        this.nome = nome;
+        this.senha = senha;
+        this.dataCad = dataCad;
     }
 
     get id() {
@@ -35,14 +36,15 @@ export class Vendedores {
         this.#nome = value.trim();
     }
 
-    get idProprietario() {
-        return this.#idProprietario;
+    get senha() {
+        return this.#senha;
     }
-    set idProprietario(value) {
-        if (value !== null && value !== undefined) {
-            this.#validarIdProprietario(value);
+
+    set senha(value) {
+        if (!value || value.trim().length < 6) {
+            throw new Error("A senha deve possuir pelo menos 6 caracteres.");
         }
-        this.#idProprietario = value === null || value === undefined ? null : Number(value);
+        this.#senha = value;
     }
 
     get dataCad() {
@@ -64,26 +66,22 @@ export class Vendedores {
             throw new Error("O nome deve possuir entre 3 e 45 caracteres.");
         }
     }
-      #validarIdProprietario(value) {
-        if (isNaN(Number(value)) || Number(value) <= 0) {
-            throw new Error("Verifique o ID informado.");
-        }
-    }
 
     static criar(dados) {
-        return new Vendedores(
+        return new Proprietario(
+            dados.id,
             dados.nome,
-            dados.idProprietario,
-            dados.id    
+            dados.senha,
+            dados.dataCad
         );
     }
 
     static alterar(dados, id) {
-        return new Vendedores(
+        return new Proprietario(
+            id,
             dados.nome,
-            dados.idProprietario,
-            id
+            dados.senha,
+            dados.dataCad
         );
     }
 }
-

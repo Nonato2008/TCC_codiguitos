@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import axios from "axios";
 
 const API_URL = "http://localhost:8000/produtos";
@@ -24,5 +25,13 @@ export async function buscarProdutos() {
     } catch (error) {
         console.error("Erro ao carregar produtos:", error);
         throw error;
+=======
+/*import axios from "axios";
+
+export const codiguitos_api = axios.create (
+    {
+        baseURL: "http://localhost:8000",
+        timeout: 5000
+>>>>>>> a064cb4b9715c909259d3be1d48a9fb63ad919cc
     }
-}
+)*/
