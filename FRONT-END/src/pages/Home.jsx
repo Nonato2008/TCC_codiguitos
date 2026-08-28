@@ -1,20 +1,13 @@
-import { useProdutos } from "../hooks/useProdutos"
-import ProdutoList from "../components/ProdutoList";
-import SkeletonLoading from "../components/SkeletonLoading";
 import { Link } from "react-router-dom";
 
 export default function Home() {
-  const { produtos, loading } = useProdutos();
-
   return (
-    <div className="container mt-4">
-      <h1 className="mb-4">Catálogo de Pessoas</h1>
-
-      <Link to="/login" className="btn btn-secondary mb-3">
+    <div style={{ padding: "40px", fontFamily: "Inter, sans-serif" }}>
+      <h1>Home</h1>
+      <p>Bem-vindo ao sistema.</p>
+      <Link to="/login" style={{ display: "inline-block", marginTop: "16px" }}>
         Ir para Login
       </Link>
-
-      {loading ? <SkeletonLoading /> : <PersonList produtos={produtos} />}
     </div>
   );
 }
