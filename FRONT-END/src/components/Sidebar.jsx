@@ -14,7 +14,7 @@ const menu = [
         rota: "/cadastroProdutos"
     },
     {
-        nome: "Gerenciamento de Estoque",
+        nome: "🚧Gerenciamento de Estoque🚧",
         icone: "inventory",
         rota: "/gerenciamentoEstoque"
     }
