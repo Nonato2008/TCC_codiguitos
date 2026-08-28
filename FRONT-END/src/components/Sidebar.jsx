@@ -8,12 +8,16 @@ const menu = [
         icone: "dashboard",
         rota: "/painel"
     },
-     {
-        nome: "Fornecedores",
-        icone: "local_shipping",
-        rota: "/fornecedores"
+    {
+        nome: "Cadastro de Produtos",
+        icone: "inventory_2",
+        rota: "/cadastroProdutos"
+    },
+    {
+        nome: "🚧Gerenciamento de Estoque🚧",
+        icone: "inventory",
+        rota: "/gerenciamentoEstoque"
     }
-    
 ];
 
 
