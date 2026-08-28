@@ -79,7 +79,7 @@ const authController = {
             console.error(error);
 
             return res.status(500).json({
-                message: "Erro ao realizar login.",
+                message: "Nome ou senha incorretos",
                 error: error.message
             });
         }
