@@ -4,6 +4,11 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Painel from "./pages/Painel";
 import CadastroProdutos from "./pages/CadastroProduto";
+import GerenciamentoEstoque from "./pages/GerenciamentoEstoque";
+import Fornecedores from "./pages/Fornecedores";
+import CadastrarFornecedor from "./pages/CadastroFornecedor";
+import CadastrarFornecedor from "./pages/CadastroFornecedor";
+
 
 
 export default function App() {
@@ -14,6 +19,10 @@ export default function App() {
         <Route path="/home"element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/painel" element={<Painel />} />
+        <Route path="/fornecedores" element={<Fornecedores />} />
+        <Route path="/cadastroProdutos" element={<CadastroProdutos />} />
+        <Route path="/gerenciamentoEstoque" element={<GerenciamentoEstoque />} />
+        <Route path="/cadastroFornecedor" element={<CadastrarFornecedor/>}/>
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>

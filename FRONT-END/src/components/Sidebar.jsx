@@ -17,6 +17,11 @@ const menu = [
         nome: "🚧Gerenciamento de Estoque🚧",
         icone: "inventory",
         rota: "/gerenciamentoEstoque"
+    },
+    {
+        nome: "Fornecedores",
+        icone: "local_shipping",
+        rota: "/fornecedores"
     }
 ];
 
