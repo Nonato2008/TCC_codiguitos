@@ -14,9 +14,15 @@ const menu = [
         rota: "/cadastroProdutos"
     },
     {
+<<<<<<< HEAD
         nome: "🚧Gerenciamento de Estoque🚧", 
         icone: "inventory",
         rota: "/gerenciamentoEstoque"
+=======
+        nome: "Fornecedores",
+        icone: "business",
+        rota: "/fornecedores"
+>>>>>>> 1acc5a0b977cc1a464d2423872df8492c492fa17
     }
 ];
 
@@ -174,7 +180,9 @@ const styles = {
         color: "#44474c",
         fontFamily: "Inter, sans-serif",
         fontSize: "14px",
-        fontWeight: "600"
+        fontWeight: "600",
+        transition: "all 0.3s ease",
+        cursor: "pointer"
     },
 
     // Estilo aplicado por cima do menuItem quando a rota está ativa (mesclado via spread no NavLink)
@@ -225,6 +233,7 @@ const styles = {
         fontFamily: "Inter, sans-serif",
         fontSize: "14px",
         textAlign: "left",
-        cursor: "pointer"
+        cursor: "pointer",
+        transition: "all 0.3s ease"
     }
 };

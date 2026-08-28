@@ -18,5 +18,5 @@ routes.use("/fornecedores", fornecedoresRoutes);
 routes.use("/produtos", produtosRoutes);
 routes.use("/vendas", vendasRoutes);
 routes.use("/vendedores", vendedoresRoutes);
-
+// routes.use("/clientes", clientesRoutes);
 export default routes;
