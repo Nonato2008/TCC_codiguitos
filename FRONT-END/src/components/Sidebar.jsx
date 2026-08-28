@@ -9,9 +9,9 @@ const menu = [
         rota: "/painel"
     },
     {
-        nome: "Cadstro de Produtos",
+        nome: "Cadastro de Produtos",
         icone: "inventory_2",
-        rota: "/Cadastro_produtos"
+        rota: "/cadastroProdutos"
     }
 ];
 
