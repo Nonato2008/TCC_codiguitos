@@ -1,26 +1,19 @@
-<<<<<<< HEAD
-import Produtos from "./pages/produtos/produtos";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-function App() {
-    return (
-        <Produtos />
-    );
-}
-
-export default App;
-=======
-import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
-import Login from "./pages/Login/Login";
+import Login from "./pages/Login";
+import Painel from "./pages/Painel";
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/home" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/painel" element={<Painel />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
   );
 }
->>>>>>> a064cb4b9715c909259d3be1d48a9fb63ad919cc
