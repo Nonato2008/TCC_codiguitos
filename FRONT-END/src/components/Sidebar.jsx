@@ -15,10 +15,8 @@ const menu = [
     },
     {
         nome: "Fornecedores",
-        icone: "local_shipping",
+        icone: "business",
         rota: "/fornecedores"
-    },{
-        nome: ""
     }
 ];
 
@@ -166,7 +164,9 @@ const styles = {
         color: "#44474c",
         fontFamily: "Inter, sans-serif",
         fontSize: "14px",
-        fontWeight: "600"
+        fontWeight: "600",
+        transition: "all 0.3s ease",
+        cursor: "pointer"
     },
 
     menuItemActive: {
@@ -213,6 +213,7 @@ const styles = {
         fontFamily: "Inter, sans-serif",
         fontSize: "14px",
         textAlign: "left",
-        cursor: "pointer"
+        cursor: "pointer",
+        transition: "all 0.3s ease"
     }
 };
