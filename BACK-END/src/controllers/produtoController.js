@@ -24,11 +24,9 @@ const calcularStatus = (quantidade, dataVenc) => {
 
 const produtoController = {
 
-    // Create - POST__________________________________________________________________________
     inserir: async (req, res) => {
         try {
             if (!req.file) {
-
                 return res.status(400).json({ message: 'Imagem não foi enviada' });
             }
 
@@ -45,11 +43,13 @@ const produtoController = {
         } catch (error) {
 
             console.error(error);
-            res.status(500).json({ message: 'Erro ao inserir produto', errorMessage: error.message });
+
+            res.status(500).json({
+                message: "Erro ao inserir produto",
+                errorMessage: error.message
+            });
         }
     },
-
-    // Update - PUT_________________________________________________________________________
     alterar: async (req, res) => {
         try {
             const id = req.params.id;
@@ -88,8 +88,6 @@ const produtoController = {
             });
         }
     },
-
-    // Delete - DELETE_________________________________________________________________________
     deletar: async (req, res) => {
 
         try {
@@ -102,7 +100,11 @@ const produtoController = {
         } catch (error) {
 
             console.error(error);
-            res.status(500).json({ message: 'Erro ao deletar produto', errorMessage: error.message });
+
+            res.status(500).json({
+                message: "Erro ao deletar produto",
+                errorMessage: error.message
+            });
         }
     },
     selecionar: async (req, res) => {
@@ -110,13 +112,16 @@ const produtoController = {
         try {
 
             const result = await produtosRepository.selecionar();
-
             res.status(200).json({ result });
 
         } catch (error) {
 
             console.error(error);
-            res.status(500).json({ message: 'Erro ao selecionar produtos', errorMessage: error.message });
+
+            res.status(500).json({
+                message: "Erro ao selecionar produtos",
+                errorMessage: error.message
+            });
         }
     },
 
@@ -128,15 +133,18 @@ const produtoController = {
             const id = req.params.id;
 
             const result = await produtosRepository.selecionarId(id);
-
             res.status(200).json({ result });
         } catch (error) {
 
             console.error(error);
-            res.status(500).json({ message: 'Erro ao selecionar produtos', errorMessage: error.message });
+
+            res.status(500).json({
+                message: "Erro ao selecionar produto",
+                errorMessage: error.message
+            });
         }
     }
 
-}
+};
 
 export default produtoController;
