@@ -2,111 +2,108 @@ import { connection } from "../config/Database.js";
 
 const produtosRepository = {
 
+    criar: async (produto) => {
 
-criar: async (produto) => {
+        const sql = `
+            INSERT INTO Produtos
+            (
+                Nome,
+                Preco,
+                Quantidade,
+                Status,
+                Imagem,
+                DataVenc,
+                IdFornecedor
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `;
 
-    const sql = `
-        INSERT INTO Produtos
-        (
-            Nome,
-            Preco,
-            Quantidade,
-            Status,
-            Imagem,
-            DataVenc,
-            IdFornecedor
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    `;
+        const values = [
+            produto.nome,
+            produto.preco,
+            produto.quantidade,
+            produto.status,
+            produto.imagem,
+            produto.dataVenc,
+            produto.idFornecedor
+        ];
 
-    const values = [
-        produto.nome,
-        produto.preco,
-        produto.quantidade,
-        produto.status,
-        produto.imagem,
-        produto.dataVenc,
-        produto.idFornecedor
-    ];
+        const [rows] = await connection.execute(sql, values);
 
-    const [rows] = await connection.execute(sql, values);
+        return rows;
+    },
 
-    return rows;
-},
+    editar: async (produto) => {
 
+        const sql = `
+            UPDATE Produtos
+            SET
+                Nome = ?,
+                Preco = ?,
+                Quantidade = ?,
+                Status = ?,
+                Imagem = ?,
+                DataVenc = ?,
+                IdFornecedor = ?
+            WHERE Id = ?
+        `;
 
-editar: async (produto) => {
+        const values = [
+            produto.nome,
+            produto.preco,
+            produto.quantidade,
+            produto.status,
+            produto.imagem,
+            produto.dataVenc,
+            produto.idFornecedor,
+            produto.id
+        ];
 
-    const sql = `
-        UPDATE Produtos
-        SET
-            Nome = ?,
-            Preco = ?,
-            Quantidade = ?,
-            Status = ?,
-            Imagem = ?,
-            DataVenc = ?,
-            IdFornecedor = ?
-        WHERE Id = ?
-    `;
+        const [rows] = await connection.execute(sql, values);
 
-    const values = [
-        produto.nome,
-        produto.preco,
-        produto.quantidade,
-        produto.status,
-        produto.imagem,
-        produto.dataVenc,
-        produto.idFornecedor,
-        produto.id
-    ];
+        return rows;
+    },
 
-    const [rows] = await connection.execute(sql, values);
+    deletar: async (id) => {
 
-    return rows;
-},
+        const sql = `
+            DELETE FROM Produtos
+            WHERE Id = ?
+        `;
 
+        const values = [id];
 
-deletar: async (id) => {
+        const [rows] = await connection.execute(sql, values);
 
-    const sql = `
-        DELETE FROM Produtos
-        WHERE Id = ?
-    `;
+        return rows;
+    },
 
-    const values = [id];
+    selecionar: async () => {
 
-    const [rows] = await connection.execute(sql, values);
+        const sql = `
+            SELECT *
+            FROM Produtos
+        `;
 
-    return rows;
-},
+        const [rows] = await connection.execute(sql);
 
+        return rows;
+    },
 
-selecionar: async () => {
-    const sql = `
-        SELECT *
-        FROM Produtos
-    `;
-    const [rows] = await connection.execute(sql);
-    return rows;
-},
+    selecionarId: async (id) => {
 
+        const sql = `
+            SELECT *
+            FROM Produtos
+            WHERE Id = ?
+        `;
 
-selecionarId: async (id) => {
+        const values = [id];
 
-    const sql = `
-        SELECT *
-        FROM Produtos
-        WHERE Id = ?
-    `;
+        const [rows] = await connection.execute(sql, values);
 
-    const values = [id];
-
-    const [rows] = await connection.execute(sql, values);
-
-    return rows;
-}
-
+        return rows;
+    }
 
 };
 

@@ -1,34 +1,42 @@
 import { useEffect, useState } from "react";
-import { getItems } from "../services/produtosService.js";
+import { buscarProdutos } from "../services/produtosService";
 
 export function useProdutos() {
-    const [produtos, setProdutos] = useState([]);
-    const [loading, setLoading] = useState(true);
+  const [produtos, setProdutos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-    useEffect(() => {
-        //useEffect por padrão não é assincrona
-        async function loadProdutos() {
-            try {
+  useEffect(() => {
+    let isMounted = true;
 
-                const data = await getItems();
+    const carregarProdutos = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-                setItems(data);
+        const dados = await buscarProdutos();
 
-            } catch (error) {
-
-                console.log("Erro ao buscar produtos", error);
-
-            } finally {
-
-                setLoading(false);
-
-            }
+        if (isMounted) {
+          setProdutos(dados);
         }
+      } catch (error) {
+        if (isMounted) {
+          setError("Não foi possível carregar os produtos.");
+          setProdutos([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
 
-        loadProdutos();
+    carregarProdutos();
 
-    }, [])
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
-    //todo componente react tem que ter return
-    return { produtos, loading };
+  return { produtos, loading, error };
 }
