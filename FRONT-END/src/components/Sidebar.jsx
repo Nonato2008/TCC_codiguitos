@@ -8,6 +8,11 @@ const menu = [
         icone: "dashboard",
         rota: "/painel"
     },
+    {
+        nome: "Cadstro de Produtos",
+        icone: "inventory_2",
+        rota: "/Cadastro_produtos"
+    }
 ];
 
 
