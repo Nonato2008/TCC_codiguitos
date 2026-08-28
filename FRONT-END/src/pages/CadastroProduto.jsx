@@ -15,5 +15,6 @@ return (
                 <h2 style={styles.title}>Cadastro de Produtos</h2>
                 <p style={styles.subtitle}>Adicione novos produtos ao seu estoque.</p>
             </header>
+        </main>
     </div>
 )
