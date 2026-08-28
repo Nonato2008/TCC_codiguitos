@@ -1,45 +1,43 @@
-import React, { useEffect, useState } from "react";
-import { codiguitos_api } from "../services/tcc.api";
+import React from "react";
 import Sidebar from "../components/Sidebar";
+import { useProdutos } from "../hooks/useProdutos";
 
 export default function Painel() {
-  const [produtosTotais, setProdutosTotais] = useState(0);
-  const [produtosEsgotados, setProdutosEsgotados] = useState(0);
-  const [produtosVencimento, setProdutosVencimento] = useState(0);
+  const { produtos, loading, error } = useProdutos();
 
-  useEffect(() => {
-    const carregarResumo = async () => {
-      try {
-        const response = await codiguitos_api.get("/produtos");
-        const produtos = Array.isArray(response.data?.result)
-          ? response.data.result
-          : Array.isArray(response.data)
-            ? response.data
-            : [];
+  const produtosTotais = produtos.length;
 
-        console.log("Produtos do painel:", produtos);
+  const produtosEsgotados = produtos.filter((produto) => {
+    const status = String(produto.Status ?? "").toLowerCase();
+    return status === "esgotado";
+  }).length;
 
-        const total = produtos.length;
-        const esgotados = produtos.filter((produto) => {
-          const status = String(produto.Status ?? "").toLowerCase();
-          return status === "esgotado";
-        }).length;
+  const produtosVencimento = produtos.filter((produto) => {
+    const status = String(produto.Status ?? "").toLowerCase();
+    return status === "vencido";
+  }).length;
 
-        const vencidos = produtos.filter((produto) => {
-          const status = String(produto.Status ?? "").toLowerCase();
-          return status === "vencido";
-        }).length;
+  if (loading) {
+    return (
+      <div style={styles.layout}>
+        <Sidebar />
+        <main style={styles.page}>
+          <div style={styles.loadingBox}>Carregando resumo do painel...</div>
+        </main>
+      </div>
+    );
+  }
 
-        setProdutosTotais(total);
-        setProdutosEsgotados(esgotados);
-        setProdutosVencimento(vencidos);
-      } catch (error) {
-        console.error("Erro ao carregar resumo do painel:", error);
-      }
-    };
-
-    carregarResumo();
-  }, []);
+  if (error) {
+    return (
+      <div style={styles.layout}>
+        <Sidebar />
+        <main style={styles.page}>
+          <div style={styles.errorBox}>{error}</div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.layout}>
@@ -48,7 +46,6 @@ export default function Painel() {
       <main style={styles.page}>
         <header style={styles.header}>
           <h2 style={styles.title}>Visão Geral</h2>
-
           <p style={styles.subtitle}>Resumo operacional da loja.</p>
         </header>
 
@@ -78,13 +75,11 @@ export default function Painel() {
           <div style={styles.largeCard}>
             <div style={styles.cardHeader}>
               <h3 style={styles.cardTitle}>Vendas Recentes</h3>
-
               <button style={styles.linkButton}>Ver todas</button>
             </div>
 
             <div style={styles.empty}>
               <span className="material-symbols-outlined">point_of_sale</span>
-
               <span>Nenhuma venda encontrada.</span>
             </div>
           </div>
@@ -92,15 +87,11 @@ export default function Painel() {
           <div style={styles.largeCard}>
             <div style={styles.cardHeader}>
               <h3 style={styles.cardTitle}>Lucro total</h3>
-
-              <span className="material-symbols-outlined">
-                local_fire_department
-              </span>
+              <span className="material-symbols-outlined">local_fire_department</span>
             </div>
 
             <div style={styles.empty}>
               <span className="material-symbols-outlined">inventory</span>
-
               <span>Nenhuma venda feita.</span>
             </div>
           </div>
@@ -115,9 +106,7 @@ function DashboardCard({ titulo, valor, icone, tipo }) {
     <div
       style={{
         ...styles.card,
-
         ...(tipo === "error" ? styles.errorCard : {}),
-
         ...(tipo === "warning" ? styles.warningCard : {}),
       }}
     >
@@ -126,9 +115,7 @@ function DashboardCard({ titulo, valor, icone, tipo }) {
           <div
             style={{
               ...styles.icon,
-
               ...(tipo === "error" ? styles.errorIcon : {}),
-
               ...(tipo === "warning" ? styles.warningIcon : {}),
             }}
           >
@@ -146,7 +133,6 @@ function DashboardCard({ titulo, valor, icone, tipo }) {
       <strong
         style={{
           ...styles.value,
-
           ...(tipo === "error" ? styles.errorValue : {}),
         }}
       >
@@ -171,6 +157,30 @@ const styles = {
     fontFamily: "Inter, sans-serif",
   },
 
+  loadingBox: {
+    minHeight: "200px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#f9f9ff",
+    border: "1px solid #e2e8f0",
+    borderRadius: "10px",
+    color: "#44474c",
+    fontWeight: "600",
+  },
+
+  errorBox: {
+    minHeight: "160px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#fff1f2",
+    border: "1px solid #fecdd3",
+    borderRadius: "10px",
+    color: "#9f1239",
+    fontWeight: "600",
+  },
+
   header: {
     marginBottom: "40px",
   },
@@ -191,7 +201,7 @@ const styles = {
 
   cards: {
     display: "grid",
-    gridTemplateColumns: "repeat(3, 1fr)",
+    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
     gap: "24px",
     marginBottom: "24px",
   },
@@ -271,7 +281,7 @@ const styles = {
 
   bottom: {
     display: "grid",
-    gridTemplateColumns: "repeat(2, 1fr)",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
     gap: "24px",
   },
 
