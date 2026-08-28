@@ -5,11 +5,11 @@ export class Vendedores {
     #idProprietario;
 
     //construtor
-    constructor (
-        pNome, 
-        pIdProprietario, 
+    constructor(
+        pNome,
+        pIdProprietario,
         pId
-    ){
+    ) {
         this.#nome = pNome;
         this.#idProprietario = pIdProprietario;
         this.#id = pId;
@@ -64,7 +64,7 @@ export class Vendedores {
             throw new Error("O nome deve possuir entre 3 e 45 caracteres.");
         }
     }
-      #validarIdProprietario(value) {
+    #validarIdProprietario(value) {
         if (isNaN(Number(value)) || Number(value) <= 0) {
             throw new Error("Verifique o ID informado.");
         }
@@ -74,7 +74,7 @@ export class Vendedores {
         return new Vendedores(
             dados.nome,
             dados.idProprietario,
-            dados.id    
+            dados.id
         );
     }
 

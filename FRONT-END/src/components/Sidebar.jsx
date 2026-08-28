@@ -1,7 +1,7 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 
-
+// Lista de itens do menu lateral.
 const menu = [
     {
         nome: "Painel",
@@ -25,11 +25,11 @@ const menu = [
     }
 ];
 
-
 export default function Sidebar() {
 
     const navigate = useNavigate();
 
+    // Função chamada ao clicar em "Sair": redireciona o usuário para a tela de login
     function sair() {
         navigate("/login");
     }
@@ -37,6 +37,7 @@ export default function Sidebar() {
     return (
         <aside style={styles.sidebar}>
 
+            {/* Cabeçalho da sidebar: logo + nome do sistema */}
             <div style={styles.logoContainer}>
                 <div style={styles.logo}>
                     <img
@@ -57,13 +58,14 @@ export default function Sidebar() {
                 </div>
             </div>
 
-
+            {/* Menu de navegação principal, gerado dinamicamente a partir do array "menu" */}
             <nav style={styles.navigation}>
 
                 {menu.map((item) => (
                     <NavLink
-                        key={item.rota}
+                        key={item.rota} 
                         to={item.rota}
+                        // NavLink permite estilizar condicionalmente o item ativo (rota atual)
                         style={({ isActive }) => ({
                             ...styles.menuItem,
                             ...(isActive ? styles.menuItemActive : {})
@@ -78,6 +80,8 @@ export default function Sidebar() {
                 ))}
 
             </nav>
+
+            {/* Rodapé da sidebar, com o botão de logout separado do menu principal */}
             <div style={styles.bottomMenu}>
 
                 <button
@@ -98,9 +102,10 @@ export default function Sidebar() {
     );
 }
 
-
+// Objeto com todos os estilos inline do componente (padrão CSS-in-JS via style prop)
 const styles = {
 
+    // Container principal: fixo na tela, ocupando a altura total (sidebar fixa à esquerda)
     sidebar: {
         position: "fixed",
         left: 0,
@@ -115,6 +120,7 @@ const styles = {
         zIndex: 100
     },
 
+    // Área do topo com logo + título/subtítulo, alinhados lado a lado
     logoContainer: {
         display: "flex",
         alignItems: "center",
@@ -122,6 +128,7 @@ const styles = {
         marginBottom: "32px"
     },
 
+    // Caixa que envolve a imagem do logo (controla tamanho e cantos arredondados)
     logo: {
         width: "48px",
         height: "48px",
@@ -131,6 +138,7 @@ const styles = {
         flexShrink: 0
     },
 
+    // Faz a imagem preencher a caixa do logo sem distorcer
     logoImage: {
         width: "100%",
         height: "100%",
@@ -152,6 +160,7 @@ const styles = {
         margin: "2px 0 0"
     },
 
+    // Container do menu: cresce para ocupar o espaço disponível (empurra o rodapé para baixo)
     navigation: {
         display: "flex",
         flexDirection: "column",
@@ -159,6 +168,7 @@ const styles = {
         flex: 1
     },
 
+    // Estilo padrão de cada item do menu (link)
     menuItem: {
         display: "flex",
         alignItems: "center",
@@ -174,11 +184,13 @@ const styles = {
         cursor: "pointer"
     },
 
+    // Estilo aplicado por cima do menuItem quando a rota está ativa (mesclado via spread no NavLink)
     menuItemActive: {
         backgroundColor: "#303e51",
         color: "#ffffff"
     },
 
+    // Estilo não utilizado no JSX atual (parece ser de um botão "Nova Venda" que foi removido)
     newSale: {
         width: "100%",
         border: "none",
@@ -197,6 +209,7 @@ const styles = {
         marginBottom: "16px"
     },
 
+    // Área inferior fixa, separada do menu por uma linha divisória
     bottomMenu: {
         borderTop: "1px solid #e2e8f0",
         paddingTop: "12px",
@@ -205,6 +218,7 @@ const styles = {
         gap: "4px"
     },
 
+    // Estilo do botão "Sair" (visualmente parecido com os itens do menu, mas é um <button>)
     bottomItem: {
         width: "100%",
         border: "none",

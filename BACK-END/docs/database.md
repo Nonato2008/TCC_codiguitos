@@ -28,7 +28,7 @@ Representa os fornecedores cadastrados no sistema.
 ### 📄 Atributos
 - id (PK)
 - nome
-- imagemFornecedor  
+- imagem 
 - dataCad
 
 ##  🪢 Relacionamento: Fornecedor x Produto
