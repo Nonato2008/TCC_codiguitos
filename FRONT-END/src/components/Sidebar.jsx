@@ -8,6 +8,12 @@ const menu = [
         icone: "dashboard",
         rota: "/painel"
     },
+     {
+        nome: "Fornecedores",
+        icone: "local_shipping",
+        rota: "/fornecedores"
+    }
+    
 ];
 
 
