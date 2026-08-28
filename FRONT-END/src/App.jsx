@@ -5,7 +5,7 @@ import Login from "./pages/Login";
 import Painel from "./pages/Painel";
 import CadastroProdutos from "./pages/CadastroProduto";
 import Fornecedores from "./pages/Fornecedor";
-import CadastrarFornecedor from "./pages/CadastroFornecedor";
+import CadastrarFornecedor from "./pages/CadastrarFornecedor";
 
 
 
@@ -18,7 +18,8 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/painel" element={<Painel />} />
         <Route path="/fornecedores" element={<Fornecedores />} />
-        <Route path="/cadastroProdutos" element={<CadastroProdutos />} />        <Route path="/cadastroFornecedor" element={<CadastrarFornecedor/>}/>
+        <Route path="/cadastroProdutos" element={<CadastroProdutos />} />
+        <Route path="/fornecedores/cadastrar"element={<CadastrarFornecedor />}/>
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>

@@ -36,10 +36,10 @@ export default function CadastrarFornecedor() {
 
             await criarFornecedor(formData);
 
-            // Mensagem de sucesso dentro do formulário
+          
             setSuccess("Fornecedor cadastrado com sucesso!");
 
-            // Limpa os campos
+        
             setNome("");
             setImagem(null);
 

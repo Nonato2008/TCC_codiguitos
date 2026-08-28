@@ -31,14 +31,10 @@ export const criarFornecedor = async (fornecedorData) => {
             fornecedorData
         );
 
-        return response.data.result || response.data;
+        return response.data.result;
 
     } catch (error) {
-        console.error(
-            "Erro ao criar fornecedor:",
-            error.response?.data || error
-        );
-
+        console.error("Erro ao criar fornecedor:", error);
         throw error;
     }
 };
