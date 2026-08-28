@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import Painel from "./pages/Painel";
 import CadastroProdutos from "./pages/CadastroProduto";
 
+
 export default function App() {
   return (
     <BrowserRouter>
