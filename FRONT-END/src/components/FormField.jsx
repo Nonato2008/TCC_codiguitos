@@ -8,6 +8,8 @@ export default function FormField({
   min,
   step,
   accept,
+  // Rest operator (não confundir com spread): junta todas as props que NÃO foram explicitamente listadas acima (ex: required, disabled, maxLength...) dentro de um objeto "rest". Isso permite passar props extras pro <input> sem precisar declarar cada uma manualmente na assinatura do componente.
+  
   ...rest
 }) {
   return (
@@ -23,12 +25,14 @@ export default function FormField({
         step={step}
         accept={accept}
         style={styles.input}
+        // Spread operator: espalha as props extras capturadas no "rest" direto no input (ex: se o pai passar required, cai aqui automaticamente)
         {...rest}
       />
     </label>
   );
 }
 
+// Estilos compartilhados por todos os campos do formulário que usam esse componente
 const styles = {
   field: {
     display: "flex",

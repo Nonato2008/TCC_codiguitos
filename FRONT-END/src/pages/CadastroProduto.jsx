@@ -17,6 +17,7 @@ const estadoInicial = {
 export default function CadastroProdutos() {
     const [form, setForm] = useState(estadoInicial);
     const [loading, setLoading] = useState(false);
+    // mensagem.type controla o estilo do AlertMessage ("success" | "error" | "")
     const [mensagem, setMensagem] = useState({ type: "", text: "" });
 
     function atualizarCampo(event) {
@@ -33,6 +34,8 @@ export default function CadastroProdutos() {
     async function cadastrarProduto(event) {
         event.preventDefault();
 
+        // Validação manual campo a campo, na ordem em que aparecem no form.
+        // Cada `return` antecipado evita chamar a API com dados incompletos.
         if (!form.nome.trim()) {
             setMensagem({ type: "error", text: "Informe o nome do produto." });
             return;
@@ -59,9 +62,12 @@ export default function CadastroProdutos() {
         }
 
         setLoading(true);
+        // Limpa mensagem anterior antes de tentar novamente
         setMensagem({ type: "", text: "" });
 
         try {
+            // FormData é obrigatório aqui porque estamos enviando um arquivo
+            // (imagem) junto com os demais campos — não dá pra mandar JSON puro.
             const dados = new FormData();
             dados.append("idFornecedor", String(form.idFornecedor || 1));
             dados.append("nome", form.nome.trim());
@@ -72,14 +78,17 @@ export default function CadastroProdutos() {
 
             await codiguitos_api.post("/produtos", dados, {
                 headers: {
+                    // Necessário explicitar multipart/form-data por causa do upload de arquivo
                     "Content-Type": "multipart/form-data",
                 },
             });
 
             setMensagem({ type: "success", text: "Produto cadastrado com sucesso!" });
+            // Reseta o formulário após sucesso, incluindo o input de arquivo
             setForm(estadoInicial);
         } catch (error) {
             console.error(error);
+            // Prioriza mensagem de erro vinda da API; usa fallback genérico se não houver
             setMensagem({
                 type: "error",
                 text: error?.response?.data?.message || "Erro ao cadastrar produto.",
@@ -182,6 +191,7 @@ const styles = {
         backgroundColor: "#f3f5f9",
     },
     page: {
+        // Compensa a largura fixa da Sidebar (256px) para o conteúdo não ficar por baixo dela
         marginLeft: "256px",
         width: "calc(100% - 256px)",
         padding: "32px",

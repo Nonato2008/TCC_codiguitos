@@ -219,8 +219,8 @@
 - **Body**:
 ```
 {
-    "nome": "Coca cola2"
-    "imagem": "imagem.jpg"
+    "nome": "Jorgim"
+    "senha": "123456"
 }
 ```
 -**Response**:
@@ -244,8 +244,8 @@
 - **Body**:
 ```
 {
-    "nome": "Coca Cola664"
-    "imagem": "imagem.jpg"
+    "nome": "kid"
+    "senha": "123456"
 }
 ```
 -**Response**:
@@ -286,21 +286,20 @@
 - **Body**:
 ```
 {
-    "idFornecedor": "1",
-    "nome": "Latinha Agora"
-    "preco": 30.00
-    "quantidade": 10
-    "dataVenc": 2026-08-03
-    "imagem": "imagem.jpg"
+
+    "nome": "Exemplo"
+    "idProprietario": "1",
+
 }
 ```
 -**Response**:
 ```
 {
+    "message": "Vendedor criado com sucesso",
     "result": {
         "fieldCount": 0,
         "affectedRows": 1,
-        "insertId": 11,
+        "insertId": 5,
         "info": "",
         "serverStatus": 2,
         "warningStatus": 0,
@@ -314,19 +313,16 @@
 - **Body**: 
 ```
 {
-    "idFornecedor": "1",
-    "nome": "Latinha Agora"
-    "preco": 25.00
-    "quantidade": 10
-    "status": "Em estoque"
-    "imagem": "imagem.jpg"
-    "dataVenc": 2026-12-31
+
+    "nome": "Jorgin"
+    "idProprietario": "1",
+
 }
 ```
 -**Response**:
 ```
 {
-    "message": "Produto alterado com sucesso",
+    "message": "Vendedor alterado com sucesso",
     "result": {
         "fieldCount": 0,
         "affectedRows": 1,
