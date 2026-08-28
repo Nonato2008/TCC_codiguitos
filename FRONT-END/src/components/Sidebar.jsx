@@ -13,11 +13,7 @@ const menu = [
         icone: "inventory_2",
         rota: "/cadastroProdutos"
     },
-    {
-        nome: "Gerenciamento de Estoque",
-        icone: "inventory",
-        rota: "/gerenciamentoEstoque"
-    }
+    
 ];
 
 
