@@ -1,4 +1,4 @@
-import PersonCard from "./PersonCard";
+import ProdutoCard from "./ProdutoCard";
 
 export default function ProdutoList({ produtos = [] }) {
   if (!produtos || produtos.length === 0) {
@@ -8,7 +8,7 @@ export default function ProdutoList({ produtos = [] }) {
   return (
     <div>
       {produtos.map((p) => (
-        <PersonCard key={p.id ?? p._id ?? p.email} person={p} />
+        <ProdutoCard key={p.id ?? p._id ?? p.email} person={p} />
       ))}
     </div>
   );
