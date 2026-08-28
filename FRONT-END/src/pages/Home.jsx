@@ -1,10 +1,10 @@
-import { usePoduto } from "../hooks/usePersons";
-import PersonList from "../components/PersonList";
+import { useProdutos } from "../hooks/useProdutos"
+import ProdutoList from "../components/ProdutoList";
 import SkeletonLoading from "../components/SkeletonLoading";
 import { Link } from "react-router-dom";
 
 export default function Home() {
-  const { produtos, loading } = usePoduto();
+  const { produtos, loading } = useProdutos();
 
   return (
     <div className="container mt-4">

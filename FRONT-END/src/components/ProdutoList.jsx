@@ -1,6 +1,6 @@
 import PersonCard from "./PersonCard";
 
-export default function PersonList({ produtos = [] }) {
+export default function ProdutoList({ produtos = [] }) {
   if (!produtos || produtos.length === 0) {
     return <div>Nenhum item encontrado</div>;
   }

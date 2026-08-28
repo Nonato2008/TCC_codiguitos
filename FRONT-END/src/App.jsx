@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login/Login";
-import{ThemeProvider} from "./context/ThemeContext.jsx"
+import{ThemeProvider} from "../context/ThemeContext.jsx"
 
 export default function App() {
   return (
