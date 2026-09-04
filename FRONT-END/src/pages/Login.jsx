@@ -7,29 +7,34 @@ import {
     saveUser
 } from "../services/authService.js";
 
-
+// Tela de autenticação: alterna entre os modos "login" e "cadastro"
+// usando o mesmo layout e formulário
 export default function Login() {
 
     const navigate = useNavigate();
 
+    // controla qual modo o formulário está exibindo (login ou cadastro)
     const [modoCadastro, setModoCadastro] = useState(false);
 
+    // campos do formulário, compartilhados pelos dois modos
     const [nome, setNome] = useState("");
     const [senha, setSenha] = useState("");
-    const [confirmarSenha, setConfirmarSenha] = useState("");
-    const [tipo, setTipo] = useState("VENDEDOR");
+    const [confirmarSenha, setConfirmarSenha] = useState(""); // usado só no cadastro
+    const [tipo, setTipo] = useState("VENDEDOR"); // usado só no cadastro
 
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(false); // desabilita form durante requisição
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
 
+    // limpa mensagens de erro/sucesso antes de uma nova tentativa
     function limparMensagens() {
         setError("");
         setSuccess("");
     }
 
 
+    // alterna entre login/cadastro e reseta os campos do formulário
     function trocarModo() {
 
         limparMensagens();
@@ -43,12 +48,14 @@ export default function Login() {
     }
 
 
+    // submete o formulário de login
     async function entrar(event) {
 
-        event.preventDefault();
+        event.preventDefault(); // evita reload da página
 
         limparMensagens();
 
+        // validações básicas antes de chamar a API
         if (!nome.trim()) {
             setError("Digite seu nome.");
             return;
@@ -68,6 +75,7 @@ export default function Login() {
                 senha
             );
 
+            // erro "de negócio" retornado pela API (não é exceção)
             if (result.error) {
 
                 setError(
@@ -80,6 +88,7 @@ export default function Login() {
 
             const usuario = result.data?.usuario;
 
+            // persiste o usuário logado (ex: localStorage) antes de navegar
             if (usuario) {
                 saveUser(usuario);
             }
@@ -88,6 +97,7 @@ export default function Login() {
 
         } catch (error) {
 
+            // erro inesperado (rede, servidor fora do ar, etc.)
             console.error(error);
 
             setError(
@@ -96,17 +106,20 @@ export default function Login() {
 
         } finally {
 
+            // garante que o botão volte a ficar habilitado
             setLoading(false);
         }
     }
 
 
+    // submete o formulário de cadastro
     async function cadastrar(event) {
 
         event.preventDefault();
 
         limparMensagens();
 
+        // validações de campo, em ordem, cada uma interrompendo o fluxo
         if (!nome.trim()) {
             setError("Digite seu nome.");
             return;
@@ -160,11 +173,13 @@ export default function Login() {
                 "Cadastro realizado com sucesso! Agora faça login."
             );
 
+            // limpa o formulário após sucesso
             setNome("");
             setSenha("");
             setConfirmarSenha("");
             setTipo("VENDEDOR");
 
+            // após um pequeno delay, volta para o modo login automaticamente
             setTimeout(() => {
 
                 setModoCadastro(false);
@@ -214,6 +229,7 @@ export default function Login() {
                 </h1>
 
 
+                {/* Subtítulo muda de acordo com o modo atual */}
                 <p style={styles.subtitle}>
                     {modoCadastro
                         ? "Crie sua conta para acessar o sistema."
@@ -231,7 +247,7 @@ export default function Login() {
                 </h2>
 
 
-                {/* MENSAGEM DE ERRO */}
+                {/* MENSAGEM DE ERRO (só renderiza se houver texto) */}
                 {error && (
                     <div style={styles.alertError}>
                         {error}
@@ -239,7 +255,7 @@ export default function Login() {
                 )}
 
 
-                {/* MENSAGEM DE SUCESSO */}
+                {/* MENSAGEM DE SUCESSO (só renderiza se houver texto) */}
                 {success && (
                     <div style={styles.alertSuccess}>
                         {success}
@@ -247,7 +263,7 @@ export default function Login() {
                 )}
 
 
-                {/* FORMULÁRIO */}
+                {/* FORMULÁRIO: o handler de submit muda conforme o modo */}
                 <form
                     style={styles.form}
                     onSubmit={
@@ -303,7 +319,7 @@ export default function Login() {
                     </div>
 
 
-                    {/* CAMPOS EXCLUSIVOS DO CADASTRO */}
+                    {/* CAMPOS EXCLUSIVOS DO CADASTRO (renderização condicional) */}
                     {modoCadastro && (
                         <>
 
@@ -364,7 +380,7 @@ export default function Login() {
                     )}
 
 
-                    {/* BOTÃO */}
+                    {/* BOTÃO: texto e estilo mudam conforme loading/modo */}
                     <button
                         type="submit"
                         style={{
@@ -402,7 +418,7 @@ export default function Login() {
 
 
                     <button
-                        type="button"
+                        type="button" // evita submeter o form ao clicar
                         onClick={trocarModo}
                         style={styles.registerLink}
                         disabled={loading}
@@ -430,6 +446,7 @@ export default function Login() {
 }
 
 
+// Objeto de estilos inline, organizado por elemento da tela
 const styles = {
 
     container: {

@@ -1,7 +1,9 @@
 import { connection } from "../config/Database.js";
 
+// CRUD - Create, Read, Update, Delete
 const vendasRepository = {
 
+    // Create - POST
     criar: async (venda, itens) => {
         const conn = await connection.getConnection();
 
@@ -10,16 +12,19 @@ const vendasRepository = {
 
             let valorTotal = 0;
 
+            // Validação inicial: a venda deve ter pelo menos um item
             if (!Array.isArray(itens) || itens.length === 0) {
                 throw new Error("A venda deve possuir pelo menos um item.");
             }
 
             for (const item of itens) {
 
+                // Validação de cada item: produto e quantidade
                 if (!item.idProduto || !item.qtd || Number(item.qtd) <= 0) {
                     throw new Error("Produto ou quantidade inválida.");
                 }
 
+                // Bloqueia a linha do produto para leitura/atualização (evita race condition)
                 const [produtoRows] = await conn.execute(
                     `SELECT Id, Preco, Quantidade, Status, DataVenc
                      FROM Produtos
@@ -36,6 +41,7 @@ const vendasRepository = {
 
                 const produto = produtoRows[0];
 
+                // Verifica se o produto está vencido (comparação de datas)
                 const hoje = new Date();
                 hoje.setHours(0, 0, 0, 0);
 
@@ -43,6 +49,7 @@ const vendasRepository = {
                 vencimento.setHours(0, 0, 0, 0);
 
                 if (vencimento < hoje) {
+                    // Atualiza o status para 'Vencido' antes de lançar erro
                     await conn.execute(
                         `UPDATE Produtos
                          SET Status = 'Vencido'
@@ -56,6 +63,7 @@ const vendasRepository = {
                 }
 
                 if (Number(produto.Quantidade) <= 0) {
+                    // Atualiza o status para 'Esgotado' antes de lançar erro
                     await conn.execute(
                         `UPDATE Produtos
                          SET Status = 'Esgotado'
@@ -76,10 +84,12 @@ const vendasRepository = {
 
                 const preco = Number(produto.Preco);
 
+                // Armazena o valor unitário no item para uso posterior
                 item.valor = preco;
                 valorTotal += preco * Number(item.qtd);
             }
 
+            // Insere a venda com o valor total calculado
             const [vendaRows] = await conn.execute(
                 `INSERT INTO Vendas
                     (IdProprietario, IdVendedor, ValorTotal)
@@ -93,6 +103,7 @@ const vendasRepository = {
 
             const vendaId = vendaRows.insertId;
 
+            // Insere cada item da venda e atualiza o estoque
             for (const item of itens) {
 
                 await conn.execute(
@@ -107,6 +118,7 @@ const vendasRepository = {
                     ]
                 );
 
+                // Atualiza a quantidade em estoque e ajusta o status automaticamente
                 const [alterarResultado] = await conn.execute(
                     `UPDATE Produtos
                      SET Quantidade = Quantidade - ?,
@@ -125,6 +137,7 @@ const vendasRepository = {
                     ]
                 );
 
+                // Garantia de que a atualização foi aplicada (otimista)
                 if (alterarResultado.affectedRows === 0) {
                     throw new Error(
                         `Falha ao atualizar estoque do produto ${item.idProduto}.`
@@ -147,6 +160,7 @@ const vendasRepository = {
         }
     },
 
+
     editar: async (id, venda, itens) => {
         const conn = await connection.getConnection();
 
@@ -157,6 +171,7 @@ const vendasRepository = {
                 throw new Error("A venda deve possuir pelo menos um item.");
             }
 
+            // Bloqueia os itens antigos para leitura e devolve a quantidade ao estoque
             const [itensAntigos] = await conn.execute(
                 `SELECT IdProduto, Qtd
                  FROM Itens_vendas
@@ -165,6 +180,7 @@ const vendasRepository = {
                 [id]
             );
 
+            // Devolve ao estoque todos os itens que estavam na venda original
             for (const item of itensAntigos) {
                 await conn.execute(
                     `UPDATE Produtos
@@ -184,6 +200,7 @@ const vendasRepository = {
 
             let valorTotal = 0;
 
+            // (Re)valida os novos itens (mesma lógica do criar)
             for (const item of itens) {
 
                 if (!item.idProduto || !item.qtd || Number(item.qtd) <= 0) {
@@ -250,6 +267,7 @@ const vendasRepository = {
                 valorTotal += preco * Number(item.qtd);
             }
 
+            // Atualiza os dados da venda
             await conn.execute(
                 `UPDATE Vendas
                  SET IdProprietario = ?,
@@ -264,12 +282,14 @@ const vendasRepository = {
                 ]
             );
 
+            // Remove todos os itens antigos (substituição completa)
             await conn.execute(
                 `DELETE FROM Itens_vendas
                  WHERE IdVenda = ?`,
                 [id]
             );
 
+            // Insere os novos itens e atualiza o estoque
             for (const item of itens) {
 
                 await conn.execute(
@@ -326,12 +346,14 @@ const vendasRepository = {
         }
     },
 
+
     deletar: async (id) => {
         const conn = await connection.getConnection();
 
         try {
             await conn.beginTransaction();
 
+            // Busca os itens da venda para devolver ao estoque
             const [itens] = await conn.execute(
                 `SELECT IdProduto, Qtd
                  FROM Itens_vendas
@@ -340,6 +362,7 @@ const vendasRepository = {
                 [id]
             );
 
+            // Devolve a quantidade de cada produto ao estoque
             for (const item of itens) {
                 await conn.execute(
                     `UPDATE Produtos
@@ -357,6 +380,7 @@ const vendasRepository = {
                 );
             }
 
+            // Remove os itens e a venda
             await conn.execute(
                 `DELETE FROM Itens_vendas
                  WHERE IdVenda = ?`,
@@ -381,12 +405,14 @@ const vendasRepository = {
         }
     },
 
+
     removerItem: async (vendaId, itemId) => {
         const conn = await connection.getConnection();
 
         try {
             await conn.beginTransaction();
 
+            // Bloqueia o item específico para leitura
             const [itemRows] = await conn.execute(
                 `SELECT *
                  FROM Itens_vendas
@@ -405,6 +431,7 @@ const vendasRepository = {
 
             const item = itemRows[0];
 
+            // Devolve a quantidade ao estoque do produto
             await conn.execute(
                 `UPDATE Produtos
                  SET Quantidade = Quantidade + ?,
@@ -420,12 +447,14 @@ const vendasRepository = {
                 ]
             );
 
+            // Remove o item da venda
             await conn.execute(
                 `DELETE FROM Itens_vendas
                  WHERE Id = ?`,
                 [itemId]
             );
 
+            // Recalcula o valor total da venda com os itens restantes
             const [itens] = await conn.execute(
                 `SELECT Qtd, Valor
                  FROM Itens_vendas
@@ -467,6 +496,7 @@ const vendasRepository = {
         }
     },
 
+
     selecionar: async () => {
 
         const [rows] = await connection.execute(`
@@ -485,6 +515,7 @@ const vendasRepository = {
         return rows;
     },
 
+
     selecionarId: async (id) => {
 
         const [rows] = await connection.execute(
@@ -497,12 +528,14 @@ const vendasRepository = {
         return rows[0] ?? null;
     },
 
+
     adicionarItem: async (vendaId, item) => {
         const conn = await connection.getConnection();
 
         try {
             await conn.beginTransaction();
 
+            // Compatibilidade com nomes de campos diferentes
             const produtoId = item.produtoId ?? item.idProduto;
             const quantidade = Number(
                 item.quantidade ?? item.qtd
@@ -512,6 +545,7 @@ const vendasRepository = {
                 throw new Error("Produto ou quantidade inválida.");
             }
 
+            // Bloqueia o produto para verificar disponibilidade
             const [produtoRows] = await conn.execute(
                 `SELECT Id, Preco, Quantidade, Status, DataVenc
                  FROM Produtos
@@ -568,6 +602,7 @@ const vendasRepository = {
 
             const valor = Number(produto.Preco);
 
+            // Insere o novo item
             const [result] = await conn.execute(
                 `INSERT INTO Itens_vendas
                     (IdVenda, IdProduto, Qtd, Valor)
@@ -580,6 +615,7 @@ const vendasRepository = {
                 ]
             );
 
+            // Atualiza o estoque
             const [alterarResultado] = await conn.execute(
                 `UPDATE Produtos
                  SET Quantidade = Quantidade - ?,
@@ -604,6 +640,7 @@ const vendasRepository = {
                 );
             }
 
+            // Atualiza o valor total da venda
             await conn.execute(
                 `UPDATE Vendas
                  SET ValorTotal = ValorTotal + ?
@@ -629,6 +666,7 @@ const vendasRepository = {
         }
     },
 
+
     editarItem: async (vendaId, itemId, quantidade) => {
         const conn = await connection.getConnection();
 
@@ -641,6 +679,7 @@ const vendasRepository = {
                 throw new Error("Quantidade inválida.");
             }
 
+            // Bloqueia o item existente para leitura
             const [itemRows] = await conn.execute(
                 `SELECT *
                  FROM Itens_vendas
@@ -661,6 +700,7 @@ const vendasRepository = {
 
             const itemAtual = itemRows[0];
 
+            // Bloqueia o produto para verificar estoque e data de vencimento
             const [produtoRows] = await conn.execute(
                 `SELECT Id, Preco, Quantidade, Status, DataVenc
                  FROM Produtos
@@ -675,6 +715,7 @@ const vendasRepository = {
 
             const produto = produtoRows[0];
 
+            // Devolve a quantidade antiga ao estoque antes de subtrair a nova
             await conn.execute(
                 `UPDATE Produtos
                  SET Quantidade = Quantidade + ?
@@ -705,6 +746,7 @@ const vendasRepository = {
                 );
             }
 
+            // Verifica o estoque disponível após devolução
             const [estoqueRows] = await conn.execute(
                 `SELECT Quantidade
                  FROM Produtos
@@ -722,6 +764,7 @@ const vendasRepository = {
                 );
             }
 
+            // Atualiza a quantidade do item
             await conn.execute(
                 `UPDATE Itens_vendas
                  SET Qtd = ?
@@ -732,6 +775,7 @@ const vendasRepository = {
                 ]
             );
 
+            // Subtrai a nova quantidade do estoque
             await conn.execute(
                 `UPDATE Produtos
                  SET Quantidade = Quantidade - ?,
@@ -748,6 +792,7 @@ const vendasRepository = {
                 ]
             );
 
+            // Recalcula o valor total da venda
             const [itens] = await conn.execute(
                 `SELECT Qtd, Valor
                  FROM Itens_vendas
@@ -788,6 +833,20 @@ const vendasRepository = {
             conn.release();
         }
     }
-};
 
-export default vendasRepository;
+}
+
+export default vendasRepository; 
+
+
+
+
+
+//  ⡴⣶⣿⡄⠀⠀⠀⠀⠀⠀⠀⡤⠞⠉⢳⠀⠀⠀⠀
+// ⢀⡇⠘⠋⠓⣆⠀⠀⠀⣀⣠⠞⠀⢀⣴⣫⠶⠚⠛⣷
+// ⣿⠀⠒⠘⣠⡾⢀⡴⠋⠉⠀⠀⠀⠉⠋⠁⢀⣠⠶⠃
+// ⠈⠙⣏⣿⢧⢿⡏⠀⠀⢠⠄⠀⠀⠀⠀⠀⢻⡀⠀⠀
+// ⠀⠀⠉⠘⣟⣾⡄⠀⠀⠀⠈⠓⠘⠃⣀⠀⢈⡇⠀⠀
+// ⠀⠀⠀⠀⢿⠉⠛⠦⠀⠀⠀⠀⠀⠀⠀⣠⡞⠁⠀⠀
+// ⠀⠀⠀⠀⠘⢧⡀⠀⠀⠀⠀⠀⠀⠘⠋⠉⢙⡆⠀⠀
+// ⠀⠀⠀⠀⠀⠀⢻⠀⠀⠀⠀⠀⠀⠀⡤⠖⠋

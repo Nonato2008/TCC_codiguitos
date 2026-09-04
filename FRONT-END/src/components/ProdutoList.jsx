@@ -8,6 +8,8 @@ export default function ProdutoList({ produtos = [] }) {
   return (
     <div>
       {produtos.map((p) => (
+        // Fallback em cascata pra key: tenta id, depois _id (comum em Mongo/APIs),
+        // e por último email — garante uma key mesmo se o formato dos dados variar
         <ProdutoCard key={p.id ?? p._id ?? p.email} person={p} />
       ))}
     </div>

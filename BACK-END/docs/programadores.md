@@ -11,9 +11,13 @@ O sistema segue uma arquitetura em camadas, separando responsabilidades entre fr
 ### 📌 Responsabilidade
 - Interface com o usuário
 - Consumo da API
+- Armazenamento de dados utilizando useState
+- Renderização dinamica de dados recebidos da API
 
 ### 🛠️ Tecnologias
 - React
+- Bootstrap
+- Axios
 - HTML / CSS / JavaScript
 
 ## ⚙️ Backend
@@ -25,6 +29,11 @@ O sistema segue uma arquitetura em camadas, separando responsabilidades entre fr
 
 ### 🛠️ Tecnologias
 - Node.js
+- Axios
+- Cors
+- Dotenv
+- Multer
+- Mysql12 
 - Express
 
 ## 🗄️ Banco de Dados
