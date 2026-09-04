@@ -13,19 +13,16 @@ export function useVendas(limit = 3) {
 
       const response = await api.get("/vendas");
 
-      const dados = Array.isArray(response.data)
-        ? response.data
-        : [];
+      const dados = Array.isArray(response.data) ? response.data : [];
 
       setVendas(dados.slice(0, limit));
 
       const total = dados.reduce(
         (soma, venda) => soma + Number(venda.ValorTotal || 0),
-        0
+        0,
       );
 
       setValorTotal(total);
-
     } catch (err) {
       setError("Erro ao carregar vendas.");
       setVendas([]);
