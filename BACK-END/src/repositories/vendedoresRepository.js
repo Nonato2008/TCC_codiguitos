@@ -2,16 +2,18 @@ import { connection } from "../config/Database.js";
 
 const vendedoresRepository = {
 
+    // Read - GET by ID____________________________________________________________________
     selecionarId: async (id) => {
-        const sql = 
+        const sql =
             `SELECT * FROM vendedores WHERE Id = ?`
-        ;
+            ;
 
         const values = [id]
         const [rows] = await connection.execute(sql, values);
         return rows[0];
-    
+
     },
+    // Read - GET____________________________________________________________________
     selecionar: async () => {
         const [rows] = await connection.execute(`
             SELECT *
@@ -20,10 +22,10 @@ const vendedoresRepository = {
         `);
         return rows;
     },
-    
-     criar: async (vendedor) => {
+    // Create - POST____________________________________________________________________
+    criar: async (vendedor) => {
 
-    const sql = `
+        const sql = `
         INSERT INTO Vendedores
         (
             IdProprietario,
@@ -32,20 +34,19 @@ const vendedoresRepository = {
         VALUES (?, ?)
     `;
 
-    const values = [
-        vendedor.idProprietario,
-        vendedor.nome,
-    ];
+        const values = [
+            vendedor.idProprietario,
+            vendedor.nome,
+        ];
 
-    const [rows] = await connection.execute(sql, values);
+        const [rows] = await connection.execute(sql, values);
 
-    return rows;
-},
+        return rows;
+    },
+    // Update - PUT____________________________________________________________________
+    editar: async (vendedor) => {
 
-
-editar: async (vendedor) => {
-
-    const sql = `
+        const sql = `
         UPDATE Vendedores
             SET
             idProprietario = ?,
@@ -53,23 +54,24 @@ editar: async (vendedor) => {
             WHERE Id = ?
     `;
 
-    const values = [
-        vendedor.idProprietario,
-        vendedor.nome,
-        vendedor.id
-    ];
+        const values = [
+            vendedor.idProprietario,
+            vendedor.nome,
+            vendedor.id
+        ];
 
-    const [rows] = await connection.execute(sql, values);
+        const [rows] = await connection.execute(sql, values);
 
-    return rows;
-},
-deletar : async (id) => {
-    const sql = `
+        return rows;
+    },
+    // Delete - DELETE____________________________________________________________________
+    deletar: async (id) => {
+        const sql = `
         DELETE FROM Vendedores
         WHERE Id = ?
     `;
-    const values = [id];
-    await connection.execute(sql, values);
+        const values = [id];
+        await connection.execute(sql, values);
     }
 }
 

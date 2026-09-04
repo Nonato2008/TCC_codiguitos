@@ -1,11 +1,12 @@
 import { connection } from "../config/Database.js";
 
 const fornecedoresRepository = {
+// CRUD - Create, Read, Update, Delete
 
+    // Read - GET by ID____________________________________________________________________
+    criar: async (fornecedor) => {
 
-criar: async (fornecedor) => {
-
-    const sql = `
+        const sql = `
         INSERT INTO Fornecedores
         (
             Nome,
@@ -14,26 +15,25 @@ criar: async (fornecedor) => {
         VALUES (?, ?)
     `;
 
-    const values = [
-        fornecedor.nome,
-        fornecedor.imagem
-    ];
+        const values = [
+            fornecedor.nome,
+            fornecedor.imagem
+        ];
 
-    const [rows] = await connection.execute(sql, values);
+        const [rows] = await connection.execute(sql, values);
 
-    return rows;
-},
+        return rows;
+    },
 
+    // Update - PUT____________________________________________________________________
+    editar: async (fornecedor) => {
 
-editar: async (fornecedor) => {
+        let sql;
+        let values;
 
-    let sql;
-    let values;
+        if (fornecedor.imagem) {
 
-
-    if (fornecedor.imagem) {
-
-        sql = `
+            sql = `
             UPDATE Fornecedores
             SET
                 Nome = ?,
@@ -41,76 +41,76 @@ editar: async (fornecedor) => {
             WHERE Id = ?
         `;
 
-        values = [
-            fornecedor.nome,
-            fornecedor.imagem,
-            fornecedor.id
-        ];
+            values = [
+                fornecedor.nome,
+                fornecedor.imagem,
+                fornecedor.id
+            ];
 
-    } else {
+        } else {
 
-        sql = `
+            sql = `
             UPDATE Fornecedores
             SET
                 Nome = ?
             WHERE Id = ?
         `;
 
-        values = [
-            fornecedor.nome,
-            fornecedor.id
-        ];
-    }
+            values = [
+                fornecedor.nome,
+                fornecedor.id
+            ];
+        }
 
 
-    const [rows] = await connection.execute(sql, values);
+        const [rows] = await connection.execute(sql, values);
 
-    return rows;
-},
+        return rows;
+    },
 
+    // Delete - DELETE____________________________________________________________________
+    deletar: async (id) => {
 
-deletar: async (id) => {
-
-    const sql = `
+        const sql = `
         DELETE FROM Fornecedores
         WHERE Id = ?
     `;
 
-    const values = [id];
+        const values = [id];
 
-    const [rows] = await connection.execute(sql, values);
+        const [rows] = await connection.execute(sql, values);
 
-    return rows;
-},
+        return rows;
+    },
 
+    // Read - GET____________________________________________________________________
+    selecionar: async () => {
 
-selecionar: async () => {
-
-    const sql = `
+        const sql = `
         SELECT *
         FROM Fornecedores
     `;
 
-    const [rows] = await connection.execute(sql);
+        const [rows] = await connection.execute(sql);
 
-    return rows;
-},
+        return rows;
+    },
 
+    // Read - GET by ID____________________________________________________________________
+    selecionarId: async (id) => {
 
-selecionarId: async (id) => {
-
-    const sql = `
+        const sql = `
         SELECT *
         FROM Fornecedores
         WHERE Id = ?
     `;
 
-    const values = [id];
+        const values = [id];
 
-    const [rows] = await connection.execute(sql, values);
+        const [rows] = await connection.execute(sql, values);
 
-    return rows;
-}
+        return rows;
+    }
 
 
 };

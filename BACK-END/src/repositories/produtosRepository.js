@@ -1,6 +1,7 @@
 import { connection } from "../config/Database.js";
 
 const produtosRepository = {
+// CRUD - Create, Read, Update, Delete
 
     criar: async (produto) => {
 
