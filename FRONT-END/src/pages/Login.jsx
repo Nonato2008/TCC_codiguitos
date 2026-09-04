@@ -141,7 +141,6 @@ export default function Login() {
                             required
                             disabled={loading}
                         />
-
                     </div>
 
                     {/* SENHA */}
@@ -177,7 +176,6 @@ export default function Login() {
                         }}
                         disabled={loading}
                     >
-
                         {loading
                             ? "Entrando..."
                             : "Entrar"
