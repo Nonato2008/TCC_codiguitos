@@ -1,39 +1,46 @@
 import React from "react";
 import Sidebar from "../components/Sidebar";
-import { useProdutos } from "../hooks/useProdutos"; // hook customizado que busca a lista de produtos (provavelmente via API)
+import { useProdutos } from "../hooks/useProdutos";
+import { useVendas } from "../hooks/useVendas";
 import { useNavigate } from "react-router-dom";
 
 export default function Painel() {
   const navigate = useNavigate();
 
-  // Hook retorna os produtos, estado de carregamento e possível erro na busca
   const { produtos, loading, error } = useProdutos();
 
-  // Total de produtos cadastrados (tamanho do array)
+  const {
+    vendas,
+    valorTotal,
+    loading: loadingVendas,
+    error: errorVendas,
+  } = useVendas();
+
+  const vendasLista = Array.isArray(vendas) ? vendas : [];
+
   const produtosTotais = Array.isArray(produtos) ? produtos.length : 0;
 
-  // Filtra produtos cujo Status seja "esgotado" (case-insensitive, com fallback para string vazia)
   const produtosEsgotados = Array.isArray(produtos)
     ? produtos.filter((produto) => {
         const status = String(produto.Status ?? "").toLowerCase();
+
         return status === "esgotado";
       }).length
     : 0;
 
-  // Filtra produtos cujo Status seja "vencido"
-  // Obs: a variável se chama "produtosVencimento" mas representa produtos VENCIDOS, não "a vencer"
   const produtosVencimento = Array.isArray(produtos)
     ? produtos.filter((produto) => {
         const status = String(produto.Status ?? "").toLowerCase();
+
         return status === "vencido";
       }).length
     : 0;
 
-  // Estado de carregamento: mostra sidebar + mensagem central enquanto busca os dados
   if (loading) {
     return (
       <div style={styles.layout}>
         <Sidebar />
+
         <main style={styles.page}>
           <div style={styles.loadingBox}>Carregando resumo do painel...</div>
         </main>
@@ -41,11 +48,11 @@ export default function Painel() {
     );
   }
 
-  // Estado de erro: mostra sidebar + caixa de erro em vermelho
   if (error) {
     return (
       <div style={styles.layout}>
         <Sidebar />
+
         <main style={styles.page}>
           <div style={styles.errorBox}>{error}</div>
         </main>
@@ -53,20 +60,19 @@ export default function Painel() {
     );
   }
 
-  // Renderização principal (dados carregados com sucesso)
-
   return (
     <div style={styles.layout}>
       <Sidebar />
 
       <main style={styles.page}>
-        {/* Cabeçalho da página */}
+        {/* CABEÇALHO */}
         <header style={styles.header}>
           <h2 style={styles.title}>Visão Geral</h2>
+
           <p style={styles.subtitle}>Resumo operacional da loja.</p>
         </header>
 
-        {/* Cards de métricas rápidas (KPIs) */}
+        {/* CARDS */}
         <section style={styles.cards}>
           <DashboardCard
             titulo="Produtos Totais"
@@ -78,42 +84,92 @@ export default function Painel() {
             titulo="Sem Estoque"
             valor={produtosEsgotados}
             icone="production_quantity_limits"
-            tipo="error" // aplica estilo vermelho (borda e ícone)
+            tipo="error"
           />
 
           <DashboardCard
             titulo="Produtos vencidos"
             valor={produtosVencimento}
             icone="event_busy"
-            tipo="warning" // aplica estilo amarelo (borda e ícone)
+            tipo="warning"
           />
         </section>
 
-        {/* Seção inferior com dois cards grandes lado a lado */}
+        {/* PARTE INFERIOR */}
         <section style={styles.bottom}>
-          {/* Card de vendas recentes — ainda sem dados reais, só placeholder */}
+          {/* VENDAS RECENTES */}
           <div style={styles.largeCard}>
             <div style={styles.cardHeader}>
               <h3 style={styles.cardTitle}>Vendas Recentes</h3>
-              <button onClick={() => navigate("/vendas")} style={styles.linkButton} >Ver todas</button>
+
+              <button
+                onClick={() => navigate("/vendas")}
+                style={styles.linkButton}
+              >
+                Ver todas
+              </button>
             </div>
 
-            <div style={styles.empty}>
-              <span className="material-symbols-outlined">point_of_sale</span>
-              <span>Nenhuma venda encontrada.</span>
-            </div>
+            {loadingVendas ? (
+              <div style={styles.empty}>
+                <span className="material-symbols-outlined">
+                  progress_activity
+                </span>
+
+                <span>Carregando vendas...</span>
+              </div>
+            ) : errorVendas ? (
+              <div style={styles.empty}>
+                <span className="material-symbols-outlined">error</span>
+
+                <span>{errorVendas}</span>
+              </div>
+            ) : vendasLista.length > 0 ? (
+              <div style={styles.vendasLista}>
+                {vendasLista.map((venda) => (
+                  <div key={venda.Id} style={styles.vendaItem}>
+                    <div style={styles.vendaInfo}>
+                      <strong style={styles.vendaTitulo}>
+                        Venda #{venda.Id}
+                      </strong>
+
+                      <span style={styles.vendaVendedor}>
+                        Vendedor #{venda.IdVendedor}
+                      </span>
+                    </div>
+
+                    <strong style={styles.vendaValor}>
+                      R${" "}
+                      {Number(venda.ValorTotal || 0)
+                        .toFixed(2)
+                        .replace(".", ",")}
+                    </strong>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={styles.empty}>
+                <span className="material-symbols-outlined">point_of_sale</span>
+
+                <span>Nenhuma venda encontrada.</span>
+              </div>
+            )}
           </div>
 
-          {/* Card de lucro total — também placeholder, sem cálculo real ainda */}
+          {/* LUCRO TOTAL */}
           <div style={styles.largeCard}>
             <div style={styles.cardHeader}>
               <h3 style={styles.cardTitle}>Lucro total</h3>
-              <span className="material-symbols-outlined">local_fire_department</span>
+
+              <span className="material-symbols-outlined">
+                local_fire_department
+              </span>
             </div>
 
-            <div style={styles.empty}>
-              <span className="material-symbols-outlined">inventory</span>
-              <span>Nenhuma venda feita.</span>
+            <div style={styles.lucroContainer}>
+              <strong style={styles.lucro}>
+                R$ {valorTotal.toFixed(2).replace(".", ",")}
+              </strong>
             </div>
           </div>
         </section>
@@ -122,14 +178,14 @@ export default function Painel() {
   );
 }
 
-// Componente reutilizável para os cards de métricas do topo
 function DashboardCard({ titulo, valor, icone, tipo }) {
   return (
     <div
       style={{
         ...styles.card,
-        // Aplica estilos condicionais de acordo com o "tipo" do card
+
         ...(tipo === "error" ? styles.errorCard : {}),
+
         ...(tipo === "warning" ? styles.warningCard : {}),
       }}
     >
@@ -138,7 +194,9 @@ function DashboardCard({ titulo, valor, icone, tipo }) {
           <div
             style={{
               ...styles.icon,
+
               ...(tipo === "error" ? styles.errorIcon : {}),
+
               ...(tipo === "warning" ? styles.warningIcon : {}),
             }}
           >
@@ -148,16 +206,15 @@ function DashboardCard({ titulo, valor, icone, tipo }) {
           <h3 style={styles.cardLabel}>{titulo}</h3>
         </div>
 
-        {/* Seta decorativa, sugere que o card é clicável (mas não tem onClick implementado) */}
         <span className="material-symbols-outlined" style={styles.arrow}>
           arrow_forward
         </span>
       </div>
 
-      {/* Valor numérico em destaque, muda de cor se for tipo "error" */}
       <strong
         style={{
           ...styles.value,
+
           ...(tipo === "error" ? styles.errorValue : {}),
         }}
       >
@@ -167,7 +224,6 @@ function DashboardCard({ titulo, valor, icone, tipo }) {
   );
 }
 
-// Objeto de estilos inline (CSS-in-JS manual, sem styled-components)
 const styles = {
   layout: {
     display: "flex",
@@ -176,7 +232,7 @@ const styles = {
   },
 
   page: {
-    marginLeft: "256px", // compensa a largura fixa da Sidebar
+    marginLeft: "256px",
     width: "calc(100% - 256px)",
     padding: "32px 32px 40px",
     boxSizing: "border-box",
@@ -227,7 +283,7 @@ const styles = {
 
   cards: {
     display: "grid",
-    gridTemplateColumns: "repeat(3, minmax(0, 1fr))", // 3 colunas iguais
+    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
     gap: "24px",
     marginBottom: "24px",
   },
@@ -242,11 +298,11 @@ const styles = {
   },
 
   errorCard: {
-    borderLeft: "4px solid #ba1a1a", // faixa vermelha à esquerda
+    borderLeft: "4px solid #ba1a1a",
   },
 
   warningCard: {
-    borderLeft: "4px solid #eab308", // faixa amarela à esquerda
+    borderLeft: "4px solid #eab308",
   },
 
   cardTop: {
@@ -265,7 +321,7 @@ const styles = {
     width: "40px",
     height: "40px",
     borderRadius: "8px",
-    backgroundColor: "#d5e3fc", // azul padrão
+    backgroundColor: "#d5e3fc",
     color: "#303e51",
     display: "flex",
     alignItems: "center",
@@ -302,12 +358,12 @@ const styles = {
   },
 
   errorValue: {
-    color: "#ba1a1a", // valor em vermelho quando é card de erro
+    color: "#ba1a1a",
   },
 
   bottom: {
     display: "grid",
-    gridTemplateColumns: "repeat(2, minmax(0, 1fr))", // 2 colunas iguais
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
     gap: "24px",
   },
 
@@ -349,5 +405,42 @@ const styles = {
     justifyContent: "center",
     gap: "8px",
     color: "#75777d",
+  },
+
+  vendasLista: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+  },
+
+  vendaItem: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "14px 16px",
+    border: "1px solid #e2e8f0",
+    borderRadius: "8px",
+    backgroundColor: "#ffffff",
+  },
+
+  vendaInfo: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "4px",
+  },
+
+  vendaTitulo: {
+    fontSize: "14px",
+    color: "#111c2d",
+  },
+
+  vendaVendedor: {
+    fontSize: "12px",
+    color: "#75777d",
+  },
+
+  vendaValor: {
+    fontSize: "15px",
+    color: "#111c2d",
   },
 };

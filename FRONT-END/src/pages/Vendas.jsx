@@ -20,9 +20,6 @@ export default function Vendas() {
         <section style={styles.panel}>
           <div style={styles.panelHeader}>
             <h2 style={styles.panelTitle}>Últimas vendas</h2>
-            <button type="button" style={styles.secondaryButton}>
-              Filtrar
-            </button>
           </div>
 
           <div style={styles.tableWrap}>
