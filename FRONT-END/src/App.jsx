@@ -9,6 +9,7 @@ import CadastroProdutos from "./pages/CadastroProduto";
 import Fornecedores from "./pages/Fornecedor";
 import CadastrarFornecedor from "./pages/CadastroFornecedor";
 import GerenciamentoEstoque from "./pages/GerenciamentoEstoque";
+import EntradaEstoque from "./pages/EntradaEstoque";
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
         <Route path="/cadastroProdutos" element={<CadastroProdutos />} />
         <Route path="/fornecedores/cadastrar" element={<CadastrarFornecedor />} />
         {/*<Route path="/gerenciamentoEstoque" element={<GerenciamentoEstoque />} />*/}
+        <Route path="/entradaEstoque" element={<EntradaEstoque />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
