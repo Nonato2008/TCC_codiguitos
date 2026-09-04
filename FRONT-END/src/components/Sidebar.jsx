@@ -14,15 +14,9 @@ const menu = [
         rota: "/cadastroProdutos"
     },
     {
-<<<<<<< HEAD
-        nome: "🚧Gerenciamento de Estoque🚧", 
-        icone: "inventory",
-        rota: "/gerenciamentoEstoque"
-=======
         nome: "Fornecedores",
         icone: "business",
         rota: "/fornecedores"
->>>>>>> 1acc5a0b977cc1a464d2423872df8492c492fa17
     }
 ];
 

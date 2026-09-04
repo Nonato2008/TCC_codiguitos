@@ -5,9 +5,8 @@ import Login from "./pages/Login";
 import Painel from "./pages/Painel";
 import CadastroProdutos from "./pages/CadastroProduto";
 import Fornecedores from "./pages/Fornecedor";
-import CadastrarFornecedor from "./pages/CadastrarFornecedor";
-
-
+import CadastrarFornecedor from "./pages/CadastroFornecedor";
+import GerenciamentoEstoque from "./pages/GerenciamentoEstoque";
 
 export default function App() {
   return (
@@ -19,7 +18,8 @@ export default function App() {
         <Route path="/painel" element={<Painel />} />
         <Route path="/fornecedores" element={<Fornecedores />} />
         <Route path="/cadastroProdutos" element={<CadastroProdutos />} />
-        <Route path="/fornecedores/cadastrar"element={<CadastrarFornecedor />}/>
+        <Route path="/fornecedores/cadastrar" element={<CadastrarFornecedor />} />
+        <Route path="/gerenciamentoEstoque" element={<GerenciamentoEstoque />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
