@@ -1,26 +1,33 @@
 import React from "react";
 import Sidebar from "../components/Sidebar";
 import { useProdutos } from "../hooks/useProdutos"; // hook customizado que busca a lista de produtos (provavelmente via API)
+import { useNavigate } from "react-router-dom";
 
 export default function Painel() {
+  const navigate = useNavigate();
+
   // Hook retorna os produtos, estado de carregamento e possível erro na busca
   const { produtos, loading, error } = useProdutos();
 
   // Total de produtos cadastrados (tamanho do array)
-  const produtosTotais = produtos.length;
+  const produtosTotais = Array.isArray(produtos) ? produtos.length : 0;
 
   // Filtra produtos cujo Status seja "esgotado" (case-insensitive, com fallback para string vazia)
-  const produtosEsgotados = produtos.filter((produto) => {
-    const status = String(produto.Status ?? "").toLowerCase();
-    return status === "esgotado";
-  }).length;
+  const produtosEsgotados = Array.isArray(produtos)
+    ? produtos.filter((produto) => {
+        const status = String(produto.Status ?? "").toLowerCase();
+        return status === "esgotado";
+      }).length
+    : 0;
 
   // Filtra produtos cujo Status seja "vencido"
   // Obs: a variável se chama "produtosVencimento" mas representa produtos VENCIDOS, não "a vencer"
-  const produtosVencimento = produtos.filter((produto) => {
-    const status = String(produto.Status ?? "").toLowerCase();
-    return status === "vencido";
-  }).length;
+  const produtosVencimento = Array.isArray(produtos)
+    ? produtos.filter((produto) => {
+        const status = String(produto.Status ?? "").toLowerCase();
+        return status === "vencido";
+      }).length
+    : 0;
 
   // Estado de carregamento: mostra sidebar + mensagem central enquanto busca os dados
   if (loading) {
@@ -87,7 +94,7 @@ export default function Painel() {
           <div style={styles.largeCard}>
             <div style={styles.cardHeader}>
               <h3 style={styles.cardTitle}>Vendas Recentes</h3>
-              <button style={styles.linkButton}>Ver todas</button>
+              <button onClick={() => navigate("/vendas")} style={styles.linkButton} >Ver todas</button>
             </div>
 
             <div style={styles.empty}>
