@@ -55,8 +55,6 @@ export default function Painel() {
 
   // Renderização principal (dados carregados com sucesso)
 
-const navigate = useNavigate();
-
   return (
     <div style={styles.layout}>
       <Sidebar />
