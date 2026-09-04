@@ -1,6 +1,7 @@
 import React from "react";
 import Sidebar from "../components/Sidebar";
 import { useProdutos } from "../hooks/useProdutos"; // hook customizado que busca a lista de produtos (provavelmente via API)
+import { useNavigate } from "react-router-dom";
 
 export default function Painel() {
   // Hook retorna os produtos, estado de carregamento e possível erro na busca
@@ -47,6 +48,9 @@ export default function Painel() {
   }
 
   // Renderização principal (dados carregados com sucesso)
+
+const navigate = useNavigate();
+
   return (
     <div style={styles.layout}>
       <Sidebar />
