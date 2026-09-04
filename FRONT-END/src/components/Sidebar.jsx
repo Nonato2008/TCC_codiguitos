@@ -17,11 +17,6 @@ const menu = [
         nome: "Fornecedores",
         icone: "business",
         rota: "/fornecedores"
-    },
-    {
-        nome: "Gerenciamento de Estoque",
-        icone: "inventory",
-        rota: "/gerenciamentoEstoque"
     }
 ];
 
