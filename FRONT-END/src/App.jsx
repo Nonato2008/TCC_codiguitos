@@ -5,7 +5,7 @@ import Login from "./pages/Login";
 import Painel from "./pages/Painel";
 import CadastroProdutos from "./pages/CadastroProduto";
 import Fornecedores from "./pages/Fornecedor";
-import CadastrarFornecedor from "./pages/CadastrarFornecedor";
+import CadastrarFornecedor from "./pages/CadastroFornecedor";
 
 
 
