@@ -7,80 +7,126 @@ import { codiguitos_api } from "../services/tcc.api";
 import { buscarProdutos } from "../services/produtosService";
 
 const estadoInicial = {
-    idFornecedor: "1",
-    nome: "",
-    preco: "",
-    quantidade: "",
-    dataVenc: "",
+    idProduto: "",
+    idVendedor: "",
+    quantidade: "1",
+    valorUnitario: "0.00",
+    valorTotal: "0.00",
+    dataVenda: new Date().toISOString().split("T")[0],
+    formaPagamento: "dinheiro",
+    observacoes: "",
 };
 
-export default function CadastroProdutos() {
+export default function CadastroVendas() {
     const [form, setForm] = useState(estadoInicial);
+    const [produtos, setProdutos] = useState([]);
+    const [vendedores, setVendedores] = useState([
+        { id: 1, nome: "João Silva" },
+        { id: 2, nome: "Maria Santos" },
+        { id: 3, nome: "Pedro Oliveira" },
+        { id: 4, nome: "Ana Costa" },
+    ]);
     const [loading, setLoading] = useState(false);
-    // mensagem.type controla o estilo do AlertMessage ("success" | "error" | "")
+    const [carregandoProdutos, setCarregandoProdutos] = useState(false);
     const [mensagem, setMensagem] = useState({ type: "", text: "" });
 
-    function atualizarCampo(event) {
-        const { name, value, files } = event.target;
+    // Carregar produtos disponíveis
+    useState(() => {
+        async function carregarProdutos() {
+            setCarregandoProdutos(true);
+            try {
+                const produtosCarregados = await buscarProdutos();
+                setProdutos(produtosCarregados);
+            } catch (error) {
+                console.error("Erro ao carregar produtos:", error);
+                setMensagem({
+                    type: "error",
+                    text: "Não foi possível carregar os produtos disponíveis.",
+                });
+            } finally {
+                setCarregandoProdutos(false);
+            }
+        }
+        carregarProdutos();
+    }, []);
 
-        setForm((anterior) => ({ ...anterior, [name]: value }));
+    function atualizarCampo(event) {
+        const { name, value } = event.target;
+        
+        setForm((anterior) => {
+            const novoForm = { ...anterior, [name]: value };
+            
+            // Calcula automaticamente o valor total quando produto ou quantidade mudam
+            if (name === "idProduto" || name === "quantidade") {
+                const produtoSelecionado = produtos.find(p => p.id === Number(novoForm.idProduto));
+                if (produtoSelecionado) {
+                    const quantidade = Number(novoForm.quantidade) || 0;
+                    novoForm.valorUnitario = produtoSelecionado.preco.toFixed(2);
+                    novoForm.valorTotal = (produtoSelecionado.preco * quantidade).toFixed(2);
+                }
+            }
+            
+            return novoForm;
+        });
     }
 
-    async function cadastrarProduto(event) {
+    async function cadastrarVenda(event) {
         event.preventDefault();
 
-        // Validação manual campo a campo, na ordem em que aparecem no form.
-        // Cada `return` antecipado evita chamar a API com dados incompletos.
-        if (!form.nome.trim()) {
-            setMensagem({ type: "error", text: "Informe o nome do produto." });
+        // Validação manual campo a campo
+        if (!form.idProduto) {
+            setMensagem({ type: "error", text: "Selecione um produto." });
             return;
         }
 
-        if (!form.preco || Number(form.preco) <= 0) {
-            setMensagem({ type: "error", text: "Informe um preço válido." });
+        if (!form.idVendedor) {
+            setMensagem({ type: "error", text: "Selecione um vendedor." });
             return;
         }
 
-        if (!form.quantidade || Number(form.quantidade) < 0) {
-            setMensagem({ type: "error", text: "Informe a quantidade em estoque." });
+        if (!form.quantidade || Number(form.quantidade) <= 0) {
+            setMensagem({ type: "error", text: "Informe uma quantidade válida." });
             return;
         }
 
-        if (!form.dataVenc) {
-            setMensagem({ type: "error", text: "Selecione a data de vencimento." });
+        if (!form.valorTotal || Number(form.valorTotal) <= 0) {
+            setMensagem({ type: "error", text: "O valor total deve ser maior que zero." });
+            return;
+        }
+
+        if (!form.dataVenda) {
+            setMensagem({ type: "error", text: "Selecione a data da venda." });
             return;
         }
 
         setLoading(true);
-        // Limpa mensagem anterior antes de tentar novamente
         setMensagem({ type: "", text: "" });
 
         try {
-            // FormData é obrigatório aqui porque estamos enviando um arquivo
-            // (imagem) junto com os demais campos — não dá pra mandar JSON puro.
-            const dados = new FormData();
-            dados.append("idFornecedor", String(form.idFornecedor || 1));
-            dados.append("nome", form.nome.trim());
-            dados.append("preco", String(form.preco));
-            dados.append("quantidade", String(form.quantidade));
-            dados.append("dataVenc", form.dataVenc);
+            const dados = {
+                idProduto: Number(form.idProduto),
+                idVendedor: Number(form.idVendedor),
+                quantidade: Number(form.quantidade),
+                valorUnitario: Number(form.valorUnitario),
+                valorTotal: Number(form.valorTotal),
+                dataVenda: form.dataVenda,
+                formaPagamento: form.formaPagamento,
+                observacoes: form.observacoes?.trim() || "",
+            };
 
-            await codiguitos_api.post("/produtos", dados, {
+            await codiguitos_api.post("/vendas", dados, {
                 headers: {
-                    // Necessário explicitar multipart/form-data por causa do upload de arquivo
-                    "Content-Type": "multipart/form-data",
+                    "Content-Type": "application/json",
                 },
             });
 
-            setMensagem({ type: "success", text: "Produto cadastrado com sucesso!" });
-            // Reseta o formulário após sucesso, incluindo o input de arquivo
+            setMensagem({ type: "success", text: "Venda registrada com sucesso!" });
             setForm(estadoInicial);
         } catch (error) {
             console.error(error);
-            // Prioriza mensagem de erro vinda da API; usa fallback genérico se não houver
             setMensagem({
                 type: "error",
-                text: error?.response?.data?.message || "Erro ao cadastrar produto.",
+                text: error?.response?.data?.message || "Erro ao registrar venda.",
             });
         } finally {
             setLoading(false);
@@ -93,67 +139,125 @@ export default function CadastroProdutos() {
 
             <main style={styles.page}>
                 <header style={styles.header}>
-                    <h2 style={styles.title}>Cadastro de Produtos</h2>
-                    <p style={styles.subtitle}>Adicione novos itens ao estoque da adega.</p>
+                    <h2 style={styles.title}>Cadastro de Vendas</h2>
+                    <p style={styles.subtitle}>Registre novas vendas e acompanhe o faturamento.</p>
                 </header>
 
                 <section style={styles.card}>
                     <AlertMessage type={mensagem.type} message={mensagem.text} />
 
-                    <form onSubmit={cadastrarProduto} style={styles.form}>
+                    <form onSubmit={cadastrarVenda} style={styles.form}>
                         <div style={styles.grid}>
-                            <FormField
-                                label="Fornecedor"
-                                name="idFornecedor"
-                                type="number"
-                                min="1"
-                                value={form.idFornecedor}
-                                onChange={atualizarCampo}
-                            />
+                            <div style={styles.field}>
+                                <label style={styles.label}>Produto</label>
+                                <select
+                                    name="idProduto"
+                                    value={form.idProduto}
+                                    onChange={atualizarCampo}
+                                    style={styles.select}
+                                    disabled={carregandoProdutos}
+                                >
+                                    <option value="">Selecione um produto...</option>
+                                    {produtos.map((produto) => (
+                                        <option key={produto.id} value={produto.id}>
+                                            {produto.nome} - R$ {Number(produto.preco).toFixed(2)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
 
-                            <FormField
-                                label="Nome do produto"
-                                name="nome"
-                                placeholder="Ex: Vinho Tinto"
-                                value={form.nome}
-                                onChange={atualizarCampo}
-                            />
-
-                            <FormField
-                                label="Preço"
-                                name="preco"
-                                type="number"
-                                min="0.01"
-                                step="0.01"
-                                placeholder="0.00"
-                                value={form.preco}
-                                onChange={atualizarCampo}
-                            />
+                            <div style={styles.field}>
+                                <label style={styles.label}>Vendedor</label>
+                                <select
+                                    name="idVendedor"
+                                    value={form.idVendedor}
+                                    onChange={atualizarCampo}
+                                    style={styles.select}
+                                >
+                                    <option value="">Selecione um vendedor...</option>
+                                    {vendedores.map((vendedor) => (
+                                        <option key={vendedor.id} value={vendedor.id}>
+                                            {vendedor.nome}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
 
                             <FormField
                                 label="Quantidade"
                                 name="quantidade"
                                 type="number"
-                                min="0"
+                                min="1"
                                 step="1"
-                                placeholder="0"
+                                placeholder="1"
                                 value={form.quantidade}
                                 onChange={atualizarCampo}
                             />
 
                             <FormField
-                                label="Data de vencimento"
-                                name="dataVenc"
+                                label="Valor Unitário (R$)"
+                                name="valorUnitario"
+                                type="number"
+                                min="0.01"
+                                step="0.01"
+                                placeholder="0.00"
+                                value={form.valorUnitario}
+                                onChange={atualizarCampo}
+                                disabled={true}
+                            />
+
+                            <FormField
+                                label="Valor Total (R$)"
+                                name="valorTotal"
+                                type="number"
+                                min="0.01"
+                                step="0.01"
+                                placeholder="0.00"
+                                value={form.valorTotal}
+                                onChange={atualizarCampo}
+                                disabled={true}
+                            />
+
+                            <FormField
+                                label="Data da Venda"
+                                name="dataVenda"
                                 type="date"
-                                value={form.dataVenc}
+                                value={form.dataVenda}
                                 onChange={atualizarCampo}
                             />
 
+                            <div style={styles.field}>
+                                <label style={styles.label}>Forma de Pagamento</label>
+                                <select
+                                    name="formaPagamento"
+                                    value={form.formaPagamento}
+                                    onChange={atualizarCampo}
+                                    style={styles.select}
+                                >
+                                    <option value="dinheiro">Dinheiro</option>
+                                    <option value="cartao_credito">Cartão de Crédito</option>
+                                    <option value="cartao_debito">Cartão de Débito</option>
+                                    <option value="pix">PIX</option>
+                                    <option value="boleto">Boleto</option>
+                                </select>
+                            </div>
+
+                            <div style={styles.fieldFull}>
+                                <label style={styles.label}>Observações</label>
+                                <textarea
+                                    name="observacoes"
+                                    value={form.observacoes}
+                                    onChange={atualizarCampo}
+                                    placeholder="Observações adicionais sobre a venda (opcional)"
+                                    style={styles.textarea}
+                                    rows="3"
+                                />
+                            </div>
                         </div>
 
                         <div style={styles.actions}>
                             <PrimaryButton disabled={loading}>
-                                {loading ? "Cadastrando..." : "Cadastrar produto"}
+                                {loading ? "Registrando..." : "Registrar venda"}
                             </PrimaryButton>
                         </div>
                     </form>
@@ -170,7 +274,6 @@ const styles = {
         backgroundColor: "#f3f5f9",
     },
     page: {
-        // Compensa a largura fixa da Sidebar (256px) para o conteúdo não ficar por baixo dela
         marginLeft: "256px",
         width: "calc(100% - 256px)",
         padding: "32px",
@@ -213,17 +316,38 @@ const styles = {
         flexDirection: "column",
         gap: "8px",
     },
+    fieldFull: {
+        display: "flex",
+        flexDirection: "column",
+        gap: "8px",
+        gridColumn: "span 2",
+    },
     label: {
         fontWeight: 600,
         color: "#303e51",
     },
-    fileInput: {
+    select: {
         width: "100%",
         boxSizing: "border-box",
-        border: "1px dashed #cbd5e1",
-        borderRadius: "10px",
-        padding: "12px",
-        backgroundColor: "#f8fafc",
+        padding: "10px 12px",
+        border: "1px solid #cbd5e1",
+        borderRadius: "8px",
+        fontSize: "14px",
+        backgroundColor: "#ffffff",
+        color: "#111c2d",
+        fontFamily: "Inter, sans-serif",
+    },
+    textarea: {
+        width: "100%",
+        boxSizing: "border-box",
+        padding: "10px 12px",
+        border: "1px solid #cbd5e1",
+        borderRadius: "8px",
+        fontSize: "14px",
+        backgroundColor: "#ffffff",
+        color: "#111c2d",
+        fontFamily: "Inter, sans-serif",
+        resize: "vertical",
     },
     actions: {
         display: "flex",
