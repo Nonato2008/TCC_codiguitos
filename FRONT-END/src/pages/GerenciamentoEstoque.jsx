@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import { useProdutos } from "../hooks/useProdutos";
+import { useFornecedores } from "../hooks/useFornecedores";
+import { atualizarProduto } from "../services/produtosService";
 
 function getImagemProduto(imagem) {
   if (!imagem) {
-    return "/logo.png";
+    return "/example.jpg";
   }
 
   if (/^https?:\/\//i.test(imagem)) {
@@ -15,20 +17,45 @@ function getImagemProduto(imagem) {
   return `http://localhost:8000${caminho}`;
 }
 
+function montarPayloadProduto(produto, quantidadeAtual) {
+  return {
+    idFornecedor: produto.IdFornecedor ?? produto.idFornecedor ?? 1,
+    nome: produto.nome ?? produto.Nome ?? "",
+    preco: Number(produto.Preco ?? produto.preco ?? 0),
+    quantidade: Number(quantidadeAtual ?? produto.quantidade ?? 0),
+    dataVenc: produto.DataVenc ?? produto.dataVenc ?? "2025-12-31",
+  };
+}
+
 export default function GerenciamentoEstoque() {
   const { produtos, loading, error } = useProdutos();
+  const { fornecedores } = useFornecedores();
   const [listaProdutos, setListaProdutos] = useState([]);
+
+  const getFornecedorNome = (produto) => {
+    const idFornecedor = Number(produto.IdFornecedor ?? produto.idFornecedor ?? 0);
+    const fornecedor = (fornecedores || []).find(
+      (item) => Number(item.Id ?? item.id ?? 0) === idFornecedor
+    );
+
+    return fornecedor?.Nome ?? fornecedor?.nome ?? "Fornecedor não informado";
+  };
 
   useEffect(() => {
     setListaProdutos(
       (produtos || []).map((produto) => ({
         ...produto,
-        id: produto.id ?? produto._id ?? produto.idProduto ?? produto.nome,
-        nome: produto.nome || "Produto sem nome",
-        quantidade: Number(produto.quantidade ?? 0),
-        quantidadeAjuste: 1,
-        ativoParaVenda: produto.ativoParaVenda ?? true,
-        imagem: getImagemProduto(produto.imagem),
+        id:
+          produto.Id ?? produto.id ?? produto._id ?? produto.idProduto ?? produto.Nome ?? produto.nome,
+        nome: produto.Nome ?? produto.nome,
+        quantidade: Number(produto.Quantidade ?? produto.quantidade ?? 0),
+        quantidadeAjuste: 0,
+        ativoParaVenda:
+          produto.ativoParaVenda ?? (produto.Status ? produto.Status !== "Esgotado" : true),
+        imagem:
+          produto.Quantidade === 0 || produto.quantidade === 0
+            ? "esgotado.jpg"
+            : getImagemProduto(produto.Imagem ?? produto.imagem),
       }))
     );
   }, [produtos]);
@@ -42,6 +69,7 @@ export default function GerenciamentoEstoque() {
           produto.id === idProduto ? { ...produto, quantidadeAjuste: "" } : produto
         )
       );
+
       return;
     }
 
@@ -60,14 +88,27 @@ export default function GerenciamentoEstoque() {
     );
   }
 
-  function ajustarEstoque(tipo, idProduto) {
-    const ajuste = Number(
-      listaProdutos.find((produto) => produto.id === idProduto)?.quantidadeAjuste ?? 0
-    );
+  async function salvarProdutoNoBanco(idProduto, quantidadeAtual) {
+    const produto = listaProdutos.find((p) => p.id === idProduto);
+    if (!produto) return;
 
-    if (!Number.isFinite(ajuste) || ajuste <= 0) {
+    const payload = montarPayloadProduto(produto, quantidadeAtual);
+    await atualizarProduto(idProduto, payload);
+  }
+
+  async function ajustarEstoque(tipo, idProduto) {
+    const produtoAtual = listaProdutos.find((produto) => produto.id === idProduto);
+    const ajuste = Number(produtoAtual?.quantidadeAjuste ?? 0);
+
+    if (!produtoAtual || !Number.isFinite(ajuste) || ajuste <= 0) {
       return;
     }
+
+    const quantidadeAnterior = produtoAtual.quantidade;
+    const novaQuantidade =
+      tipo === "mais"
+        ? produtoAtual.quantidade + ajuste
+        : Math.max(0, produtoAtual.quantidade - ajuste);
 
     setListaProdutos((atual) =>
       atual.map((produto) => {
@@ -75,18 +116,27 @@ export default function GerenciamentoEstoque() {
           return produto;
         }
 
-        const novaQuantidade =
-          tipo === "mais"
-            ? produto.quantidade + ajuste
-            : Math.max(0, produto.quantidade - ajuste);
-
         return {
           ...produto,
           quantidade: novaQuantidade,
-          quantidadeAjuste: 1,
+          quantidadeAjuste: 0,
         };
       })
     );
+
+    try {
+      await salvarProdutoNoBanco(idProduto, novaQuantidade);
+    } catch (err) {
+      console.error(err);
+      setListaProdutos((atual) =>
+        atual.map((produto) =>
+          produto.id === idProduto
+            ? { ...produto, quantidade: quantidadeAnterior, quantidadeAjuste: ajuste }
+            : produto
+        )
+      );
+      alert("Falha ao atualizar o estoque no banco de dados.");
+    }
   }
 
   function alternarDisponibilidade(idProduto) {
@@ -142,6 +192,7 @@ export default function GerenciamentoEstoque() {
                     </div>
 
                     <h3 style={styles.productName}>{produto.nome}</h3>
+                    <div style={styles.fornecedorName}>{getFornecedorNome(produto)}</div>
 
                     <div style={styles.stockSummary}>
                       <span style={styles.label}>Estoque atual</span>
@@ -291,9 +342,16 @@ const styles = {
     color: "#991b1b",
   },
   productName: {
-    margin: 0,
-    fontSize: "30px",
-    color: "#111827",
+    margin: "0 0 6px",
+    fontSize: "22px",
+    color: "#111c2d",
+    fontWeight: 700,
+  },
+  fornecedorName: {
+    margin: "0 0 14px",
+    fontSize: "14px",
+    color: "#54657a",
+    fontWeight: 600,
   },
   stockSummary: {
     display: "flex",

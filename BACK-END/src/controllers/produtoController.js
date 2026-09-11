@@ -22,6 +22,24 @@ const calcularStatus = (quantidade, dataVenc) => {
     return statusPed.ESTOQUE;
 };
 
+const normalizarDataParaBanco = (valor) => {
+    if (!valor) return null;
+
+    const texto = String(valor).trim();
+    if (!texto) return null;
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(texto)) {
+        return texto;
+    }
+
+    const data = new Date(texto);
+    if (Number.isNaN(data.getTime())) {
+        return texto;
+    }
+
+    return data.toISOString().slice(0, 10);
+};
+
 const produtoController = {
 
     inserir: async (req, res) => {
@@ -31,10 +49,11 @@ const produtoController = {
             }
 
             const { idFornecedor, nome, preco, quantidade, dataVenc } = req.body;
+            const dataVencNormalizada = normalizarDataParaBanco(dataVenc);
 
             const imagem = `/uploads/imagens/${req.file.filename}`;
 
-            const produto = Produtos.criar({ idFornecedor, nome, preco, quantidade, status: calcularStatus(quantidade, dataVenc), imagem, dataVenc });
+            const produto = Produtos.criar({ idFornecedor, nome, preco, quantidade, status: calcularStatus(quantidade, dataVencNormalizada), imagem, dataVenc: dataVencNormalizada });
 
             const result = await produtosRepository.criar(produto);
 
@@ -53,25 +72,38 @@ const produtoController = {
     alterar: async (req, res) => {
         try {
             const id = req.params.id;
+            const produtoAtual = (await produtosRepository.selecionarId(id))[0] || {};
 
             const {
-
-                idFornecedor, nome, preco, quantidade, dataVenc
+                idFornecedor,
+                nome,
+                preco,
+                quantidade,
+                dataVenc,
+                imagem: imagemInformada
             } = req.body;
 
             const imagem = req.file
                 ? `/uploads/imagens/${req.file.filename}`
-                : null;
+                : (typeof imagemInformada === 'string' && imagemInformada.trim() !== ''
+                    ? imagemInformada
+                    : (produtoAtual.Imagem || produtoAtual.imagem || '/uploads/imagens/default.png'));
 
-            const status = calcularStatus(
-
-                quantidade,
-                dataVenc
-            );
+            const dataVencFinal = normalizarDataParaBanco(dataVenc || produtoAtual.DataVenc || produtoAtual.dataVenc || '2035-12-31');
+            const quantidadeFinal = Number(quantidade ?? produtoAtual.Quantidade ?? produtoAtual.quantidade ?? 0);
+            const precoFinal = Number(preco ?? produtoAtual.Preco ?? produtoAtual.preco ?? 1);
+            const idFornecedorFinal = Number(idFornecedor ?? produtoAtual.IdFornecedor ?? produtoAtual.idFornecedor ?? 1);
+            const nomeFinal = nome || produtoAtual.Nome || produtoAtual.nome || 'Produto';
+            const status = calcularStatus(quantidadeFinal, dataVencFinal);
 
             const produto = Produtos.alterar({
-
-                idFornecedor, nome, preco, quantidade, status, imagem, dataVenc
+                idFornecedor: idFornecedorFinal,
+                nome: nomeFinal,
+                preco: precoFinal,
+                quantidade: quantidadeFinal,
+                status,
+                imagem,
+                dataVenc: dataVencFinal
             }, id);
 
             const result = await produtosRepository.editar(produto);
