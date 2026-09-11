@@ -4,8 +4,6 @@ export const buscarFornecedores = async () => {
     try {
         const response = await codiguitos_api.get("/fornecedores");
 
-        console.log("API:", response.data);
-
         return response.data;
     } catch (error) {
         console.error("Erro ao buscar fornecedores:", error);

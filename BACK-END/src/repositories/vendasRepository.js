@@ -516,17 +516,55 @@ const vendasRepository = {
     },
 
 
-    selecionarId: async (id) => {
+   selecionarId: async (id) => {
 
-        const [rows] = await connection.execute(
-            `SELECT *
-             FROM Vendas
-             WHERE Id = ?`,
-            [id]
-        );
+    // Busca os dados da venda e o vendedor
+    const [vendas] = await connection.execute(
+        `
+        SELECT
+            Vendas.Id,
+            Vendas.IdProprietario,
+            Vendas.IdVendedor,
+            Vendedores.Nome AS NomeVendedor,
+            Vendas.ValorTotal,
+            Vendas.DataCad
+        FROM Vendas
+        INNER JOIN Vendedores
+            ON Vendedores.Id = Vendas.IdVendedor
+        WHERE Vendas.Id = ?
+        `,
+        [id]
+    );
 
-        return rows[0] ?? null;
-    },
+    // Se não encontrou a venda
+    if (vendas.length === 0) {
+        return null;
+    }
+
+    // Busca os produtos que pertencem à venda
+    const [itens] = await connection.execute(
+        `
+        SELECT
+            Itens_vendas.Id,
+            Itens_vendas.IdVenda,
+            Itens_vendas.IdProduto,
+            Produtos.Nome AS NomeProduto,
+            Itens_vendas.Qtd,
+            Itens_vendas.Valor
+        FROM Itens_vendas
+        INNER JOIN Produtos
+            ON Produtos.Id = Itens_vendas.IdProduto
+        WHERE Itens_vendas.IdVenda = ?
+        `,
+        [id]
+    );
+
+    // Retorna a venda junto com os produtos
+    return {
+        ...vendas[0],
+        Itens: itens
+    };
+},
 
 
     adicionarItem: async (vendaId, item) => {
