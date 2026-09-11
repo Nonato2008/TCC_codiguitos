@@ -41,6 +41,20 @@ function getPrecoProduto(produto) {
   );
 }
 
+function getEstoqueProduto(produto) {
+  return Number(
+    produto?.Quantidade ??
+      produto?.quantidade ??
+      produto?.Estoque ??
+      produto?.estoque ??
+      produto?.QuantidadeEstoque ??
+      produto?.quantidadeEstoque ??
+      produto?.Qtd ??
+      produto?.qtd ??
+      0
+  );
+}
+
 // ---------- Normaliza retorno: array direto ou { result: [...] } ----------
 function normalizarLista(lista) {
   if (Array.isArray(lista)) return lista;
@@ -58,6 +72,8 @@ export default function CadastroVendas() {
   const [produtos, setProdutos] = useState([]);
   const [vendedores, setVendedores] = useState([]);
   const [proprietarios, setProprietarios] = useState([]);
+
+  const [buscaProduto, setBuscaProduto] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [carregandoProdutos, setCarregandoProdutos] = useState(false);
@@ -132,11 +148,26 @@ export default function CadastroVendas() {
 
   // ---------- Manipulação dos itens ----------
   function atualizarItem(index, campo, valor) {
+    // Verifica duplicidade ao trocar o produto
+    if (campo === "idProduto" && valor) {
+      const jaExiste = itens.some(
+        (item, i) =>
+          i !== index && Number(item.idProduto) === Number(valor)
+      );
+
+      if (jaExiste) {
+        setMensagem({
+          type: "error",
+          text: "Esse produto já foi adicionado à venda.",
+        });
+        return;
+      }
+    }
+
     setItens((anterior) => {
       const novos = [...anterior];
       const item = { ...novos[index], [campo]: valor };
 
-      // Recalcula valor unitário/total quando produto ou quantidade mudam
       if (campo === "idProduto" || campo === "quantidade") {
         const produto = produtos.find(
           (p) => Number(getIdProduto(p)) === Number(item.idProduto)
@@ -144,7 +175,13 @@ export default function CadastroVendas() {
 
         if (produto) {
           const preco = getPrecoProduto(produto);
-          const qtd = Number(item.quantidade) || 0;
+          const estoque = getEstoqueProduto(produto);
+
+          let qtd = Number(item.quantidade) || 0;
+          if (qtd > estoque) qtd = estoque;
+          if (qtd < 1 && estoque >= 1) qtd = 1;
+
+          item.quantidade = String(qtd);
           item.valorUnitario = preco.toFixed(2);
           item.valorTotal = (preco * qtd).toFixed(2);
         } else {
@@ -158,7 +195,7 @@ export default function CadastroVendas() {
     });
   }
 
-  // ---------- Adicionar item: adiciona já e recarrega em background ----------
+  // ---------- Adicionar item ----------
   function adicionarItem() {
     setItens((anterior) => [...anterior, { ...itemVazio }]);
     carregarProdutos();
@@ -166,6 +203,7 @@ export default function CadastroVendas() {
 
   function removerItem(index) {
     setItens((anterior) => anterior.filter((_, i) => i !== index));
+    setMensagem({ type: "", text: "" });
   }
 
   // ---------- Total geral ----------
@@ -173,6 +211,15 @@ export default function CadastroVendas() {
     (acc, item) => acc + (Number(item.valorTotal) || 0),
     0
   );
+
+  // ---------- Produtos filtrados pela busca ----------
+  const produtosFiltrados = produtos.filter((produto) => {
+    const termo = buscaProduto.trim().toLowerCase();
+    if (!termo) return true;
+    const nome = getNomeProduto(produto).toLowerCase();
+    const id = String(getIdProduto(produto));
+    return nome.includes(termo) || id.includes(termo);
+  });
 
   // ---------- Submit ----------
   async function cadastrarVenda(event) {
@@ -199,6 +246,43 @@ export default function CadastroVendas() {
       return;
     }
 
+    // Valida produtos duplicados
+    const idsUsados = new Set();
+    for (const item of itensValidos) {
+      const id = Number(item.idProduto);
+      if (idsUsados.has(id)) {
+        const produto = produtos.find(
+          (p) => Number(getIdProduto(p)) === id
+        );
+        setMensagem({
+          type: "error",
+          text: `O produto "${getNomeProduto(
+            produto
+          )}" está duplicado. Remova uma das linhas.`,
+        });
+        return;
+      }
+      idsUsados.add(id);
+    }
+
+    // Valida estoque
+    for (const item of itensValidos) {
+      const produto = produtos.find(
+        (p) => Number(getIdProduto(p)) === Number(item.idProduto)
+      );
+      const estoque = produto ? getEstoqueProduto(produto) : 0;
+
+      if (Number(item.quantidade) > estoque) {
+        setMensagem({
+          type: "error",
+          text: `A quantidade do produto "${getNomeProduto(
+            produto
+          )}" ultrapassa o estoque disponível (${estoque}).`,
+        });
+        return;
+      }
+    }
+
     setLoading(true);
     setMensagem({ type: "", text: "" });
 
@@ -223,6 +307,7 @@ export default function CadastroVendas() {
       setMensagem({ type: "success", text: "Venda registrada com sucesso!" });
       setForm(estadoInicial);
       setItens([{ ...itemVazio }]);
+      setBuscaProduto("");
     } catch (error) {
       console.error(error);
       setMensagem({
@@ -265,7 +350,6 @@ export default function CadastroVendas() {
           <form onSubmit={cadastrarVenda} style={styles.form}>
             {/* ---------- Proprietário + Vendedor (linha) ---------- */}
             <div style={styles.row}>
-              {/* Proprietário */}
               <div style={styles.field}>
                 <label style={styles.label}>Proprietário</label>
                 <select
@@ -293,7 +377,6 @@ export default function CadastroVendas() {
                 </select>
               </div>
 
-              {/* Vendedor */}
               <div style={styles.field}>
                 <label style={styles.label}>Vendedor</label>
                 <select
@@ -352,72 +435,167 @@ export default function CadastroVendas() {
                 </div>
               </div>
 
-              {itens.map((item, index) => (
-                <div key={index} style={styles.itemRow}>
-                  <select
-                    value={item.idProduto}
-                    onChange={(e) =>
-                      atualizarItem(index, "idProduto", e.target.value)
-                    }
-                    style={{ ...styles.select, flex: 2 }}
-                  >
-                    <option value="">
-                      {carregandoProdutos && produtos.length === 0
-                        ? "Carregando produtos..."
-                        : produtos.length === 0
-                        ? "Nenhum produto cadastrado"
-                        : "Selecione um produto..."}
-                    </option>
-                    {produtos.map((produto) => {
-                      const id = getIdProduto(produto);
-                      const nome = getNomeProduto(produto);
-                      const preco = getPrecoProduto(produto);
-                      return (
-                        <option key={id} value={id}>
-                          {nome} - R$ {preco.toFixed(2)}
-                        </option>
-                      );
-                    })}
-                  </select>
+              {/* ---------- Campo de busca ---------- */}
+              <div style={styles.searchWrapper}>
+                <span
+                  className="material-symbols-outlined"
+                  style={styles.searchIcon}
+                >
+                  search
+                </span>
 
-                  <input
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={item.quantidade}
-                    onChange={(e) =>
-                      atualizarItem(index, "quantidade", e.target.value)
-                    }
-                    style={{ ...styles.select, width: "90px" }}
-                    placeholder="Qtd"
-                  />
+                <input
+                  type="text"
+                  value={buscaProduto}
+                  onChange={(e) => setBuscaProduto(e.target.value)}
+                  placeholder="Pesquisar produto por nome ou ID..."
+                  style={styles.searchInput}
+                />
 
-                  <input
-                    type="text"
-                    value={`R$ ${Number(item.valorTotal).toFixed(2)}`}
-                    readOnly
-                    style={{
-                      ...styles.select,
-                      width: "130px",
-                      background: "#f1f5f9",
-                    }}
-                  />
-
+                {buscaProduto && (
                   <button
                     type="button"
-                    style={styles.removeButton}
-                    onClick={() => removerItem(index)}
-                    disabled={itens.length === 1}
-                    title={
-                      itens.length === 1
-                        ? "Adicione pelo menos um produto"
-                        : "Remover produto"
-                    }
+                    style={styles.searchClear}
+                    onClick={() => setBuscaProduto("")}
+                    title="Limpar pesquisa"
                   >
                     ✕
                   </button>
-                </div>
-              ))}
+                )}
+              </div>
+
+              {buscaProduto.trim() && (
+                <p style={styles.searchInfo}>
+                  {produtosFiltrados.length} produto(s) encontrado(s) para "
+                  {buscaProduto}"
+                </p>
+              )}
+
+              {itens.map((item, index) => {
+                const produtoAtual = produtos.find(
+                  (p) => Number(getIdProduto(p)) === Number(item.idProduto)
+                );
+                const estoqueAtual = produtoAtual
+                  ? getEstoqueProduto(produtoAtual)
+                  : undefined;
+                const noLimite =
+                  estoqueAtual !== undefined &&
+                  Number(item.quantidade) >= estoqueAtual;
+
+                // Produtos já usados em OUTRAS linhas
+                const idsUsadosEmOutrasLinhas = itens
+                  .filter((_, i) => i !== index)
+                  .map((i) => Number(i.idProduto))
+                  .filter((v) => !Number.isNaN(v) && v > 0);
+
+                // Produtos disponíveis para ESTA linha
+                const produtosParaSelect = [...produtosFiltrados];
+
+                // Mantém o produto selecionado visível mesmo que filtrado
+                if (
+                  produtoAtual &&
+                  !produtosParaSelect.some(
+                    (p) =>
+                      Number(getIdProduto(p)) === Number(item.idProduto)
+                  )
+                ) {
+                  produtosParaSelect.unshift(produtoAtual);
+                }
+
+                return (
+                  <div key={index} style={styles.itemRow}>
+                    <select
+                      value={item.idProduto}
+                      onChange={(e) =>
+                        atualizarItem(index, "idProduto", e.target.value)
+                      }
+                      style={{ ...styles.select, flex: 2 }}
+                    >
+                      <option value="">
+                        {carregandoProdutos && produtos.length === 0
+                          ? "Carregando produtos..."
+                          : produtos.length === 0
+                          ? "Nenhum produto cadastrado"
+                          : produtosParaSelect.length === 0
+                          ? "Nenhum produto encontrado"
+                          : "Selecione um produto..."}
+                      </option>
+                      {produtosParaSelect.map((produto) => {
+                        const id = getIdProduto(produto);
+                        const nome = getNomeProduto(produto);
+                        const preco = getPrecoProduto(produto);
+                        const estoque = getEstoqueProduto(produto);
+                        const semEstoque = estoque <= 0;
+                        const jaUsadoEmOutra = idsUsadosEmOutrasLinhas.includes(
+                          Number(id)
+                        );
+
+                        return (
+                          <option
+                            key={id}
+                            value={id}
+                            disabled={semEstoque || jaUsadoEmOutra}
+                          >
+                            {nome} - R$ {preco.toFixed(2)}
+                            {jaUsadoEmOutra
+                              ? " (já adicionado)"
+                              : semEstoque
+                              ? " (sem estoque)"
+                              : ` • Estoque: ${estoque}`}
+                          </option>
+                        );
+                      })}
+                    </select>
+
+                    <input
+                      type="number"
+                      min="1"
+                      max={estoqueAtual ?? undefined}
+                      step="1"
+                      value={item.quantidade}
+                      onChange={(e) =>
+                        atualizarItem(index, "quantidade", e.target.value)
+                      }
+                      style={{
+                        ...styles.select,
+                        width: "90px",
+                        borderColor: noLimite ? "#f59e0b" : "#cbd5e1",
+                      }}
+                      placeholder="Qtd"
+                      title={
+                        estoqueAtual !== undefined
+                          ? `Máximo disponível: ${estoqueAtual}`
+                          : undefined
+                      }
+                    />
+
+                    <input
+                      type="text"
+                      value={`R$ ${Number(item.valorTotal).toFixed(2)}`}
+                      readOnly
+                      style={{
+                        ...styles.select,
+                        width: "130px",
+                        background: "#f1f5f9",
+                      }}
+                    />
+
+                    <button
+                      type="button"
+                      style={styles.removeButton}
+                      onClick={() => removerItem(index)}
+                      disabled={itens.length === 1}
+                      title={
+                        itens.length === 1
+                          ? "Adicione pelo menos um produto"
+                          : "Remover produto"
+                      }
+                    >
+                      ✕
+                    </button>
+                  </div>
+                );
+              })}
 
               <div style={styles.totalBox}>
                 <span style={styles.totalLabel}>Total da venda</span>
@@ -584,6 +762,48 @@ const styles = {
     cursor: "pointer",
     fontSize: "13px",
   },
+
+  searchWrapper: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    padding: "0 12px",
+    border: "1px solid #cbd5e1",
+    borderRadius: "8px",
+    backgroundColor: "#ffffff",
+  },
+  searchIcon: {
+    fontSize: "20px",
+    color: "#64748b",
+    flexShrink: 0,
+  },
+  searchInput: {
+    flex: 1,
+    border: "none",
+    outline: "none",
+    padding: "10px 0",
+    fontSize: "14px",
+    backgroundColor: "transparent",
+    color: "#111c2d",
+    fontFamily: "Inter, sans-serif",
+  },
+  searchClear: {
+    border: "none",
+    background: "transparent",
+    color: "#64748b",
+    cursor: "pointer",
+    fontSize: "14px",
+    padding: "4px 6px",
+    borderRadius: "4px",
+    flexShrink: 0,
+  },
+  searchInfo: {
+    margin: 0,
+    fontSize: "12px",
+    color: "#64748b",
+    fontStyle: "italic",
+  },
+
   itemRow: {
     display: "flex",
     gap: "10px",
