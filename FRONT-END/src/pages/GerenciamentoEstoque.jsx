@@ -44,20 +44,27 @@ export default function GerenciamentoEstoque() {
 
   useEffect(() => {
     setListaProdutos(
-      (produtos || []).map((produto) => ({
-        ...produto,
-        id:
-          produto.Id ?? produto.id ?? produto._id ?? produto.idProduto ?? produto.Nome ?? produto.nome,
-        nome: produto.Nome ?? produto.nome,
-        quantidade: Number(produto.Quantidade ?? produto.quantidade ?? 0),
-        quantidadeAjuste: 0,
-        ativoParaVenda:
-          produto.ativoParaVenda ?? (produto.Status ? produto.Status !== "Esgotado" : true),
-        imagem:
-          produto.Quantidade === 0 || produto.quantidade === 0
-            ? "esgotado.jpg"
-            : getImagemProduto(produto.Imagem ?? produto.imagem),
-      }))
+      (produtos || []).map((produto, index) => {
+        const imagemOriginal = getImagemProduto(produto.Imagem ?? produto.imagem ?? "/example.jpg");
+        const quantidadeAtual = Number(produto.Quantidade ?? produto.quantidade ?? 0);
+
+        return {
+          ...produto,
+          id:
+            produto.Id ??
+            produto.id ??
+            produto._id ??
+            produto.idProduto ??
+            `${produto.Nome ?? produto.nome ?? "produto"}-${index}`,
+          nome: produto.Nome ?? produto.nome ?? `Produto ${index + 1}`,
+          quantidade: quantidadeAtual,
+          quantidadeAjuste: 0,
+          ativoParaVenda:
+            produto.ativoParaVenda ?? (produto.Status ? produto.Status !== "Esgotado" : true),
+          imagemOriginal,
+          imagem: quantidadeAtual === 0 ? "esgotado.jpg" : imagemOriginal,
+        };
+      })
     );
   }, [produtos]);
 
@@ -128,16 +135,17 @@ export default function GerenciamentoEstoque() {
 
     setListaProdutos((atual) =>
       atual.map((produto) => {
-        if (
-          produto.id !== idProduto
-        ) {
+        if (produto.id !== idProduto) {
           return produto;
         }
+
+        const imagemAtual = produto.imagemOriginal ?? produto.imagem ?? "/example.jpg";
 
         return {
           ...produto,
           quantidade: novaQuantidade,
           quantidadeAjuste: 0,
+          imagem: novaQuantidade === 0 ? "esgotado.jpg" : imagemAtual,
         };
       })
     );
@@ -149,7 +157,13 @@ export default function GerenciamentoEstoque() {
       setListaProdutos((atual) =>
         atual.map((produto) =>
           produto.id === idProduto
-            ? { ...produto, quantidade: quantidadeAnterior, quantidadeAjuste: ajuste }
+            ? {
+                ...produto,
+                quantidade: quantidadeAnterior,
+                quantidadeAjuste: ajuste,
+                imagem:
+                  quantidadeAnterior === 0 ? "esgotado.jpg" : produto.imagemOriginal ?? produto.imagem,
+              }
             : produto
         )
       );
@@ -173,31 +187,18 @@ export default function GerenciamentoEstoque() {
     );
   }
 
-  function abrirEntradaMercadorias() {
-    navigate("/entradaEstoque");
-  }
-
   return (
     <div style={styles.layout}>
       <Sidebar />
 
       <main style={styles.page}>
         <header style={styles.header}>
-
           <div>
-            <h2 style={styles.title}>
-              Gerenciamento de Estoque
-            </h2>
-
+            <h2 style={styles.title}>Gerenciamento de Estoque</h2>
             <p style={styles.subtitle}>
-              Ajuste o estoque dos produtos
-              cadastrados e controle a
-              disponibilidade para venda.
+              Ajuste o estoque dos produtos cadastrados e controle a disponibilidade para venda.
             </p>
           </div>
-
-          
-
         </header>
 
         {loading && <div style={styles.emptyState}>Carregando produtos...</div>}
@@ -211,7 +212,7 @@ export default function GerenciamentoEstoque() {
         {!loading && !error && listaProdutos.length > 0 && (
           <div style={styles.listContainer}>
             {listaProdutos.map((produto) => (
-              <section key={produto.id} style={styles.card}>
+              <section key={String(produto.id)} style={styles.card}>
                 <div style={styles.productContent}>
                   <div style={styles.imageBox}>
                     <img src={produto.imagem} alt={produto.nome} style={styles.productImage} />
@@ -282,218 +283,6 @@ export default function GerenciamentoEstoque() {
             ))}
           </div>
         )}
-
-        {!loading && error && (
-          <div
-            style={
-              styles.emptyStateError
-            }
-          >
-            {error}
-          </div>
-        )}
-
-        {!loading &&
-          !error &&
-          listaProdutos.length === 0 && (
-            <div
-              style={
-                styles.emptyState
-              }
-            >
-              Nenhum produto cadastrado.
-            </div>
-          )}
-
-        {!loading &&
-          !error &&
-          listaProdutos.length > 0 && (
-            <div
-              style={
-                styles.listContainer
-              }
-            >
-              {listaProdutos.map(
-                (produto) => (
-                  <section
-                    key={produto.id}
-                    style={styles.card}
-                  >
-                    <div
-                      style={
-                        styles.productContent
-                      }
-                    >
-                      <div
-                        style={
-                          styles.imageBox
-                        }
-                      >
-                        <img
-                          src={
-                            produto.imagem
-                          }
-                          alt={
-                            produto.nome
-                          }
-                          style={
-                            styles.productImage
-                          }
-                        />
-                      </div>
-
-                      <div
-                        style={
-                          styles.infoArea
-                        }
-                      >
-                        <div
-                          style={
-                            styles.badgeRow
-                          }
-                        >
-                          <span
-                            style={
-                              styles.badge
-                            }
-                          >
-                            {produto.categoria ||
-                              "Produto"}
-                          </span>
-
-                          <span
-                            style={{
-                              ...styles.statusBadge,
-                              ...(produto.ativoParaVenda
-                                ? styles.statusAtivo
-                                : styles.statusInativo),
-                            }}
-                          >
-                            {produto.ativoParaVenda
-                              ? "Disponível para venda"
-                              : "Desativado para venda"}
-                          </span>
-                        </div>
-
-                        <h3
-                          style={
-                            styles.productName
-                          }
-                        >
-                          {produto.nome}
-                        </h3>
-
-                        <div
-                          style={
-                            styles.stockSummary
-                          }
-                        >
-                          <span
-                            style={
-                              styles.label
-                            }
-                          >
-                            Estoque atual
-                          </span>
-
-                          <strong
-                            style={
-                              styles.stockValue
-                            }
-                          >
-                            {produto.quantidade}{" "}
-                            unidades
-                          </strong>
-                        </div>
-
-                        <div
-                          style={
-                            styles.controlBox
-                          }
-                        >
-                          <button
-                            type="button"
-                            style={
-                              styles.circleButton
-                            }
-                            onClick={() =>
-                              ajustarEstoque(
-                                "menos",
-                                produto.id
-                              )
-                            }
-                            aria-label={`Diminuir estoque de ${produto.nome}`}
-                          >
-                            −
-                          </button>
-
-                          <input
-                            type="number"
-                            min="0"
-                            value={
-                              produto.quantidadeAjuste
-                            }
-                            onChange={(
-                              event
-                            ) =>
-                              atualizarQuantidadeEntrada(
-                                event,
-                                produto.id
-                              )
-                            }
-                            style={
-                              styles.input
-                            }
-                            aria-label={`Quantidade para ajustar o estoque de ${produto.nome}`}
-                          />
-
-                          <button
-                            type="button"
-                            style={
-                              styles.circleButton
-                            }
-                            onClick={() =>
-                              ajustarEstoque(
-                                "mais",
-                                produto.id
-                              )
-                            }
-                            aria-label={`Aumentar estoque de ${produto.nome}`}
-                          >
-                            +
-                          </button>
-                        </div>
-
-                        <div
-                          style={
-                            styles.actions
-                          }
-                        >
-                          <button
-                            type="button"
-                            style={
-                              produto.ativoParaVenda
-                                ? styles.disableButton
-                                : styles.enableButton
-                            }
-                            onClick={() =>
-                              alternarDisponibilidade(
-                                produto.id
-                              )
-                            }
-                          >
-                            {produto.ativoParaVenda
-                              ? "Desativar para venda"
-                              : "Ativar para venda"}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-                )
-              )}
-            </div>
-          )}
       </main>
     </div>
   );
