@@ -19,11 +19,6 @@ const menu = [
         rota: "/gerenciamentoEstoque"
     },
     {
-        nome: "Entrada de Mercadorias",
-        icone: "local_shipping",
-        rota: "/entradaEstoque"
-    },
-    {
         nome: "Cadastro de Produtos",
         icone: "inventory_2",
         rota: "/cadastroProdutos"
