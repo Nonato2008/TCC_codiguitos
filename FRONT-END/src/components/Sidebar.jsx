@@ -9,6 +9,16 @@ const menu = [
         rota: "/painel"
     },
     {
+        nome: "Vendas",
+        icone: "point_of_sale",
+        rota: "/vendas"
+    },
+    {
+        nome: "Gerenciamento de Estoque",
+        icone: "inventory",
+        rota: "/gerenciamentoEstoque"
+    },
+    {
         nome: "Cadastro de Produtos",
         icone: "inventory_2",
         rota: "/cadastroProdutos"
@@ -17,11 +27,6 @@ const menu = [
         nome: "Fornecedores",
         icone: "business",
         rota: "/fornecedores"
-    },
-    {
-        nome: "Gerenciamento de Estoque",
-        icone: "inventory",
-        rota: "/gerenciamentoEstoque"
     }
 ];
 

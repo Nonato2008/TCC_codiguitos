@@ -2,33 +2,57 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
-    login as apiLogin,
-    saveUser
+    cadastro as apiCadastro
 } from "../services/authService.js";
 
-export default function Login() {
+export default function Cadastro() {
 
     const navigate = useNavigate();
 
     const [nome, setNome] = useState("");
     const [senha, setSenha] = useState("");
+    const [confirmarSenha, setConfirmarSenha] = useState("");
+    const [tipo, setTipo] = useState("VENDEDOR");
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [success, setSuccess] = useState("");
 
-    async function entrar(event) {
+    async function cadastrar(event) {
 
         event.preventDefault();
 
         setError("");
+        setSuccess("");
 
         if (!nome.trim()) {
             setError("Digite seu nome.");
             return;
         }
 
+        if (nome.trim().length < 3) {
+            setError(
+                "O nome deve possuir pelo menos 3 caracteres."
+            );
+            return;
+        }
+
         if (!senha) {
-            setError("Digite sua senha.");
+            setError("Digite uma senha.");
+            return;
+        }
+
+        if (senha.length < 6) {
+            setError(
+                "A senha deve possuir pelo menos 6 caracteres."
+            );
+            return;
+        }
+
+        if (senha !== confirmarSenha) {
+            setError(
+                "As senhas não coincidem."
+            );
             return;
         }
 
@@ -36,28 +60,34 @@ export default function Login() {
 
         try {
 
-            const result = await apiLogin(
+            const result = await apiCadastro(
                 nome.trim(),
-                senha
+                senha,
+                tipo
             );
 
             if (result.error) {
 
                 setError(
                     result.error.message ||
-                    "Nome ou senha incorretos."
+                    "Não foi possível realizar o cadastro."
                 );
 
                 return;
             }
 
-            const usuario = result.data?.usuario;
+            setSuccess(
+                "Cadastro realizado com sucesso!"
+            );
 
-            if (usuario) {
-                saveUser(usuario);
-            }
+            setNome("");
+            setSenha("");
+            setConfirmarSenha("");
+            setTipo("VENDEDOR");
 
-            navigate("/painel");
+            setTimeout(() => {
+                navigate("/login");
+            }, 1500);
 
         } catch (error) {
 
@@ -100,11 +130,11 @@ export default function Login() {
                 </h1>
 
                 <p style={styles.subtitle}>
-                    Entre na sua conta para acessar o sistema.
+                    Crie sua conta para acessar o sistema.
                 </p>
 
                 <h2 style={styles.formTitle}>
-                    Login
+                    Criar Cadastro
                 </h2>
 
                 {/* ERRO */}
@@ -116,10 +146,18 @@ export default function Login() {
 
                 )}
 
-                {/* FORMULÁRIO */}
+                {/* SUCESSO */}
+                {success && (
+
+                    <div style={styles.alertSuccess}>
+                        {success}
+                    </div>
+
+                )}
+
                 <form
                     style={styles.form}
-                    onSubmit={entrar}
+                    onSubmit={cadastrar}
                 >
 
                     {/* NOME */}
@@ -141,6 +179,7 @@ export default function Login() {
                             required
                             disabled={loading}
                         />
+
                     </div>
 
                     {/* SENHA */}
@@ -165,7 +204,59 @@ export default function Login() {
 
                     </div>
 
-                    {/* BOTÃO ENTRAR */}
+                    {/* CONFIRMAR SENHA */}
+                    <div style={styles.inputGroup}>
+
+                        <label style={styles.label}>
+                            Confirmar Senha
+                        </label>
+
+                        <input
+                            type="password"
+                            placeholder="Digite a senha novamente"
+                            value={confirmarSenha}
+                            onChange={(event) =>
+                                setConfirmarSenha(
+                                    event.target.value
+                                )
+                            }
+                            style={styles.input}
+                            minLength={6}
+                            required
+                            disabled={loading}
+                        />
+
+                    </div>
+
+                    {/* TIPO DE USUÁRIO */}
+                    <div style={styles.inputGroup}>
+
+                        <label style={styles.label}>
+                            Tipo de Usuário
+                        </label>
+
+                        <select
+                            value={tipo}
+                            onChange={(event) =>
+                                setTipo(event.target.value)
+                            }
+                            style={styles.input}
+                            disabled={loading}
+                        >
+
+                            <option value="VENDEDOR">
+                                Vendedor
+                            </option>
+
+                            <option value="PROPRIETARIO">
+                                Proprietário
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    {/* CADASTRAR */}
                     <button
                         type="submit"
                         style={{
@@ -176,34 +267,34 @@ export default function Login() {
                         }}
                         disabled={loading}
                     >
+
                         {loading
-                            ? "Entrando..."
-                            : "Entrar"
+                            ? "Cadastrando..."
+                            : "Cadastrar"
                         }
 
                     </button>
 
                 </form>
 
-                {/* IR PARA CADASTRO */}
+                {/* VOLTAR PARA LOGIN */}
                 <div style={styles.registerText}>
 
                     <span>
-                        Não possui uma conta?
+                        Já possui uma conta?
                     </span>
 
                     <button
                         type="button"
-                        onClick={() => navigate("/cadastro")}
+                        onClick={() => navigate("/login")}
                         style={styles.registerLink}
                         disabled={loading}
                     >
-                        Criar conta
+                        Fazer login
                     </button>
 
                 </div>
 
-                {/* RODAPÉ */}
                 <p style={styles.footer}>
                     Sistema de gerenciamento da Adega do Nelson
                 </p>
@@ -361,6 +452,16 @@ const styles = {
         backgroundColor: "#fef2f2",
         border: "1px solid #fecaca",
         color: "#b91c1c",
+        borderRadius: "8px",
+        padding: "12px",
+        fontSize: "14px",
+        marginBottom: "20px"
+    },
+
+    alertSuccess: {
+        backgroundColor: "#f0fdf4",
+        border: "1px solid #bbf7d0",
+        color: "#15803d",
         borderRadius: "8px",
         padding: "12px",
         fontSize: "14px",
