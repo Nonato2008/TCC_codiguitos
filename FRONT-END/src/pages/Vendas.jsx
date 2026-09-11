@@ -1,12 +1,9 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 
 const vendasMock = [];
 
 export default function Vendas() {
-  const navigate = useNavigate();
-
   return (
     <div style={styles.layout}>
       <Sidebar />
@@ -17,23 +14,12 @@ export default function Vendas() {
             <p style={styles.eyebrow}>Operações</p>
             <h1 style={styles.title}>Vendas</h1>
           </div>
-          
-          <button 
-            type="button" 
-            style={styles.primaryButton}
-            onClick={() => navigate("/vendas/cadastrar")}
-          >
-            + Nova Venda
-          </button>
         </header>
 
 
         <section style={styles.panel}>
           <div style={styles.panelHeader}>
             <h2 style={styles.panelTitle}>Últimas vendas</h2>
-            <button type="button" style={styles.secondaryButton}>
-              Filtrar
-            </button>
           </div>
 
           <div style={styles.tableWrap}>
@@ -46,25 +32,19 @@ export default function Vendas() {
                 </tr>
               </thead>
               <tbody>
-                {vendasMock.length === 0 ? (
-                  <tr>
-                    <td colSpan="3" style={styles.emptyMessage}>
-                      Nenhuma venda registrada ainda. Clique em "Nova Venda" para começar.
+                {vendasMock.map((venda) => (
+                  <tr key={venda.id}>
+                    <td style={styles.td}>{venda.produto}</td>
+                    <td style={styles.td}>{venda.total}</td>
+                    <td style={styles.td}>
+                      <span
+                        style={{}}
+                      >
+                        {venda.status}
+                      </span>
                     </td>
                   </tr>
-                ) : (
-                  vendasMock.map((venda) => (
-                    <tr key={venda.id}>
-                      <td style={styles.td}>{venda.produto}</td>
-                      <td style={styles.td}>{venda.total}</td>
-                      <td style={styles.td}>
-                        <span style={styles.badge}>
-                          {venda.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                )}
+                ))}
               </tbody>
             </table>
           </div>
@@ -122,7 +102,6 @@ const styles = {
     borderRadius: "10px",
     fontWeight: 600,
     cursor: "pointer",
-    transition: "background-color 0.2s ease",
   },
 
   summaryRow: {
@@ -202,13 +181,6 @@ const styles = {
     padding: "14px 10px",
     borderBottom: "1px solid #f1f5f9",
     color: "#111827",
-  },
-
-  emptyMessage: {
-    padding: "32px 10px",
-    textAlign: "center",
-    color: "#6b7280",
-    fontSize: "14px",
   },
 
   badge: {

@@ -8,7 +8,6 @@ import CadastroProdutos from "./pages/CadastroProduto";
 import Fornecedores from "./pages/Fornecedor";
 import CadastrarFornecedor from "./pages/CadastroFornecedor";
 import GerenciamentoEstoque from "./pages/GerenciamentoEstoque";
-import CadastroVendas from "./pages/CadastroVenda";
 
 export default function App() {
   return (
@@ -23,7 +22,6 @@ export default function App() {
         <Route path="/fornecedores" element={<Fornecedores />} />
         <Route path="/cadastroProdutos" element={<CadastroProdutos />} />
         <Route path="/fornecedores/cadastrar" element={<CadastrarFornecedor />} />
-        <Route path="/vendas/cadastrar" element={<CadastroVendas />} />
         <Route path="/gerenciamentoEstoque" element={<GerenciamentoEstoque />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

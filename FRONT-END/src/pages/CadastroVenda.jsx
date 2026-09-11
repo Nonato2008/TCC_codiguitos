@@ -21,10 +21,7 @@ export default function CadastroVendas() {
     const [form, setForm] = useState(estadoInicial);
     const [produtos, setProdutos] = useState([]);
     const [vendedores, setVendedores] = useState([
-        { id: 1, nome: "João Silva" },
-        { id: 2, nome: "Maria Santos" },
-        { id: 3, nome: "Pedro Oliveira" },
-        { id: 4, nome: "Ana Costa" },
+  
     ]);
     const [loading, setLoading] = useState(false);
     const [carregandoProdutos, setCarregandoProdutos] = useState(false);
