@@ -5,6 +5,7 @@ import Login from "./pages/Login.jsx";
 import Cadastro from "./pages/Cadastro.jsx";
 import Painel from "./pages/Painel";
 import Vendas from "./pages/Vendas";
+import CadastroVendas from "./pages/CadastroVenda";
 import CadastroProdutos from "./pages/CadastroProduto";
 import Fornecedores from "./pages/Fornecedor";
 import CadastrarFornecedor from "./pages/CadastroFornecedor";
@@ -20,8 +21,8 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/painel" element={<Painel />} />
-        <Route path="/vendas" element={<Vendas />} />
         <Route path="/Vendas" element={<Vendas />} />
+        <Route path="/vendas/cadastrar" element={<CadastroVendas />} />
         <Route path="/fornecedores" element={<Fornecedores />} />
         <Route path="/cadastroProdutos" element={<CadastroProdutos />} />
         <Route path="/fornecedores/cadastrar" element={<CadastrarFornecedor />} />
