@@ -45,7 +45,7 @@ export default function GerenciamentoEstoque() {
   useEffect(() => {
     setListaProdutos(
       (produtos || []).map((produto, index) => {
-        const imagemOriginal = getImagemProduto(produto.Imagem ?? produto.imagem ?? "/example.jpg");
+        const imagemReal = getImagemProduto(produto.Imagem ?? produto.imagem ?? "/example.jpg");
         const quantidadeAtual = Number(produto.Quantidade ?? produto.quantidade ?? 0);
 
         return {
@@ -61,8 +61,8 @@ export default function GerenciamentoEstoque() {
           quantidadeAjuste: 0,
           ativoParaVenda:
             produto.ativoParaVenda ?? (produto.Status ? produto.Status !== "Esgotado" : true),
-          imagemOriginal,
-          imagem: quantidadeAtual === 0 ? "esgotado.jpg" : imagemOriginal,
+          imagemReal,
+          imagem: quantidadeAtual === 0 ? "esgotado.jpg" : imagemReal,
         };
       })
     );
@@ -139,13 +139,14 @@ export default function GerenciamentoEstoque() {
           return produto;
         }
 
-        const imagemAtual = produto.imagemOriginal ?? produto.imagem ?? "/example.jpg";
+        const imagemReal =
+          produto.imagemReal ?? produto.imagemOriginal ?? produto.imagem ?? "/example.jpg";
 
         return {
           ...produto,
           quantidade: novaQuantidade,
           quantidadeAjuste: 0,
-          imagem: novaQuantidade === 0 ? "esgotado.jpg" : imagemAtual,
+          imagem: novaQuantidade === 0 ? "esgotado.jpg" : imagemReal,
         };
       })
     );
@@ -162,7 +163,9 @@ export default function GerenciamentoEstoque() {
                 quantidade: quantidadeAnterior,
                 quantidadeAjuste: ajuste,
                 imagem:
-                  quantidadeAnterior === 0 ? "esgotado.jpg" : produto.imagemOriginal ?? produto.imagem,
+                  quantidadeAnterior === 0
+                    ? "esgotado.jpg"
+                    : produto.imagemReal ?? produto.imagemOriginal ?? produto.imagem,
               }
             : produto
         )
