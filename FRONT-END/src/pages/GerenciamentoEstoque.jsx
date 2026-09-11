@@ -196,17 +196,7 @@ export default function GerenciamentoEstoque() {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={
-              abrirEntradaMercadorias
-            }
-            style={
-              styles.entradaButton
-            }
-          >
-            + Entrada de Mercadorias
-          </button>
+          
 
         </header>
 
