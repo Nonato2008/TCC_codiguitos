@@ -126,7 +126,7 @@ export default function Painel() {
               </div>
             ) : vendasLista.length > 0 ? (
               <div style={styles.vendasLista}>
-                {vendasLista.map((venda) => (
+                {vendasLista.slice(0, 3).map((venda) => (
                   <div key={venda.Id} style={styles.vendaItem}>
                     <div style={styles.vendaInfo}>
                       <strong style={styles.vendaTitulo}>
