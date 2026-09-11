@@ -24,7 +24,7 @@ function montarPayloadProduto(produto, quantidadeAtual) {
     nome: produto.nome ?? produto.Nome ?? "",
     preco: Number(produto.Preco ?? produto.preco ?? 0),
     quantidade: Number(quantidadeAtual ?? produto.quantidade ?? 0),
-    dataVenc: produto.DataVenc ?? produto.dataVenc ?? "2025-12-31",
+    dataVenc: produto.DataVenc ?? produto.dataVenc,
   };
 }
 

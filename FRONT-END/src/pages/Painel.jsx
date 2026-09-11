@@ -168,7 +168,7 @@ export default function Painel() {
 
             <div style={styles.lucroContainer}>
               <strong style={styles.lucro}>
-                R$ {valorTotal.toFixed(2).replace(".", ",")}
+                R$ {valorTotal.toFixed(2).replace(".", ",")}💸
               </strong>
             </div>
           </div>
@@ -207,7 +207,6 @@ function DashboardCard({ titulo, valor, icone, tipo }) {
         </div>
 
         <span className="material-symbols-outlined" style={styles.arrow}>
-          arrow_forward
         </span>
       </div>
 
@@ -442,5 +441,16 @@ const styles = {
   vendaValor: {
     fontSize: "15px",
     color: "#111c2d",
+  },
+  lucro: {
+    fontSize: "38px",
+    fontWeight: "700",
+    color: "#06c100",
+  },
+  lucroContainer: {
+    minHeight: "170px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   },
 };
