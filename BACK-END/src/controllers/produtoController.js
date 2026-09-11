@@ -1,14 +1,19 @@
 import { statusPed } from "../enums/statusVenda.js";
 import { Produtos } from "../models/Produtos.js";
 import produtosRepository from "../repositories/produtosRepository.js";
-import { gerarNotaFiscal } from "../services/notaFiscalService.js";
+import {
+    gerarNotaFiscal,
+    gerarNotaFiscalPDF
+} from "../services/notaFiscalService.js";
 
 const calcularStatus = (quantidade, dataVenc) => {
 
     const hoje = new Date();
+
     hoje.setHours(0, 0, 0, 0);
 
     const vencimento = new Date(dataVenc);
+
     vencimento.setHours(0, 0, 0, 0);
 
     if (vencimento < hoje) {
@@ -50,9 +55,11 @@ const produtoController = {
         try {
 
             if (!req.file) {
+
                 return res.status(400).json({
                     message: "Imagem não foi enviada"
                 });
+
             }
 
             const {
@@ -76,6 +83,7 @@ const produtoController = {
                 );
 
             const produto = Produtos.criar({
+
                 idFornecedor,
                 nome,
                 preco,
@@ -83,39 +91,70 @@ const produtoController = {
                 status,
                 imagem,
                 dataVenc: dataVencNormalizada
+
             });
 
             const result =
                 await produtosRepository.criar(produto);
 
-            const idProduto = result.insertId;
+            const idProduto =
+                result.insertId;
 
-            const notaFiscal = gerarNotaFiscal(
-                {
+            const notaFiscal =
+                gerarNotaFiscal({
+
+                    id: idProduto,
+
                     idFornecedor,
+
                     nome,
+
                     preco,
+
                     quantidade
-                },
-                idProduto
-            );
+
+                });
+
+            const pdf =
+                await gerarNotaFiscalPDF(
+                    notaFiscal
+                );
+
+            const pdfBase64 =
+                pdf.toString("base64");
 
             res.status(201).json({
 
-                message: "Produto cadastrado com sucesso.",
+                message:
+                    "Produto cadastrado com sucesso.",
 
                 produto: {
+
                     id: idProduto,
-                    idFornecedor: Number(idFornecedor),
+
+                    idFornecedor:
+                        Number(idFornecedor),
+
                     nome,
-                    preco: Number(preco),
-                    quantidade: Number(quantidade),
+
+                    preco:
+                        Number(preco),
+
+                    quantidade:
+                        Number(quantidade),
+
                     status,
+
                     imagem,
-                    dataVenc: dataVencNormalizada
+
+                    dataVenc:
+                        dataVencNormalizada
+
                 },
 
-                notaFiscal
+                notaFiscal,
+
+                pdf: pdfBase64
 
             });
 
@@ -124,10 +163,17 @@ const produtoController = {
             console.error(error);
 
             res.status(500).json({
-                message: "Erro ao inserir produto",
-                errorMessage: error.message
+
+                message:
+                    "Erro ao inserir produto",
+
+                errorMessage:
+                    error.message
+
             });
+
         }
+
     },
 
     alterar: async (req, res) => {
@@ -207,19 +253,24 @@ const produtoController = {
 
             const produto = Produtos.alterar({
 
-                idFornecedor: idFornecedorFinal,
+                idFornecedor:
+                    idFornecedorFinal,
 
-                nome: nomeFinal,
+                nome:
+                    nomeFinal,
 
-                preco: precoFinal,
+                preco:
+                    precoFinal,
 
-                quantidade: quantidadeFinal,
+                quantidade:
+                    quantidadeFinal,
 
                 status,
 
                 imagem,
 
-                dataVenc: dataVencFinal
+                dataVenc:
+                    dataVencFinal
 
             }, id);
 
@@ -228,7 +279,8 @@ const produtoController = {
 
             res.status(200).json({
 
-                message: "Produto alterado com sucesso",
+                message:
+                    "Produto alterado com sucesso",
 
                 result
 
@@ -240,12 +292,16 @@ const produtoController = {
 
             res.status(500).json({
 
-                message: "Erro ao alterar produto",
+                message:
+                    "Erro ao alterar produto",
 
-                errorMessage: error.message
+                errorMessage:
+                    error.message
 
             });
+
         }
+
     },
 
     deletar: async (req, res) => {
@@ -258,7 +314,8 @@ const produtoController = {
 
             res.status(200).json({
 
-                message: "Produto deletado com sucesso"
+                message:
+                    "Produto deletado com sucesso"
 
             });
 
@@ -268,12 +325,16 @@ const produtoController = {
 
             res.status(500).json({
 
-                message: "Erro ao deletar produto",
+                message:
+                    "Erro ao deletar produto",
 
-                errorMessage: error.message
+                errorMessage:
+                    error.message
 
             });
+
         }
+
     },
 
     selecionar: async (req, res) => {
@@ -295,12 +356,16 @@ const produtoController = {
 
             res.status(500).json({
 
-                message: "Erro ao selecionar produtos",
+                message:
+                    "Erro ao selecionar produtos",
 
-                errorMessage: error.message
+                errorMessage:
+                    error.message
 
             });
+
         }
+
     },
 
     selecionarId: async (req, res) => {
@@ -324,12 +389,16 @@ const produtoController = {
 
             res.status(500).json({
 
-                message: "Erro ao selecionar produto",
+                message:
+                    "Erro ao selecionar produto",
 
-                errorMessage: error.message
+                errorMessage:
+                    error.message
 
             });
+
         }
+
     }
 
 };

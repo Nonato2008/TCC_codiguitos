@@ -20,14 +20,12 @@ export default function CadastroProdutos() {
 
     const [loading, setLoading] = useState(false);
 
-    const [mensagem, setMensagem] =
-        useState({
-            type: "",
-            text: ""
-        });
+    const [mensagem, setMensagem] = useState({
+        type: "",
+        text: ""
+    });
 
-    const [notaFiscal, setNotaFiscal] =
-        useState(null);
+    const [notaFiscal, setNotaFiscal] = useState(null);
 
     function atualizarCampo(event) {
 
@@ -51,6 +49,64 @@ export default function CadastroProdutos() {
             ...anterior,
             [name]: value
         }));
+    }
+
+    function abrirPDF(base64) {
+
+        try {
+
+            const byteCharacters =
+                atob(base64);
+
+            const byteNumbers =
+                new Array(byteCharacters.length);
+
+            for (
+                let i = 0;
+                i < byteCharacters.length;
+                i++
+            ) {
+
+                byteNumbers[i] =
+                    byteCharacters.charCodeAt(i);
+
+            }
+
+            const byteArray =
+                new Uint8Array(byteNumbers);
+
+            const blob =
+                new Blob(
+                    [byteArray],
+                    {
+                        type: "application/pdf"
+                    }
+                );
+
+            const url =
+                URL.createObjectURL(blob);
+
+            window.open(url, "_blank");
+
+            setTimeout(() => {
+
+                URL.revokeObjectURL(url);
+
+            }, 10000);
+
+        } catch (error) {
+
+            console.error(
+                "Erro ao abrir PDF:",
+                error
+            );
+
+            setMensagem({
+                type: "error",
+                text: "A nota foi gerada, mas não foi possível abrir o PDF."
+            });
+
+        }
     }
 
     async function cadastrarProduto(event) {
@@ -79,7 +135,10 @@ export default function CadastroProdutos() {
             return;
         }
 
-        if (!form.quantidade || Number(form.quantidade) < 0) {
+        if (
+            form.quantidade === "" ||
+            Number(form.quantidade) < 0
+        ) {
 
             setMensagem({
                 type: "error",
@@ -174,6 +233,14 @@ export default function CadastroProdutos() {
             setNotaFiscal(
                 resposta.data.notaFiscal
             );
+
+            if (resposta.data.pdf) {
+
+                abrirPDF(
+                    resposta.data.pdf
+                );
+
+            }
 
             setForm(estadoInicial);
 
