@@ -25,7 +25,7 @@ export default function App() {
         <Route path="/fornecedores" element={<Fornecedores />} />
         <Route path="/cadastroProdutos" element={<CadastroProdutos />} />
         <Route path="/fornecedores/cadastrar" element={<CadastrarFornecedor />} />
-        {/*<Route path="/gerenciamentoEstoque" element={<GerenciamentoEstoque />} />*/}
+        <Route path="/gerenciamentoEstoque" element={<GerenciamentoEstoque />} />
         <Route path="/entradaEstoque" element={<EntradaEstoque />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

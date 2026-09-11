@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Sidebar from "../components/Sidebar";
 
 import { buscarProdutos } from "../services/produtosService";
 import { buscarFornecedores } from "../services/fornecedoresService";
@@ -39,8 +40,18 @@ export default function EntradaEstoque() {
             const listaProdutos =
                 await buscarProdutos();
 
-            setFornecedores(listaFornecedores);
-            setProdutos(listaProdutos);
+            const fornecedoresNormalizados =
+                Array.isArray(listaFornecedores)
+                    ? listaFornecedores
+                    : (listaFornecedores?.result || []);
+
+            const produtosNormalizados =
+                Array.isArray(listaProdutos)
+                    ? listaProdutos
+                    : (listaProdutos?.result || []);
+
+            setFornecedores(fornecedoresNormalizados);
+            setProdutos(produtosNormalizados);
 
         } catch (error) {
 
@@ -78,6 +89,15 @@ export default function EntradaEstoque() {
 
             setMensagem(
                 "Informe uma quantidade válida."
+            );
+
+            return;
+        }
+
+        if (!numeroLote.trim()) {
+
+            setMensagem(
+                "Informe o número do lote."
             );
 
             return;
@@ -234,9 +254,11 @@ export default function EntradaEstoque() {
 
     return (
 
-        <div style={styles.container}>
+        <div style={styles.layout}>
+            <Sidebar />
 
-            <div style={styles.header}>
+            <main style={styles.container}>
+                <div style={styles.header}>
 
                 <h1>
                     Entrada de Mercadorias
@@ -244,7 +266,7 @@ export default function EntradaEstoque() {
 
                 <button
                     onClick={() =>
-                        navigate("/estoque")
+                        navigate("/gerenciamentoEstoque")
                     }
                     style={styles.voltar}
                 >
@@ -515,7 +537,7 @@ export default function EntradaEstoque() {
                 </button>
 
             </form>
-
+            </main>
         </div>
     );
 }
@@ -523,10 +545,19 @@ export default function EntradaEstoque() {
 
 const styles = {
 
+    layout: {
+        display: "flex",
+        minHeight: "100vh",
+        backgroundColor: "#f3f5f9",
+        fontFamily: "Inter, sans-serif"
+    },
+
     container: {
-        padding: "30px",
-        maxWidth: "1000px",
-        margin: "0 auto"
+        marginLeft: "256px",
+        width: "calc(100% - 256px)",
+        padding: "32px",
+        maxWidth: "1100px",
+        boxSizing: "border-box"
     },
 
     header: {
