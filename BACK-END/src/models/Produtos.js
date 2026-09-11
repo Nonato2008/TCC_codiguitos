@@ -103,7 +103,23 @@ export class Produtos {
     }
     set dataVenc(value) {
         this.#validarDataVenc(value);
-        this.#dataVenc = value;
+        this.#dataVenc = this.#normalizarDataParaBanco(value);
+    }
+
+    #normalizarDataParaBanco(value) {
+        if (!value) return value;
+
+        const texto = String(value).trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(texto)) {
+            return texto;
+        }
+
+        const data = new Date(texto);
+        if (Number.isNaN(data.getTime())) {
+            return texto;
+        }
+
+        return data.toISOString().slice(0, 10);
     }
 
     // Métodos de validação
