@@ -168,7 +168,7 @@ export default function Painel() {
 
             <div style={styles.lucroContainer}>
               <strong style={styles.lucro}>
-                R$ {valorTotal.toFixed(2).replace(".", ",")}💸
+                R$ {(valorTotal || 0).toFixed(2).replace(".", ",")}💸
               </strong>
             </div>
           </div>
