@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Painel from "./pages/Painel";
 import Vendas from "./pages/Vendas";
+import CadastroVendas from "./pages/CadastroVenda";
 import CadastroProdutos from "./pages/CadastroProduto";
 import Fornecedores from "./pages/Fornecedor";
 import CadastrarFornecedor from "./pages/CadastroFornecedor";
@@ -17,8 +18,8 @@ export default function App() {
         <Route path="/home" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/painel" element={<Painel />} />
-        <Route path="/vendas" element={<Vendas />} />
         <Route path="/Vendas" element={<Vendas />} />
+        <Route path="/vendas/cadastrar" element={<CadastroVendas />} />
         <Route path="/fornecedores" element={<Fornecedores />} />
         <Route path="/cadastroProdutos" element={<CadastroProdutos />} />
         <Route path="/fornecedores/cadastrar" element={<CadastrarFornecedor />} />

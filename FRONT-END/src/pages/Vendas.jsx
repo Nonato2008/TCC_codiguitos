@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 
 const vendasMock = [];
@@ -14,8 +15,11 @@ export default function Vendas() {
             <p style={styles.eyebrow}>Operações</p>
             <h1 style={styles.title}>Vendas</h1>
           </div>
-        </header>
 
+          <Link to="/vendas/cadastrar" style={{ textDecoration: "venda" }}>
+            <button style={styles.primaryButton}>+ Nova venda</button>
+          </Link>
+        </header>
 
         <section style={styles.panel}>
           <div style={styles.panelHeader}>
@@ -37,9 +41,7 @@ export default function Vendas() {
                     <td style={styles.td}>{venda.produto}</td>
                     <td style={styles.td}>{venda.total}</td>
                     <td style={styles.td}>
-                      <span
-                        style={{}}
-                      >
+                      <span style={styles.badge}>
                         {venda.status}
                       </span>
                     </td>
@@ -54,14 +56,12 @@ export default function Vendas() {
   );
 }
 
-
 const styles = {
   layout: {
     display: "flex",
     minHeight: "100vh",
     backgroundColor: "#f3f5f9",
   },
-
   page: {
     marginLeft: "256px",
     width: "calc(100% - 256px)",
@@ -69,7 +69,6 @@ const styles = {
     boxSizing: "border-box",
     fontFamily: "Inter, sans-serif",
   },
-
   header: {
     display: "flex",
     alignItems: "center",
@@ -77,7 +76,6 @@ const styles = {
     marginBottom: "24px",
     gap: "16px",
   },
-
   eyebrow: {
     margin: 0,
     color: "#6b7280",
@@ -86,14 +84,12 @@ const styles = {
     letterSpacing: "0.08em",
     fontWeight: 700,
   },
-
   title: {
     margin: "8px 0 0",
     color: "#111827",
     fontSize: "32px",
     fontWeight: 700,
   },
-
   primaryButton: {
     border: "none",
     backgroundColor: "#303e51",
@@ -103,53 +99,45 @@ const styles = {
     fontWeight: 600,
     cursor: "pointer",
   },
-
   summaryRow: {
     display: "grid",
     gridTemplateColumns: "repeat(3, minmax(180px, 1fr))",
     gap: "16px",
     marginBottom: "24px",
   },
-
   card: {
     backgroundColor: "#fff",
     borderRadius: "12px",
     padding: "18px 20px",
     boxShadow: "0 10px 24px rgba(15, 23, 42, 0.04)",
   },
-
   cardLabel: {
     margin: 0,
     color: "#6b7280",
     fontSize: "13px",
     marginBottom: "8px",
   },
-
   cardValue: {
     fontSize: "28px",
     color: "#111827",
   },
-
   panel: {
     backgroundColor: "#fff",
     borderRadius: "16px",
     padding: "20px",
     boxShadow: "0 10px 24px rgba(15, 23, 42, 0.04)",
   },
-
   panelHeader: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: "16px",
   },
-
   panelTitle: {
     margin: 0,
     fontSize: "20px",
     color: "#111827",
   },
-
   secondaryButton: {
     border: "1px solid #d1d5db",
     backgroundColor: "#fff",
@@ -159,16 +147,8 @@ const styles = {
     fontWeight: 600,
     cursor: "pointer",
   },
-
-  tableWrap: {
-    overflowX: "auto",
-  },
-
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-  },
-
+  tableWrap: { overflowX: "auto" },
+  table: { width: "100%", borderCollapse: "collapse" },
   th: {
     textAlign: "left",
     padding: "12px 10px",
@@ -176,13 +156,11 @@ const styles = {
     fontSize: "13px",
     borderBottom: "1px solid #e5e7eb",
   },
-
   td: {
     padding: "14px 10px",
     borderBottom: "1px solid #f1f5f9",
     color: "#111827",
   },
-
   badge: {
     display: "inline-block",
     padding: "6px 10px",
@@ -190,12 +168,10 @@ const styles = {
     fontSize: "12px",
     fontWeight: 700,
   },
-
   badgePaid: {
     backgroundColor: "#dcfce7",
     color: "#166534",
   },
-
   badgePending: {
     backgroundColor: "#fef3c7",
     color: "#92400e",
