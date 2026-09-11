@@ -14,6 +14,16 @@ const menu = [
         rota: "/vendas"
     },
     {
+        nome: "Gerenciamento de Estoque",
+        icone: "inventory",
+        rota: "/gerenciamentoEstoque"
+    },
+    {
+        nome: "Entrada de Mercadorias",
+        icone: "local_shipping",
+        rota: "/entradaEstoque"
+    },
+    {
         nome: "Cadastro de Produtos",
         icone: "inventory_2",
         rota: "/cadastroProdutos"
@@ -22,11 +32,6 @@ const menu = [
         nome: "Fornecedores",
         icone: "business",
         rota: "/fornecedores"
-    },
-    {
-        nome: "Gerenciamento de Estoque",
-        icone: "inventory",
-        rota: "/gerenciamentoEstoque"
     }
 ];
 

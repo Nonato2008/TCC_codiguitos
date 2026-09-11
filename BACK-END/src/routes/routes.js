@@ -6,6 +6,7 @@ import vendasRoutes from "./vendasRoutes.js";
 import proprietarioRoutes from "./proprietarioRoutes.js";
 import itensVendasRoutes from "./itenVendasRoutes.js";
 import vendedoresRoutes from "./vendedoresRoutes.js";
+import entradaEstoqueRoutes from "./entradaEstoqueRoutes.js";
 import authRoutes from "./authRoutes.js";
 
 const routes = Router();
@@ -18,5 +19,6 @@ routes.use("/fornecedores", fornecedoresRoutes);
 routes.use("/produtos", produtosRoutes);
 routes.use("/vendas", vendasRoutes);
 routes.use("/vendedores", vendedoresRoutes);
+routes.use("/entrada-estoque", entradaEstoqueRoutes);
 // routes.use("/clientes", clientesRoutes);
 export default routes;
