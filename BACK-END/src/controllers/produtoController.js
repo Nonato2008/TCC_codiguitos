@@ -1,8 +1,8 @@
 import { statusPed } from "../enums/statusVenda.js";
 import { Produtos } from "../models/Produtos.js";
 import produtosRepository from "../repositories/produtosRepository.js";
+import { gerarNotaFiscal } from "../services/notaFiscalService.js";
 
-// Função para calcular o status do produto com base na quantidade e na data de vencimento
 const calcularStatus = (quantidade, dataVenc) => {
 
     const hoje = new Date();
@@ -12,20 +12,22 @@ const calcularStatus = (quantidade, dataVenc) => {
     vencimento.setHours(0, 0, 0, 0);
 
     if (vencimento < hoje) {
-
         return statusPed.VENCIDO;
     }
-    if (Number(quantidade) <= 0) {
 
+    if (Number(quantidade) <= 0) {
         return statusPed.ESGOTADO;
     }
+
     return statusPed.ESTOQUE;
 };
 
 const normalizarDataParaBanco = (valor) => {
+
     if (!valor) return null;
 
     const texto = String(valor).trim();
+
     if (!texto) return null;
 
     if (/^\d{4}-\d{2}-\d{2}$/.test(texto)) {
@@ -33,6 +35,7 @@ const normalizarDataParaBanco = (valor) => {
     }
 
     const data = new Date(texto);
+
     if (Number.isNaN(data.getTime())) {
         return texto;
     }
@@ -43,21 +46,78 @@ const normalizarDataParaBanco = (valor) => {
 const produtoController = {
 
     inserir: async (req, res) => {
+
         try {
+
             if (!req.file) {
-                return res.status(400).json({ message: 'Imagem não foi enviada' });
+                return res.status(400).json({
+                    message: "Imagem não foi enviada"
+                });
             }
 
-            const { idFornecedor, nome, preco, quantidade, dataVenc } = req.body;
-            const dataVencNormalizada = normalizarDataParaBanco(dataVenc);
+            const {
+                idFornecedor,
+                nome,
+                preco,
+                quantidade,
+                dataVenc
+            } = req.body;
 
-            const imagem = `/uploads/imagens/${req.file.filename}`;
+            const dataVencNormalizada =
+                normalizarDataParaBanco(dataVenc);
 
-            const produto = Produtos.criar({ idFornecedor, nome, preco, quantidade, status: calcularStatus(quantidade, dataVencNormalizada), imagem, dataVenc: dataVencNormalizada });
+            const imagem =
+                `/uploads/imagens/${req.file.filename}`;
 
-            const result = await produtosRepository.criar(produto);
+            const status =
+                calcularStatus(
+                    quantidade,
+                    dataVencNormalizada
+                );
 
-            res.status(201).json({ result });
+            const produto = Produtos.criar({
+                idFornecedor,
+                nome,
+                preco,
+                quantidade,
+                status,
+                imagem,
+                dataVenc: dataVencNormalizada
+            });
+
+            const result =
+                await produtosRepository.criar(produto);
+
+            const idProduto = result.insertId;
+
+            const notaFiscal = gerarNotaFiscal(
+                {
+                    idFornecedor,
+                    nome,
+                    preco,
+                    quantidade
+                },
+                idProduto
+            );
+
+            res.status(201).json({
+
+                message: "Produto cadastrado com sucesso.",
+
+                produto: {
+                    id: idProduto,
+                    idFornecedor: Number(idFornecedor),
+                    nome,
+                    preco: Number(preco),
+                    quantidade: Number(quantidade),
+                    status,
+                    imagem,
+                    dataVenc: dataVencNormalizada
+                },
+
+                notaFiscal
+
+            });
 
         } catch (error) {
 
@@ -69,10 +129,15 @@ const produtoController = {
             });
         }
     },
+
     alterar: async (req, res) => {
+
         try {
+
             const id = req.params.id;
-            const produtoAtual = (await produtosRepository.selecionarId(id))[0] || {};
+
+            const produtoAtual =
+                await produtosRepository.selecionarId(id);
 
             const {
                 idFornecedor,
@@ -85,41 +150,104 @@ const produtoController = {
 
             const imagem = req.file
                 ? `/uploads/imagens/${req.file.filename}`
-                : (typeof imagemInformada === 'string' && imagemInformada.trim() !== ''
-                    ? imagemInformada
-                    : (produtoAtual.Imagem || produtoAtual.imagem || '/uploads/imagens/default.png'));
+                : (
+                    typeof imagemInformada === "string" &&
+                    imagemInformada.trim() !== ""
+                        ? imagemInformada
+                        : (
+                            produtoAtual?.Imagem ||
+                            produtoAtual?.imagem ||
+                            "/uploads/imagens/default.png"
+                        )
+                );
 
-            const dataVencFinal = normalizarDataParaBanco(dataVenc || produtoAtual.DataVenc || produtoAtual.dataVenc || '2035-12-31');
-            const quantidadeFinal = Number(quantidade ?? produtoAtual.Quantidade ?? produtoAtual.quantidade ?? 0);
-            const precoFinal = Number(preco ?? produtoAtual.Preco ?? produtoAtual.preco ?? 1);
-            const idFornecedorFinal = Number(idFornecedor ?? produtoAtual.IdFornecedor ?? produtoAtual.idFornecedor ?? 1);
-            const nomeFinal = nome || produtoAtual.Nome || produtoAtual.nome || 'Produto';
-            const status = calcularStatus(quantidadeFinal, dataVencFinal);
+            const dataVencFinal =
+                normalizarDataParaBanco(
+                    dataVenc ||
+                    produtoAtual?.DataVenc ||
+                    produtoAtual?.dataVenc ||
+                    "2035-12-31"
+                );
+
+            const quantidadeFinal =
+                Number(
+                    quantidade ??
+                    produtoAtual?.Quantidade ??
+                    produtoAtual?.quantidade ??
+                    0
+                );
+
+            const precoFinal =
+                Number(
+                    preco ??
+                    produtoAtual?.Preco ??
+                    produtoAtual?.preco ??
+                    1
+                );
+
+            const idFornecedorFinal =
+                Number(
+                    idFornecedor ??
+                    produtoAtual?.IdFornecedor ??
+                    produtoAtual?.idFornecedor ??
+                    1
+                );
+
+            const nomeFinal =
+                nome ||
+                produtoAtual?.Nome ||
+                produtoAtual?.nome ||
+                "Produto";
+
+            const status =
+                calcularStatus(
+                    quantidadeFinal,
+                    dataVencFinal
+                );
 
             const produto = Produtos.alterar({
+
                 idFornecedor: idFornecedorFinal,
+
                 nome: nomeFinal,
+
                 preco: precoFinal,
+
                 quantidade: quantidadeFinal,
+
                 status,
+
                 imagem,
+
                 dataVenc: dataVencFinal
+
             }, id);
 
-            const result = await produtosRepository.editar(produto);
+            const result =
+                await produtosRepository.editar(produto);
 
-            res.status(200).json({ message: 'Produto alterado com sucesso', result });
-            console.log(result)
+            res.status(200).json({
+
+                message: "Produto alterado com sucesso",
+
+                result
+
+            });
 
         } catch (error) {
 
             console.error(error);
+
             res.status(500).json({
+
                 message: "Erro ao alterar produto",
+
                 errorMessage: error.message
+
             });
         }
     },
+
     deletar: async (req, res) => {
 
         try {
@@ -127,52 +255,79 @@ const produtoController = {
             const id = req.params.id;
 
             await produtosRepository.deletar(id);
-            res.status(200).json({ message: 'Produto deletado com sucesso' });
+
+            res.status(200).json({
+
+                message: "Produto deletado com sucesso"
+
+            });
 
         } catch (error) {
 
             console.error(error);
 
             res.status(500).json({
+
                 message: "Erro ao deletar produto",
+
                 errorMessage: error.message
+
             });
         }
     },
+
     selecionar: async (req, res) => {
 
         try {
 
-            const result = await produtosRepository.selecionar();
-            res.status(200).json({ result });
+            const result =
+                await produtosRepository.selecionar();
+
+            res.status(200).json({
+
+                result
+
+            });
 
         } catch (error) {
 
             console.error(error);
 
             res.status(500).json({
+
                 message: "Erro ao selecionar produtos",
+
                 errorMessage: error.message
+
             });
         }
     },
 
-    // Read - GET by ID____________________________________________________________________
     selecionarId: async (req, res) => {
 
         try {
 
             const id = req.params.id;
 
-            const result = await produtosRepository.selecionarId(id);
-            res.status(200).json({ result });
+            const result =
+                await produtosRepository.selecionarId(id);
+
+            res.status(200).json({
+
+                result
+
+            });
+
         } catch (error) {
 
             console.error(error);
 
             res.status(500).json({
+
                 message: "Erro ao selecionar produto",
+
                 errorMessage: error.message
+
             });
         }
     }

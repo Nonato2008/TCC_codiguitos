@@ -15,104 +15,223 @@ const estadoInicial = {
 };
 
 export default function CadastroProdutos() {
+
     const [form, setForm] = useState(estadoInicial);
+
     const [loading, setLoading] = useState(false);
-    // mensagem.type controla o estilo do AlertMessage ("success" | "error" | "")
-    const [mensagem, setMensagem] = useState({ type: "", text: "" });
+
+    const [mensagem, setMensagem] =
+        useState({
+            type: "",
+            text: ""
+        });
+
+    const [notaFiscal, setNotaFiscal] =
+        useState(null);
 
     function atualizarCampo(event) {
-        const { name, value, files } = event.target;
+
+        const {
+            name,
+            value,
+            files
+        } = event.target;
 
         if (name === "imagem") {
-            setForm((anterior) => ({ ...anterior, imagem: files[0] || null }));
+
+            setForm((anterior) => ({
+                ...anterior,
+                imagem: files[0] || null
+            }));
+
             return;
         }
 
-        setForm((anterior) => ({ ...anterior, [name]: value }));
+        setForm((anterior) => ({
+            ...anterior,
+            [name]: value
+        }));
     }
 
     async function cadastrarProduto(event) {
+
         event.preventDefault();
 
-        // Validação manual campo a campo, na ordem em que aparecem no form.
-        // Cada `return` antecipado evita chamar a API com dados incompletos.
+        setNotaFiscal(null);
+
         if (!form.nome.trim()) {
-            setMensagem({ type: "error", text: "Informe o nome do produto." });
+
+            setMensagem({
+                type: "error",
+                text: "Informe o nome do produto."
+            });
+
             return;
         }
 
         if (!form.preco || Number(form.preco) <= 0) {
-            setMensagem({ type: "error", text: "Informe um preço válido." });
+
+            setMensagem({
+                type: "error",
+                text: "Informe um preço válido."
+            });
+
             return;
         }
 
         if (!form.quantidade || Number(form.quantidade) < 0) {
-            setMensagem({ type: "error", text: "Informe a quantidade em estoque." });
+
+            setMensagem({
+                type: "error",
+                text: "Informe a quantidade em estoque."
+            });
+
             return;
         }
 
         if (!form.dataVenc) {
-            setMensagem({ type: "error", text: "Selecione a data de vencimento." });
+
+            setMensagem({
+                type: "error",
+                text: "Selecione a data de vencimento."
+            });
+
             return;
         }
 
         if (!form.imagem) {
-            setMensagem({ type: "error", text: "Selecione uma imagem do produto." });
+
+            setMensagem({
+                type: "error",
+                text: "Selecione uma imagem do produto."
+            });
+
             return;
         }
 
         setLoading(true);
-        // Limpa mensagem anterior antes de tentar novamente
-        setMensagem({ type: "", text: "" });
+
+        setMensagem({
+            type: "",
+            text: ""
+        });
 
         try {
-            // FormData é obrigatório aqui porque estamos enviando um arquivo
-            // (imagem) junto com os demais campos — não dá pra mandar JSON puro.
+
             const dados = new FormData();
-            dados.append("idFornecedor", String(form.idFornecedor || 1));
-            dados.append("nome", form.nome.trim());
-            dados.append("preco", String(form.preco));
-            dados.append("quantidade", String(form.quantidade));
-            dados.append("dataVenc", form.dataVenc);
-            dados.append("imagem", form.imagem);
 
-            await codiguitos_api.post("/produtos", dados, {
-                headers: {
-                    // Necessário explicitar multipart/form-data por causa do upload de arquivo
-                    "Content-Type": "multipart/form-data",
-                },
-            });
+            dados.append(
+                "idFornecedor",
+                String(form.idFornecedor || 1)
+            );
 
-            setMensagem({ type: "success", text: "Produto cadastrado com sucesso!" });
-            // Reseta o formulário após sucesso, incluindo o input de arquivo
-            setForm(estadoInicial);
-        } catch (error) {
-            console.error(error);
-            // Prioriza mensagem de erro vinda da API; usa fallback genérico se não houver
+            dados.append(
+                "nome",
+                form.nome.trim()
+            );
+
+            dados.append(
+                "preco",
+                String(form.preco)
+            );
+
+            dados.append(
+                "quantidade",
+                String(form.quantidade)
+            );
+
+            dados.append(
+                "dataVenc",
+                form.dataVenc
+            );
+
+            dados.append(
+                "imagem",
+                form.imagem
+            );
+
+            const resposta =
+                await codiguitos_api.post(
+                    "/produtos",
+                    dados,
+                    {
+                        headers: {
+                            "Content-Type":
+                                "multipart/form-data"
+                        }
+                    }
+                );
+
             setMensagem({
-                type: "error",
-                text: error?.response?.data?.message || "Erro ao cadastrar produto.",
+
+                type: "success",
+
+                text:
+                    "Produto cadastrado com sucesso! Nota fiscal gerada."
+
             });
+
+            setNotaFiscal(
+                resposta.data.notaFiscal
+            );
+
+            setForm(estadoInicial);
+
+        } catch (error) {
+
+            console.error(error);
+
+            setMensagem({
+
+                type: "error",
+
+                text:
+                    error?.response?.data?.message ||
+                    "Erro ao cadastrar produto."
+
+            });
+
         } finally {
+
             setLoading(false);
+
         }
     }
 
     return (
+
         <div style={styles.layout}>
+
             <Sidebar />
 
             <main style={styles.page}>
+
                 <header style={styles.header}>
-                    <h2 style={styles.title}>Cadastro de Produtos</h2>
-                    <p style={styles.subtitle}>Adicione novos itens ao estoque da adega.</p>
+
+                    <h2 style={styles.title}>
+                        Cadastro de Produtos
+                    </h2>
+
+                    <p style={styles.subtitle}>
+                        Adicione novos itens ao estoque da adega.
+                    </p>
+
                 </header>
 
                 <section style={styles.card}>
-                    <AlertMessage type={mensagem.type} message={mensagem.text} />
 
-                    <form onSubmit={cadastrarProduto} style={styles.form}>
+                    <AlertMessage
+                        type={mensagem.type}
+                        message={mensagem.text}
+                    />
+
+                    <form
+                        onSubmit={cadastrarProduto}
+                        style={styles.form}
+                    >
+
                         <div style={styles.grid}>
+
                             <FormField
                                 label="Fornecedor"
                                 name="idFornecedor"
@@ -161,7 +280,11 @@ export default function CadastroProdutos() {
                             />
 
                             <label style={styles.field}>
-                                <span style={styles.label}>Imagem do produto</span>
+
+                                <span style={styles.label}>
+                                    Imagem do produto
+                                </span>
+
                                 <input
                                     type="file"
                                     name="imagem"
@@ -169,48 +292,181 @@ export default function CadastroProdutos() {
                                     onChange={atualizarCampo}
                                     style={styles.fileInput}
                                 />
+
                             </label>
+
                         </div>
 
                         <div style={styles.actions}>
-                            <PrimaryButton disabled={loading}>
-                                {loading ? "Cadastrando..." : "Cadastrar produto"}
+
+                            <PrimaryButton
+                                disabled={loading}
+                            >
+
+                                {loading
+                                    ? "Cadastrando..."
+                                    : "Cadastrar produto"
+                                }
+
                             </PrimaryButton>
+
                         </div>
+
                     </form>
+
+                    {notaFiscal && (
+
+                        <div style={styles.nota}>
+
+                            <div style={styles.notaHeader}>
+
+                                <div>
+
+                                    <h3 style={styles.notaTitle}>
+                                        Nota Fiscal
+                                    </h3>
+
+                                    <p style={styles.notaNumero}>
+                                        Nº {notaFiscal.numero}
+                                    </p>
+
+                                </div>
+
+                                <span style={styles.notaStatus}>
+                                    Gerada
+                                </span>
+
+                            </div>
+
+                            <div style={styles.notaLinha}>
+
+                                <span>
+                                    Data de emissão
+                                </span>
+
+                                <strong>
+                                    {new Date(
+                                        notaFiscal.dataEmissao
+                                    ).toLocaleString("pt-BR")}
+                                </strong>
+
+                            </div>
+
+                            <div style={styles.notaLinha}>
+
+                                <span>
+                                    Produto
+                                </span>
+
+                                <strong>
+                                    {notaFiscal.produto.nome}
+                                </strong>
+
+                            </div>
+
+                            <div style={styles.notaLinha}>
+
+                                <span>
+                                    Quantidade
+                                </span>
+
+                                <strong>
+                                    {notaFiscal.produto.quantidade}
+                                </strong>
+
+                            </div>
+
+                            <div style={styles.notaLinha}>
+
+                                <span>
+                                    Preço unitário
+                                </span>
+
+                                <strong>
+                                    {Number(
+                                        notaFiscal.produto.precoUnitario
+                                    ).toLocaleString(
+                                        "pt-BR",
+                                        {
+                                            style: "currency",
+                                            currency: "BRL"
+                                        }
+                                    )}
+                                </strong>
+
+                            </div>
+
+                            <div style={styles.total}>
+
+                                <span>
+                                    TOTAL
+                                </span>
+
+                                <strong>
+                                    {Number(
+                                        notaFiscal.produto.valorTotal
+                                    ).toLocaleString(
+                                        "pt-BR",
+                                        {
+                                            style: "currency",
+                                            currency: "BRL"
+                                        }
+                                    )}
+                                </strong>
+
+                            </div>
+
+                            <p style={styles.avisoNota}>
+                                Esta nota fiscal foi gerada
+                                automaticamente e não foi salva
+                                no banco de dados.
+                            </p>
+
+                        </div>
+
+                    )}
+
                 </section>
+
             </main>
+
         </div>
+
     );
 }
 
 const styles = {
+
     layout: {
         display: "flex",
         minHeight: "100vh",
         backgroundColor: "#f3f5f9",
     },
+
     page: {
-        // Compensa a largura fixa da Sidebar (256px) para o conteúdo não ficar por baixo dela
         marginLeft: "256px",
         width: "calc(100% - 256px)",
         padding: "32px",
         boxSizing: "border-box",
         fontFamily: "Inter, sans-serif",
     },
+
     header: {
         marginBottom: "24px",
     },
+
     title: {
         margin: 0,
         fontSize: "32px",
         color: "#111c2d",
         fontWeight: 700,
     },
+
     subtitle: {
         margin: "8px 0 0",
         color: "#4a5568",
     },
+
     card: {
         backgroundColor: "#ffffff",
         border: "1px solid #e2e8f0",
@@ -219,25 +475,31 @@ const styles = {
         boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
         maxWidth: "900px",
     },
+
     form: {
         display: "flex",
         flexDirection: "column",
         gap: "20px",
     },
+
     grid: {
         display: "grid",
-        gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+        gridTemplateColumns:
+            "repeat(2, minmax(0, 1fr))",
         gap: "20px",
     },
+
     field: {
         display: "flex",
         flexDirection: "column",
         gap: "8px",
     },
+
     label: {
         fontWeight: 600,
         color: "#303e51",
     },
+
     fileInput: {
         width: "100%",
         boxSizing: "border-box",
@@ -246,8 +508,74 @@ const styles = {
         padding: "12px",
         backgroundColor: "#f8fafc",
     },
+
     actions: {
         display: "flex",
         justifyContent: "flex-end",
+    },
+
+    nota: {
+        marginTop: "32px",
+        padding: "24px",
+        border: "2px solid #e2e8f0",
+        borderRadius: "12px",
+        backgroundColor: "#f8fafc",
+    },
+
+    notaHeader: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        borderBottom: "1px solid #e2e8f0",
+        paddingBottom: "16px",
+        marginBottom: "16px",
+    },
+
+    notaTitle: {
+        margin: 0,
+        fontSize: "24px",
+        color: "#111c2d",
+    },
+
+    notaNumero: {
+        margin: "6px 0 0",
+        color: "#64748b",
+        fontSize: "14px",
+    },
+
+    notaStatus: {
+        padding: "6px 12px",
+        borderRadius: "20px",
+        backgroundColor: "#dcfce7",
+        color: "#166534",
+        fontSize: "13px",
+        fontWeight: 600,
+    },
+
+    notaLinha: {
+        display: "flex",
+        justifyContent: "space-between",
+        padding: "12px 0",
+        borderBottom: "1px solid #e2e8f0",
+        color: "#475569",
+    },
+
+    total: {
+        display: "flex",
+        justifyContent: "space-between",
+        marginTop: "18px",
+        paddingTop: "18px",
+        fontSize: "20px",
+        color: "#111c2d",
+    },
+
+    avisoNota: {
+        margin: "20px 0 0",
+        padding: "12px",
+        borderRadius: "8px",
+        backgroundColor: "#fff7ed",
+        color: "#9a3412",
+        fontSize: "13px",
+        textAlign: "center",
     },
 };
