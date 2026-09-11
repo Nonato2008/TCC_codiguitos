@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import FormField from "../components/FormField";
 import AlertMessage from "../components/AlertMessage";
@@ -14,99 +15,83 @@ const itemVazio = {
 };
 
 const estadoInicial = {
+  idProprietario: "",
   idVendedor: "",
   observacoes: "",
 };
 
-// ---------- Normaliza qualquer formato de retorno em um array de produtos ----------
-function normalizarProdutos(resposta) {
-  if (!resposta) return [];
-  if (Array.isArray(resposta)) return resposta;
-  if (Array.isArray(resposta.data)) return resposta.data;
-  if (Array.isArray(resposta.produtos)) return resposta.produtos;
-  if (Array.isArray(resposta.data?.produtos)) return resposta.data.produtos;
-  return [];
+// ---------- Helpers para lidar com PascalCase / camelCase da API ----------
+function getIdProduto(produto) {
+  return produto?.Id ?? produto?.id ?? produto?.idProduto;
 }
 
-// ---------- Tenta descobrir o preço do produto em campos comuns ----------
-function getPreco(produto) {
-  const valor =
-    produto?.preco ??
-    produto?.valor ??
-    produto?.valorUnitario ??
-    produto?.precoVenda ??
-    0;
-  return Number(valor) || 0;
+function getNomeProduto(produto) {
+  return produto?.Nome ?? produto?.nome ?? "Produto sem nome";
 }
 
-// ---------- Tenta descobrir o nome do produto ----------
-function getNome(produto) {
-  return (
-    produto?.nome ??
-    produto?.descricao ??
-    produto?.titulo ??
-    produto?.name ??
-    "Produto sem nome"
+function getPrecoProduto(produto) {
+  return Number(
+    produto?.Preco ??
+      produto?.preco ??
+      produto?.Valor ??
+      produto?.valor ??
+      produto?.PrecoVenda ??
+      produto?.precoVenda ??
+      0
   );
 }
 
-// ---------- Tenta descobrir o id do produto ----------
-function getId(produto) {
-  return produto?.id ?? produto?.idProduto ?? produto?._id ?? produto?.codigo;
+// ---------- Normaliza retorno: array direto ou { result: [...] } ----------
+function normalizarLista(lista) {
+  if (Array.isArray(lista)) return lista;
+  if (Array.isArray(lista?.result)) return lista.result;
+  if (Array.isArray(lista?.data)) return lista.data;
+  return [];
 }
 
 export default function CadastroVendas() {
+  const navigate = useNavigate();
+
   const [form, setForm] = useState(estadoInicial);
   const [itens, setItens] = useState([{ ...itemVazio }]);
 
   const [produtos, setProdutos] = useState([]);
   const [vendedores, setVendedores] = useState([]);
+  const [proprietarios, setProprietarios] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [carregandoProdutos, setCarregandoProdutos] = useState(false);
   const [carregandoVendedores, setCarregandoVendedores] = useState(false);
+  const [carregandoProprietarios, setCarregandoProprietarios] = useState(false);
   const [mensagem, setMensagem] = useState({ type: "", text: "" });
 
   // ---------- Buscar produtos do banco ----------
   async function carregarProdutos() {
     setCarregandoProdutos(true);
     try {
-      const resposta = await buscarProdutos();
-
-      // 🔍 Log pra debug — remova depois que estiver funcionando
-      console.log("[buscarProdutos] resposta bruta:", resposta);
-
-      const lista = normalizarProdutos(resposta);
-
-      console.log("[buscarProdutos] lista normalizada:", lista);
-
-      if (lista.length === 0) {
-        console.warn(
-          "[buscarProdutos] Nenhum produto encontrado. Verifique o formato do retorno."
-        );
-      }
-
-      setProdutos(lista);
+      const listaProdutos = await buscarProdutos();
+      const produtosNormalizados = normalizarLista(listaProdutos);
+      setProdutos(produtosNormalizados);
+      return produtosNormalizados;
     } catch (error) {
       console.error("Erro ao carregar produtos:", error);
       setMensagem({
         type: "error",
-        text:
-          error?.response?.data?.message ||
-          "Não foi possível carregar os produtos disponíveis.",
+        text: "Não foi possível carregar os produtos disponíveis.",
       });
+      return [];
     } finally {
       setCarregandoProdutos(false);
     }
   }
 
-  // ---------- Carregar produtos e vendedores do banco ----------
+  // ---------- Carregar produtos, vendedores e proprietários ----------
   useEffect(() => {
     async function carregarVendedores() {
       setCarregandoVendedores(true);
       try {
         const { data } = await codiguitos_api.get("/vendedores");
-        setVendedores(data);
+        setVendedores(normalizarLista(data));
       } catch (error) {
         console.error("Erro ao carregar vendedores:", error);
         setMensagem({
@@ -118,8 +103,25 @@ export default function CadastroVendas() {
       }
     }
 
+    async function carregarProprietarios() {
+      setCarregandoProprietarios(true);
+      try {
+        const { data } = await codiguitos_api.get("/proprietarios");
+        setProprietarios(normalizarLista(data));
+      } catch (error) {
+        console.error("Erro ao carregar proprietários:", error);
+        setMensagem({
+          type: "error",
+          text: "Não foi possível carregar os proprietários.",
+        });
+      } finally {
+        setCarregandoProprietarios(false);
+      }
+    }
+
     carregarProdutos();
     carregarVendedores();
+    carregarProprietarios();
   }, []);
 
   // ---------- Campos do formulário ----------
@@ -134,12 +136,14 @@ export default function CadastroVendas() {
       const novos = [...anterior];
       const item = { ...novos[index], [campo]: valor };
 
+      // Recalcula valor unitário/total quando produto ou quantidade mudam
       if (campo === "idProduto" || campo === "quantidade") {
         const produto = produtos.find(
-          (p) => String(getId(p)) === String(item.idProduto)
+          (p) => Number(getIdProduto(p)) === Number(item.idProduto)
         );
+
         if (produto) {
-          const preco = getPreco(produto);
+          const preco = getPrecoProduto(produto);
           const qtd = Number(item.quantidade) || 0;
           item.valorUnitario = preco.toFixed(2);
           item.valorTotal = (preco * qtd).toFixed(2);
@@ -174,6 +178,11 @@ export default function CadastroVendas() {
   async function cadastrarVenda(event) {
     event.preventDefault();
 
+    if (!form.idProprietario) {
+      setMensagem({ type: "error", text: "Selecione um proprietário." });
+      return;
+    }
+
     if (!form.idVendedor) {
       setMensagem({ type: "error", text: "Selecione um vendedor." });
       return;
@@ -195,6 +204,7 @@ export default function CadastroVendas() {
 
     try {
       const dados = {
+        idProprietario: Number(form.idProprietario),
         idVendedor: Number(form.idVendedor),
         observacoes: form.observacoes?.trim() || "",
         valorTotal: Number(totalGeral.toFixed(2)),
@@ -230,38 +240,86 @@ export default function CadastroVendas() {
       <Sidebar />
 
       <main style={styles.page}>
+        {/* ---------- Cabeçalho ---------- */}
         <header style={styles.header}>
-          <h2 style={styles.title}>Cadastro de Vendas</h2>
-          <p style={styles.subtitle}>
-            Registre novas vendas e acompanhe o faturamento.
-          </p>
+          <div>
+            <h2 style={styles.title}>Cadastro de Vendas</h2>
+            <p style={styles.subtitle}>
+              Registre novas vendas e acompanhe o faturamento.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            style={styles.voltarButton}
+            onClick={() => navigate(-1)}
+          >
+            <span className="material-symbols-outlined">arrow_back</span>
+            Voltar
+          </button>
         </header>
 
         <section style={styles.card}>
           <AlertMessage type={mensagem.type} message={mensagem.text} />
 
           <form onSubmit={cadastrarVenda} style={styles.form}>
-            {/* ---------- Vendedor ---------- */}
-            <div style={styles.field}>
-              <label style={styles.label}>Vendedor</label>
-              <select
-                name="idVendedor"
-                value={form.idVendedor}
-                onChange={atualizarCampo}
-                style={styles.select}
-                disabled={carregandoVendedores}
-              >
-                <option value="">
-                  {carregandoVendedores
-                    ? "Carregando vendedores..."
-                    : "Selecione um vendedor..."}
-                </option>
-                {vendedores.map((vendedor) => (
-                  <option key={vendedor.id} value={vendedor.id}>
-                    {vendedor.nome}
+            {/* ---------- Proprietário + Vendedor (linha) ---------- */}
+            <div style={styles.row}>
+              {/* Proprietário */}
+              <div style={styles.field}>
+                <label style={styles.label}>Proprietário</label>
+                <select
+                  name="idProprietario"
+                  value={form.idProprietario}
+                  onChange={atualizarCampo}
+                  style={styles.select}
+                  disabled={carregandoProprietarios}
+                >
+                  <option value="">
+                    {carregandoProprietarios
+                      ? "Carregando proprietários..."
+                      : "Selecione um proprietário..."}
                   </option>
-                ))}
-              </select>
+                  {proprietarios.map((proprietario) => {
+                    const id = proprietario.Id ?? proprietario.id;
+                    const nome =
+                      proprietario.Nome ?? proprietario.nome ?? "Sem nome";
+                    return (
+                      <option key={id} value={id}>
+                        {nome}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              {/* Vendedor */}
+              <div style={styles.field}>
+                <label style={styles.label}>Vendedor</label>
+                <select
+                  name="idVendedor"
+                  value={form.idVendedor}
+                  onChange={atualizarCampo}
+                  style={styles.select}
+                  disabled={carregandoVendedores}
+                >
+                  <option value="">
+                    {carregandoVendedores
+                      ? "Carregando vendedores..."
+                      : "Selecione um vendedor..."}
+                  </option>
+                  {vendedores.map((vendedor) => {
+                    const id = vendedor.Id ?? vendedor.id;
+                    const nome =
+                      vendedor.Nome ?? vendedor.nome ?? "Sem nome";
+                    return (
+                      <option key={id} value={id}>
+                        {nome}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
             </div>
 
             {/* ---------- Lista de produtos ---------- */}
@@ -311,9 +369,9 @@ export default function CadastroVendas() {
                         : "Selecione um produto..."}
                     </option>
                     {produtos.map((produto) => {
-                      const id = getId(produto);
-                      const nome = getNome(produto);
-                      const preco = getPreco(produto);
+                      const id = getIdProduto(produto);
+                      const nome = getNomeProduto(produto);
+                      const preco = getPrecoProduto(produto);
                       return (
                         <option key={id} value={id}>
                           {nome} - R$ {preco.toFixed(2)}
@@ -404,9 +462,38 @@ const styles = {
     boxSizing: "border-box",
     fontFamily: "Inter, sans-serif",
   },
-  header: { marginBottom: "24px" },
-  title: { margin: 0, fontSize: "32px", color: "#111c2d", fontWeight: 700 },
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    marginBottom: "24px",
+    gap: "16px",
+  },
+  title: {
+    margin: 0,
+    fontSize: "32px",
+    color: "#111c2d",
+    fontWeight: 700,
+    fontFamily: "Montserrat, sans-serif",
+  },
   subtitle: { margin: "8px 0 0", color: "#4a5568" },
+
+  voltarButton: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    padding: "10px 16px",
+    border: "1px solid #e2e8f0",
+    borderRadius: "8px",
+    backgroundColor: "#f9f9ff",
+    color: "#303e51",
+    fontSize: "14px",
+    fontWeight: "600",
+    cursor: "pointer",
+    fontFamily: "Inter, sans-serif",
+    flexShrink: 0,
+  },
+
   card: {
     backgroundColor: "#ffffff",
     border: "1px solid #e2e8f0",
@@ -416,6 +503,13 @@ const styles = {
     maxWidth: "900px",
   },
   form: { display: "flex", flexDirection: "column", gap: "20px" },
+
+  row: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "16px",
+  },
+
   field: { display: "flex", flexDirection: "column", gap: "8px" },
   fieldFull: {
     display: "flex",
