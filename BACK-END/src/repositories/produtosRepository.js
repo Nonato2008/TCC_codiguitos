@@ -31,7 +31,7 @@ class ProdutosRepository {
         return resultado;
     }
 
-    async editar(id, produto) {
+    async editar(produto) {
         const {
             idFornecedor,
             nome,
@@ -39,7 +39,8 @@ class ProdutosRepository {
             quantidade,
             status,
             imagem,
-            dataVenc
+            dataVenc,
+            id
         } = produto;
 
         const [resultado] = await connection.execute(
@@ -93,22 +94,15 @@ class ProdutosRepository {
         return resultado[0];
     }
 
-    // ==========================================================
-    // ENTRADA DE MERCADORIAS
-    // ==========================================================
-
     async entradaMercadoria(itens) {
-
         const connectionTransaction = await connection.getConnection();
 
         try {
-
             await connectionTransaction.beginTransaction();
 
             for (const item of itens) {
-
                 const [produto] = await connectionTransaction.execute(
-                    `SELECT Id, Quantidade, DataVenc
+                    `SELECT Id, Quantidade
                      FROM Produtos
                      WHERE Id = ?
                      FOR UPDATE`,
@@ -123,19 +117,17 @@ class ProdutosRepository {
 
                 const quantidadeAtual = Number(produto[0].Quantidade);
                 const quantidadeEntrada = Number(item.quantidade);
-
                 const novaQuantidade =
                     quantidadeAtual + quantidadeEntrada;
 
                 const dataVenc = item.dataVenc;
-
-                let status = "Em Estoque";
-
                 const hoje = new Date();
                 hoje.setHours(0, 0, 0, 0);
 
                 const vencimento = new Date(`${dataVenc}T00:00:00`);
                 vencimento.setHours(0, 0, 0, 0);
+
+                let status = "Em Estoque";
 
                 if (novaQuantidade <= 0) {
                     status = "Esgotado";
@@ -162,19 +154,15 @@ class ProdutosRepository {
 
             return {
                 sucesso: true,
-                mensagem: "Entrada de mercadorias realizada com sucesso."
+                mensagem:
+                    "Entrada de mercadorias realizada com sucesso."
             };
 
         } catch (error) {
-
             await connectionTransaction.rollback();
-
             throw error;
-
         } finally {
-
             connectionTransaction.release();
-
         }
     }
 }
