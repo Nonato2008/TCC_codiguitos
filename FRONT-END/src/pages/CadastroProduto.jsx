@@ -101,10 +101,13 @@ export default function CadastroProdutos() {
                 error
             );
 
-            setMensagem({
-                type: "error",
-                text: "A nota foi gerada, mas não foi possível abrir o PDF."
-            });
+            setMensagem((anterior) => ({
+                // preserva mensagem de sucesso caso já exista, e anexa um aviso
+                type: anterior?.type === "success" ? "success" : "error",
+                text: anterior?.text
+                    ? `${anterior.text} A nota foi gerada, mas não foi possível abrir o PDF.`
+                    : "A nota foi gerada, mas não foi possível abrir o PDF.",
+            }));
 
         }
     }
@@ -209,40 +212,37 @@ export default function CadastroProdutos() {
                 form.imagem
             );
 
-            const resposta =
-                await codiguitos_api.post(
-                    "/produtos",
-                    dados,
-                    {
-                        headers: {
-                            "Content-Type":
-                                "multipart/form-data"
+                        const resposta = await codiguitos_api.post("/produtos", dados, {
+                            headers: { "Content-Type": "multipart/form-data" },
+                        });
+
+                        const data = resposta?.data || {};
+
+                        // Mensagem de sucesso construída dinamicamente
+                        let sucessoTexto = "Produto cadastrado com sucesso!";
+                        if (data.notaFiscal) sucessoTexto += " Nota fiscal gerada.";
+
+                        setMensagem({ type: "success", text: sucessoTexto });
+
+                        // Define notaFiscal apenas se presente na resposta
+                        if (data.notaFiscal) setNotaFiscal(data.notaFiscal);
+
+                        // Tenta abrir o PDF — se falhar, anexa aviso à mensagem de sucesso
+                        if (data.pdf) {
+                            try {
+                                abrirPDF(data.pdf);
+                            } catch (err) {
+                                console.error("Erro ao abrir PDF:", err);
+                                setMensagem((anterior) => ({
+                                    type: anterior?.type === "success" ? "success" : "error",
+                                    text: anterior?.text
+                                        ? `${anterior.text} A nota foi gerada, mas não foi possível abrir o PDF.`
+                                        : "A nota foi gerada, mas não foi possível abrir o PDF.",
+                                }));
+                            }
                         }
-                    }
-                );
 
-            setMensagem({
-
-                type: "success",
-
-                text:
-                    "Produto cadastrado com sucesso! Nota fiscal gerada."
-
-            });
-
-            setNotaFiscal(
-                resposta.data.notaFiscal
-            );
-
-            if (resposta.data.pdf) {
-
-                abrirPDF(
-                    resposta.data.pdf
-                );
-
-            }
-
-            setForm(estadoInicial);
+                        setForm(estadoInicial);
 
         } catch (error) {
 

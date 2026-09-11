@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import { useVendas } from "../hooks/useVendas";
 import { buscarVendedores } from "../services/vendedoresService";
@@ -14,7 +14,7 @@ export default function Vendas() {
         const carregarVendedores = async () => {
             try {
                 const dados = await buscarVendedores();
-                setVendedores(dados);
+                setVendedores(dados || []);
             } catch (error) {
                 console.error("Erro ao buscar vendedores:", error);
             }
@@ -24,14 +24,14 @@ export default function Vendas() {
     }, []);
 
     const encontrarNomeVendedor = (idVendedor) => {
-        const vendedor = vendedores.find(
-            (vendedor) => vendedor.Id === idVendedor
-        );
-
-        return vendedor
-            ? vendedor.Nome
-            : `Vendedor #${idVendedor}`;
+        const vendedor = vendedores.find((v) => v.Id === idVendedor || v.id === idVendedor);
+        return vendedor ? vendedor.Nome ?? vendedor.nome : `Vendedor #${idVendedor}`;
     };
+
+    const vendasComVendedor = (Array.isArray(vendas) ? vendas : []).map((venda) => ({
+        ...venda,
+        NomeVendedor: encontrarNomeVendedor(venda.IdVendedor),
+    }));
 
     if (loading) {
         return (
@@ -39,6 +39,20 @@ export default function Vendas() {
                 <Sidebar />
 
                 <main style={styles.page}>
+                    <header style={styles.header}>
+                        <div>
+                            <h1 style={styles.title}>Vendas</h1>
+                            <p style={styles.subtitle}>Consulte as vendas realizadas na loja.</p>
+                        </div>
+
+                        <div style={styles.headerRight}>
+                            <div style={styles.total}>0 vendas</div>
+                            <Link to="/vendas/cadastrar" style={{ textDecoration: "none" }}>
+                                <button style={styles.primaryButton}>+ Nova venda</button>
+                            </Link>
+                        </div>
+                    </header>
+
                     <div style={styles.centerContent}>
                         <p>Carregando vendas...</p>
                     </div>
@@ -53,99 +67,69 @@ export default function Vendas() {
                 <Sidebar />
 
                 <main style={styles.page}>
-                    <div style={styles.centerContent}>
-                        <div style={styles.error}>
-                            Erro ao carregar as vendas.
+                    <header style={styles.header}>
+                        <div>
+                            <h1 style={styles.title}>Vendas</h1>
+                            <p style={styles.subtitle}>Consulte as vendas realizadas na loja.</p>
                         </div>
+
+                        <div style={styles.headerRight}>
+                            <div style={styles.total}>0 vendas</div>
+                            <Link to="/vendas/cadastrar" style={{ textDecoration: "none" }}>
+                                <button style={styles.primaryButton}>+ Nova venda</button>
+                            </Link>
+                        </div>
+                    </header>
+
+                    <div style={styles.centerContent}>
+                        <div style={styles.error}>Erro ao carregar as vendas.</div>
                     </div>
                 </main>
             </div>
         );
     }
 
-    const vendasComVendedor = vendas.map((venda) => ({
-        ...venda,
-        NomeVendedor: encontrarNomeVendedor(venda.IdVendedor),
-    }));
+    return (
+        <div style={styles.layout}>
+            <Sidebar />
 
-    import { Link } from "react-router-dom";
-
-return (
-    <div style={styles.layout}>
-
-        <Sidebar />
-
-        <main style={styles.page}>
-
-            {/* CABEÇALHO */}
-            <header style={styles.header}>
-
-                <div>
-                    <h1 style={styles.title}>
-                        Vendas
-                    </h1>
-
-                    <p style={styles.subtitle}>
-                        Consulte as vendas realizadas na loja.
-                    </p>
-                </div>
-
-                <div style={styles.total}>
-                    {vendas.length}{" "}
-                    {vendas.length === 1
-                        ? "venda"
-                        : "vendas"}
-                </div>
-
-            </header>
-
-            {/* BOTÃO NOVA VENDA */}
-            <div style={styles.newSaleContainer}>
-
-                <Link
-                    to="/vendas/cadastrar"
-                    style={{ textDecoration: "none" }}
-                >
-                    <button style={styles.primaryButton}>
-                        + Nova venda
-                    </button>
-                </Link>
-
-            </div>
-
-            {/* LISTA */}
-            <section style={styles.content}>
-
-                {vendas.length === 0 ? (
-
-                    <div style={styles.empty}>
-                        <span className="material-symbols-outlined">
-                            point_of_sale
-                        </span>
-
-                        <p>
-                            Nenhuma venda encontrada.
-                        </p>
+            <main style={styles.page}>
+                {/* CABEÇALHO */}
+                <header style={styles.header}>
+                    <div>
+                        <h1 style={styles.title}>Vendas</h1>
+                        <p style={styles.subtitle}>Consulte as vendas realizadas na loja.</p>
                     </div>
 
-                ) : (
+                    <div style={styles.headerRight}>
+                        <div style={styles.total}>
+                            {vendas.length} {" "}
+                            {vendas.length === 1 ? "venda" : "vendas"}
+                        </div>
 
-                    <VendasList
-                        vendas={vendasComVendedor}
-                    />
+                        <Link to="/vendas/cadastrar" style={{ textDecoration: "none" }}>
+                            <button style={styles.primaryButton}>+ Nova venda</button>
+                        </Link>
+                    </div>
+                </header>
 
-                )}
-
-            </section>
-
-        </main>
-
-    </div>
-)};
-    
+                {/* LISTA */}
+                <section style={styles.content}>
+                    {vendas.length === 0 ? (
+                        <div style={styles.empty}>
+                            <span className="material-symbols-outlined">point_of_sale</span>
+                            <p>Nenhuma venda encontrada.</p>
+                        </div>
+                    ) : (
+                        <VendasList vendas={vendasComVendedor} />
+                    )}
+                </section>
+            </main>
+        </div>
+    );
+}
 
 const styles = {
-
     layout: {
         minHeight: "100vh",
         backgroundColor: "#f5f6f8",
@@ -161,10 +145,15 @@ const styles = {
     header: {
         maxWidth: "1150px",
         margin: "0 0 25px 0",
-
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
+    },
+
+    headerRight: {
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
     },
 
     title: {
@@ -190,6 +179,16 @@ const styles = {
         fontWeight: "600",
         fontSize: "15px",
         boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
+    },
+
+    primaryButton: {
+        border: "none",
+        backgroundColor: "#303e51",
+        color: "#fff",
+        padding: "10px 14px",
+        borderRadius: "10px",
+        fontWeight: 600,
+        cursor: "pointer",
     },
 
     content: {

@@ -26,6 +26,7 @@ export default function App() {
         <Route path="/vendas" element={<Vendas />} />
         <Route path="/Vendas" element={<Vendas />} />
 
+        <Route path="/vendas/cadastrar" element={<CadastroVendas />} />
         <Route path="/vendas/:id" element={<ProfileVenda />} />
 
         <Route path="/fornecedores" element={<Fornecedores />} />

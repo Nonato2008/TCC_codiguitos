@@ -52,9 +52,15 @@ export function gerarNotaFiscal(produto) {
 }
 
 export async function gerarNotaFiscalPDF(notaFiscal) {
+    let PDFDocument;
 
-    const PDFDocument =
-        (await import("pdfkit")).default;
+    try {
+        PDFDocument = (await import("pdfkit")).default;
+    } catch (err) {
+        console.error("pdfkit não encontrado; pulando geração de PDF:", err);
+        // retorna null para indicar que não foi possível gerar o PDF
+        return null;
+    }
 
     return new Promise((resolve, reject) => {
 
