@@ -17,6 +17,7 @@ export default function Painel() {
   } = useVendas();
 
   const vendasLista = Array.isArray(vendas) ? vendas : [];
+  const ultimasVendas = [...vendasLista].slice(-3).reverse();
 
   const produtosTotais = Array.isArray(produtos) ? produtos.length : 0;
 
@@ -126,7 +127,7 @@ export default function Painel() {
               </div>
             ) : vendasLista.length > 0 ? (
               <div style={styles.vendasLista}>
-                {vendasLista.slice(0, 3).map((venda) => (
+                {ultimasVendas.map((venda) => (
                   <div key={venda.Id} style={styles.vendaItem}>
                     <div style={styles.vendaInfo}>
                       <strong style={styles.vendaTitulo}>
