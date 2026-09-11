@@ -501,15 +501,13 @@ const vendasRepository = {
 
         const [rows] = await connection.execute(`
             SELECT
-                v.*,
-                i.Id AS itemId,
-                i.IdProduto,
-                i.Qtd,
-                i.Valor
+                v.Id,
+                v.IdProprietario,
+                v.IdVendedor,
+                v.ValorTotal,
+                v.DataCad
             FROM Vendas v
-            LEFT JOIN Itens_vendas i
-                ON i.IdVenda = v.Id
-            ORDER BY v.Id DESC, i.Id ASC
+            ORDER BY v.Id DESC
         `);
 
         return rows;
