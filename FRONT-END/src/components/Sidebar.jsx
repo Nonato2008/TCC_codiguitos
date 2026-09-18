@@ -90,7 +90,7 @@ export default function Sidebar() {
 
             </nav>
 
-            <div style={styles.bottomMenu}>
+            <div style={{ ...styles.bottomMenu, ...(isDark ? styles.bottomMenuDark : {}) }}>
                 <button
                     type="button"
                     onClick={toggleTheme}
@@ -245,6 +245,10 @@ const styles = {
         display: "flex",
         flexDirection: "column",
         gap: "8px"
+    },
+
+    bottomMenuDark: {
+        borderTopColor: "#374151"
     },
 
     themeButton: {
