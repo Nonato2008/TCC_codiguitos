@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import FormField from "../components/FormField";
@@ -6,6 +6,7 @@ import AlertMessage from "../components/AlertMessage";
 import PrimaryButton from "../components/PrimaryButton";
 import { codiguitos_api } from "../services/tcc.api";
 import { buscarProdutos } from "../services/produtosService";
+import { ThemeContext } from "../contexts/ThemeContext";
 
 const itemVazio = {
   idProduto: "",
@@ -65,6 +66,8 @@ function normalizarLista(lista) {
 
 export default function CadastroVendas() {
   const navigate = useNavigate();
+  const { theme } = useContext(ThemeContext);
+  const isDark = theme === "dark";
 
   const [form, setForm] = useState(estadoInicial);
   const [itens, setItens] = useState([{ ...itemVazio }]);
@@ -321,307 +324,172 @@ export default function CadastroVendas() {
 
   // ---------- Render ----------
   return (
-    <div style={styles.layout}>
+    <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
       <Sidebar />
 
-      <main style={styles.page}>
+      <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
         {/* ---------- Cabeçalho ---------- */}
         <header style={styles.header}>
           <div>
-            <h2 style={styles.title}>Cadastro de Vendas</h2>
-            <p style={styles.subtitle}>
-              Registre novas vendas e acompanhe o faturamento.
+            <h1 style={{ ...styles.title, ...(isDark ? styles.titleDark : {}) }}>
+              Cadastro de venda
+            </h1>
+            <p style={{ ...styles.subtitle, ...(isDark ? styles.subtitleDark : {}) }}>
+              Registre uma nova venda com produtos, vendedor e proprietário.
             </p>
           </div>
 
           <button
             type="button"
-            style={styles.voltarButton}
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/vendas")}
+            style={{ ...styles.backButton, ...(isDark ? styles.backButtonDark : {}) }}
           >
             <span className="material-symbols-outlined">arrow_back</span>
             Voltar
           </button>
         </header>
 
-        <section style={styles.card}>
-          <AlertMessage type={mensagem.type} message={mensagem.text} />
+        <section style={{ ...styles.card, ...(isDark ? styles.cardDark : {}) }}>
+          <AlertMessage type={mensagem.type} message={mensagem.text} dark={isDark} />
 
           <form onSubmit={cadastrarVenda} style={styles.form}>
             {/* ---------- Proprietário + Vendedor (linha) ---------- */}
-            <div style={styles.row}>
-              <div style={styles.field}>
-                <label style={styles.label}>Proprietário</label>
+            <div style={styles.grid}>
+              <label style={{ ...styles.field, ...(isDark ? styles.fieldDark : {}) }}>
+                <span style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>Proprietário</span>
                 <select
                   name="idProprietario"
                   value={form.idProprietario}
                   onChange={atualizarCampo}
-                  style={styles.select}
+                  style={{ ...styles.select, ...(isDark ? styles.selectDark : {}) }}
                   disabled={carregandoProprietarios}
                 >
-                  <option value="">
-                    {carregandoProprietarios
-                      ? "Carregando proprietários..."
-                      : "Selecione um proprietário..."}
-                  </option>
-                  {proprietarios.map((proprietario) => {
-                    const id = proprietario.Id ?? proprietario.id;
-                    const nome =
-                      proprietario.Nome ?? proprietario.nome ?? "Sem nome";
-                    return (
-                      <option key={id} value={id}>
-                        {nome}
-                      </option>
-                    );
-                  })}
+                  <option value="">Selecione</option>
+                  {proprietarios.map((proprietario) => (
+                    <option key={proprietario.Id ?? proprietario.id} value={proprietario.Id ?? proprietario.id}>
+                      {proprietario.Nome ?? proprietario.nome}
+                    </option>
+                  ))}
                 </select>
-              </div>
+              </label>
 
-              <div style={styles.field}>
-                <label style={styles.label}>Vendedor</label>
+              <label style={{ ...styles.field, ...(isDark ? styles.fieldDark : {}) }}>
+                <span style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>Vendedor</span>
                 <select
                   name="idVendedor"
                   value={form.idVendedor}
                   onChange={atualizarCampo}
-                  style={styles.select}
+                  style={{ ...styles.select, ...(isDark ? styles.selectDark : {}) }}
                   disabled={carregandoVendedores}
                 >
-                  <option value="">
-                    {carregandoVendedores
-                      ? "Carregando vendedores..."
-                      : "Selecione um vendedor..."}
-                  </option>
-                  {vendedores.map((vendedor) => {
-                    const id = vendedor.Id ?? vendedor.id;
-                    const nome =
-                      vendedor.Nome ?? vendedor.nome ?? "Sem nome";
-                    return (
-                      <option key={id} value={id}>
-                        {nome}
-                      </option>
-                    );
-                  })}
+                  <option value="">Selecione</option>
+                  {vendedores.map((vendedor) => (
+                    <option key={vendedor.Id ?? vendedor.id} value={vendedor.Id ?? vendedor.id}>
+                      {vendedor.Nome ?? vendedor.nome}
+                    </option>
+                  ))}
                 </select>
-              </div>
+              </label>
+            </div>
+
+            {/* ---------- Campo de busca ---------- */}
+            <div style={styles.searchBox}>
+              <span className="material-symbols-outlined">search</span>
+              <input
+                type="text"
+                value={buscaProduto}
+                onChange={(e) => setBuscaProduto(e.target.value)}
+                placeholder="Buscar produto por nome ou código"
+                style={{ ...styles.searchInput, ...(isDark ? styles.searchInputDark : {}) }}
+              />
             </div>
 
             {/* ---------- Lista de produtos ---------- */}
-            <div style={styles.itemsSection}>
-              <div style={styles.itemsHeader}>
-                <h3 style={styles.itemsTitle}>
-                  Produtos da venda{" "}
-                  {carregandoProdutos && (
-                    <span style={styles.loadingHint}>atualizando...</span>
-                  )}
-                </h3>
+            <div style={styles.itensHeader}>
+              <h2 style={{ ...styles.sectionTitle, ...(isDark ? styles.sectionTitleDark : {}) }}>Produtos da venda</h2>
+              <button
+                type="button"
+                onClick={adicionarItem}
+                style={{ ...styles.addButton, ...(isDark ? styles.addButtonDark : {}) }}
+              >
+                <span className="material-symbols-outlined">add</span>
+                Adicionar item
+              </button>
+            </div>
 
-                <div style={styles.headerButtons}>
-                  <button
-                    type="button"
-                    style={styles.refreshButton}
-                    onClick={carregarProdutos}
-                    disabled={carregandoProdutos}
-                    title="Atualizar lista de produtos"
-                  >
-                    ↻
-                  </button>
-                  <button
-                    type="button"
-                    style={styles.addButton}
-                    onClick={adicionarItem}
-                  >
-                    + Adicionar produto
-                  </button>
-                </div>
-              </div>
-
-              {/* ---------- Campo de busca ---------- */}
-              <div style={styles.searchWrapper}>
-                <span
-                  className="material-symbols-outlined"
-                  style={styles.searchIcon}
-                >
-                  search
-                </span>
-
-                <input
-                  type="text"
-                  value={buscaProduto}
-                  onChange={(e) => setBuscaProduto(e.target.value)}
-                  placeholder="Pesquisar produto por nome ou ID..."
-                  style={styles.searchInput}
-                />
-
-                {buscaProduto && (
-                  <button
-                    type="button"
-                    style={styles.searchClear}
-                    onClick={() => setBuscaProduto("")}
-                    title="Limpar pesquisa"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-
-              {buscaProduto.trim() && (
-                <p style={styles.searchInfo}>
-                  {produtosFiltrados.length} produto(s) encontrado(s) para "
-                  {buscaProduto}"
-                </p>
-              )}
-
-              {itens.map((item, index) => {
-                const produtoAtual = produtos.find(
-                  (p) => Number(getIdProduto(p)) === Number(item.idProduto)
-                );
-                const estoqueAtual = produtoAtual
-                  ? getEstoqueProduto(produtoAtual)
-                  : undefined;
-                const noLimite =
-                  estoqueAtual !== undefined &&
-                  Number(item.quantidade) >= estoqueAtual;
-
-                // Produtos já usados em OUTRAS linhas
-                const idsUsadosEmOutrasLinhas = itens
-                  .filter((_, i) => i !== index)
-                  .map((i) => Number(i.idProduto))
-                  .filter((v) => !Number.isNaN(v) && v > 0);
-
-                // Produtos disponíveis para ESTA linha
-                const produtosParaSelect = [...produtosFiltrados];
-
-                // Mantém o produto selecionado visível mesmo que filtrado
-                if (
-                  produtoAtual &&
-                  !produtosParaSelect.some(
-                    (p) =>
-                      Number(getIdProduto(p)) === Number(item.idProduto)
-                  )
-                ) {
-                  produtosParaSelect.unshift(produtoAtual);
-                }
-
-                return (
-                  <div key={index} style={styles.itemRow}>
+            {itens.map((item, index) => (
+              <div key={index} style={{ ...styles.itemCard, ...(isDark ? styles.itemCardDark : {}) }}>
+                <div style={styles.grid}>
+                  <label style={{ ...styles.field, ...(isDark ? styles.fieldDark : {}) }}>
+                    <span style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>Produto</span>
                     <select
                       value={item.idProduto}
-                      onChange={(e) =>
-                        atualizarItem(index, "idProduto", e.target.value)
-                      }
-                      style={{ ...styles.select, flex: 2 }}
+                      onChange={(event) => atualizarItem(index, "idProduto", event.target.value)}
+                      style={{ ...styles.select, ...(isDark ? styles.selectDark : {}) }}
                     >
-                      <option value="">
-                        {carregandoProdutos && produtos.length === 0
-                          ? "Carregando produtos..."
-                          : produtos.length === 0
-                          ? "Nenhum produto cadastrado"
-                          : produtosParaSelect.length === 0
-                          ? "Nenhum produto encontrado"
-                          : "Selecione um produto..."}
-                      </option>
-                      {produtosParaSelect.map((produto) => {
-                        const id = getIdProduto(produto);
-                        const nome = getNomeProduto(produto);
-                        const preco = getPrecoProduto(produto);
-                        const estoque = getEstoqueProduto(produto);
-                        const semEstoque = estoque <= 0;
-                        const jaUsadoEmOutra = idsUsadosEmOutrasLinhas.includes(
-                          Number(id)
-                        );
-
-                        return (
-                          <option
-                            key={id}
-                            value={id}
-                            disabled={semEstoque || jaUsadoEmOutra}
-                          >
-                            {nome} - R$ {preco.toFixed(2)}
-                            {jaUsadoEmOutra
-                              ? " (já adicionado)"
-                              : semEstoque
-                              ? " (sem estoque)"
-                              : ` • Estoque: ${estoque}`}
-                          </option>
-                        );
-                      })}
+                      <option value="">Selecione um produto</option>
+                      {produtosFiltrados.map((produto) => (
+                        <option key={getIdProduto(produto)} value={getIdProduto(produto)}>
+                          {getNomeProduto(produto)}
+                        </option>
+                      ))}
                     </select>
+                  </label>
 
+                  <label style={{ ...styles.field, ...(isDark ? styles.fieldDark : {}) }}>
+                    <span style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>Quantidade</span>
                     <input
                       type="number"
                       min="1"
-                      max={estoqueAtual ?? undefined}
-                      step="1"
                       value={item.quantidade}
-                      onChange={(e) =>
-                        atualizarItem(index, "quantidade", e.target.value)
-                      }
-                      style={{
-                        ...styles.select,
-                        width: "90px",
-                        borderColor: noLimite ? "#f59e0b" : "#cbd5e1",
-                      }}
-                      placeholder="Qtd"
-                      title={
-                        estoqueAtual !== undefined
-                          ? `Máximo disponível: ${estoqueAtual}`
-                          : undefined
-                      }
+                      onChange={(event) => atualizarItem(index, "quantidade", event.target.value)}
+                      style={{ ...styles.input, ...(isDark ? styles.inputDark : {}) }}
                     />
+                  </label>
+                </div>
 
-                    <input
-                      type="text"
-                      value={`R$ ${Number(item.valorTotal).toFixed(2)}`}
-                      readOnly
-                      style={{
-                        ...styles.select,
-                        width: "130px",
-                        background: "#f1f5f9",
-                      }}
-                    />
+                <div style={{ ...styles.itemMeta, ...(isDark ? styles.itemMetaDark : {}) }}>
+                  <span>Valor unitário: R$ {Number(item.valorUnitario || 0).toFixed(2).replace(".", ",")}</span>
+                  <span>Total: R$ {Number(item.valorTotal || 0).toFixed(2).replace(".", ",")}</span>
+                </div>
 
-                    <button
-                      type="button"
-                      style={styles.removeButton}
-                      onClick={() => removerItem(index)}
-                      disabled={itens.length === 1}
-                      title={
-                        itens.length === 1
-                          ? "Adicione pelo menos um produto"
-                          : "Remover produto"
-                      }
-                    >
-                      ✕
-                    </button>
-                  </div>
-                );
-              })}
-
-              <div style={styles.totalBox}>
-                <span style={styles.totalLabel}>Total da venda</span>
-                <strong style={styles.totalValue}>
-                  R$ {totalGeral.toFixed(2)}
-                </strong>
+                {itens.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removerItem(index)}
+                    style={{ ...styles.removeButton, ...(isDark ? styles.removeButtonDark : {}) }}
+                  >
+                    Remover
+                  </button>
+                )}
               </div>
+            ))}
+
+            {/* ---------- Total geral ---------- */}
+            <div style={styles.totalBox}>
+              <span style={{ ...(isDark ? styles.totalLabelDark : {}) }}>Total da venda</span>
+              <strong style={{ ...styles.totalValue, ...(isDark ? styles.totalValueDark : {}) }}>
+                R$ {totalGeral.toFixed(2).replace(".", ",")}
+              </strong>
             </div>
 
             {/* ---------- Observações ---------- */}
-            <div style={styles.fieldFull}>
-              <label style={styles.label}>Observações</label>
+            <div style={styles.formGroup}>
+              <label style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>Observações</label>
               <textarea
                 name="observacoes"
                 value={form.observacoes}
                 onChange={atualizarCampo}
-                placeholder="Observações adicionais sobre a venda (opcional)"
-                style={styles.textarea}
-                rows="3"
+                rows={4}
+                style={{ ...styles.textarea, ...(isDark ? styles.textareaDark : {}) }}
+                placeholder="Observações adicionais da venda"
               />
             </div>
 
             {/* ---------- Ações ---------- */}
             <div style={styles.actions}>
-              <PrimaryButton disabled={loading}>
-                {loading ? "Registrando..." : "Registrar venda"}
+              <PrimaryButton dark={isDark} disabled={loading} type="submit">
+                {loading ? "Cadastrando..." : "Cadastrar venda"}
               </PrimaryButton>
             </div>
           </form>
@@ -633,201 +501,49 @@ export default function CadastroVendas() {
 
 const styles = {
   layout: { display: "flex", minHeight: "100vh", backgroundColor: "#f3f5f9" },
-  page: {
-    marginLeft: "256px",
-    width: "calc(100% - 256px)",
-    padding: "32px",
-    boxSizing: "border-box",
-    fontFamily: "Inter, sans-serif",
-  },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-    marginBottom: "24px",
-    gap: "16px",
-  },
-  title: {
-    margin: 0,
-    fontSize: "32px",
-    color: "#111c2d",
-    fontWeight: 700,
-    fontFamily: "Montserrat, sans-serif",
-  },
+  layoutDark: { backgroundColor: "#0f172a" },
+  page: { marginLeft: "256px", width: "calc(100% - 256px)", padding: "32px 32px 40px", boxSizing: "border-box", fontFamily: "Inter, sans-serif" },
+  pageDark: { backgroundColor: "#111827", color: "#f3f4f6" },
+  header: { display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "24px" },
+  title: { margin: 0, fontSize: "32px", color: "#111c2d", fontWeight: 700 },
+  titleDark: { color: "#f9fafb" },
   subtitle: { margin: "8px 0 0", color: "#4a5568" },
-
-  voltarButton: {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    padding: "10px 16px",
-    border: "1px solid #e2e8f0",
-    borderRadius: "8px",
-    backgroundColor: "#f9f9ff",
-    color: "#303e51",
-    fontSize: "14px",
-    fontWeight: "600",
-    cursor: "pointer",
-    fontFamily: "Inter, sans-serif",
-    flexShrink: 0,
-  },
-
-  card: {
-    backgroundColor: "#ffffff",
-    border: "1px solid #e2e8f0",
-    borderRadius: "12px",
-    padding: "24px",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
-    maxWidth: "900px",
-  },
+  subtitleDark: { color: "#d1d5db" },
+  backButton: { display: "flex", alignItems: "center", gap: "8px", padding: "10px 16px", border: "1px solid #e2e8f0", borderRadius: "8px", backgroundColor: "#f9f9ff", color: "#303e51", fontSize: "14px", fontWeight: "600", cursor: "pointer" },
+  backButtonDark: { backgroundColor: "#1f2937", borderColor: "#4b5563", color: "#f9fafb" },
+  card: { backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "24px", boxShadow: "0 4px 12px rgba(0,0,0,0.04)", maxWidth: "950px" },
+  cardDark: { backgroundColor: "#111827", borderColor: "#374151" },
   form: { display: "flex", flexDirection: "column", gap: "20px" },
-
-  row: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "16px",
-  },
-
+  grid: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "20px" },
   field: { display: "flex", flexDirection: "column", gap: "8px" },
-  fieldFull: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "8px",
-  },
+  fieldDark: { color: "#e5e7eb" },
   label: { fontWeight: 600, color: "#303e51" },
-  select: {
-    width: "100%",
-    boxSizing: "border-box",
-    padding: "10px 12px",
-    border: "1px solid #cbd5e1",
-    borderRadius: "8px",
-    fontSize: "14px",
-    backgroundColor: "#ffffff",
-    color: "#111c2d",
-    fontFamily: "Inter, sans-serif",
-  },
-  textarea: {
-    width: "100%",
-    boxSizing: "border-box",
-    padding: "10px 12px",
-    border: "1px solid #cbd5e1",
-    borderRadius: "8px",
-    fontSize: "14px",
-    backgroundColor: "#ffffff",
-    color: "#111c2d",
-    fontFamily: "Inter, sans-serif",
-    resize: "vertical",
-  },
+  labelDark: { color: "#e5e7eb" },
+  select: { width: "100%", boxSizing: "border-box", border: "1px solid #d7dfeb", borderRadius: "10px", padding: "12px 14px", fontSize: "14px", outline: "none", backgroundColor: "#ffffff", color: "#111827" },
+  selectDark: { backgroundColor: "#1f2937", borderColor: "#4b5563", color: "#f9fafb" },
+  input: { width: "100%", boxSizing: "border-box", border: "1px solid #d7dfeb", borderRadius: "10px", padding: "12px 14px", fontSize: "14px", outline: "none", backgroundColor: "#ffffff", color: "#111827" },
+  inputDark: { backgroundColor: "#1f2937", borderColor: "#4b5563", color: "#f9fafb" },
+  searchBox: { display: "flex", alignItems: "center", gap: "8px", padding: "10px 12px", borderRadius: "10px", border: "1px solid #d7dfeb", backgroundColor: "#f8fafc" },
+  searchInput: { width: "100%", border: "none", backgroundColor: "transparent", outline: "none", color: "#111827" },
+  searchInputDark: { color: "#f9fafb" },
+  itensHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" },
+  sectionTitle: { margin: 0, fontSize: "22px", color: "#111c2d" },
+  sectionTitleDark: { color: "#f9fafb" },
+  addButton: { display: "flex", alignItems: "center", gap: "6px", border: "1px solid #cbd5e1", backgroundColor: "#f8fafc", color: "#111827", borderRadius: "10px", padding: "8px 12px", cursor: "pointer" },
+  addButtonDark: { backgroundColor: "#1f2937", borderColor: "#4b5563", color: "#f9fafb" },
+  itemCard: { border: "1px solid #e2e8f0", borderRadius: "10px", padding: "18px", backgroundColor: "#f8fafc" },
+  itemCardDark: { backgroundColor: "#1f2937", borderColor: "#374151" },
+  itemMeta: { display: "flex", justifyContent: "space-between", marginTop: "12px", color: "#475569", fontSize: "13px" },
+  itemMetaDark: { color: "#d1d5db" },
+  removeButton: { marginTop: "12px", border: "1px solid #fca5a5", backgroundColor: "#fff1f2", color: "#991b1b", borderRadius: "8px", padding: "8px 12px", cursor: "pointer" },
+  removeButtonDark: { backgroundColor: "#3f1721", borderColor: "#7f1d1d", color: "#fecdd3" },
+  totalBox: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 18px", backgroundColor: "#0d2230", borderRadius: "10px", color: "#0f172a" },
+  totalBoxDark: { backgroundColor: "#0b1220", border: "1px solid #334155", color: "#f8fafc" },
+  totalLabelDark: { color: "#cbd5e1" },
+  totalValue: { fontSize: "22px", color: "#0f172a" },
+  totalValueDark: { color: "#f9fafb" },
+  formGroup: { display: "flex", flexDirection: "column", gap: "8px" },
+  textarea: { width: "100%", boxSizing: "border-box", border: "1px solid #d7dfeb", borderRadius: "10px", padding: "12px 14px", fontSize: "14px", backgroundColor: "#ffffff", color: "#111827", resize: "vertical" },
+  textareaDark: { backgroundColor: "#1f2937", borderColor: "#4b5563", color: "#f9fafb" },
   actions: { display: "flex", justifyContent: "flex-end" },
-
-  itemsSection: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-  },
-  itemsHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  itemsTitle: { margin: 0, fontSize: "16px", color: "#111c2d" },
-  loadingHint: {
-    fontSize: "12px",
-    color: "#64748b",
-    fontWeight: 400,
-    marginLeft: "8px",
-  },
-  headerButtons: {
-    display: "flex",
-    gap: "8px",
-    alignItems: "center",
-  },
-  refreshButton: {
-    border: "1px solid #cbd5e1",
-    backgroundColor: "#fff",
-    color: "#303e51",
-    padding: "8px 12px",
-    borderRadius: "8px",
-    fontWeight: 600,
-    cursor: "pointer",
-    fontSize: "14px",
-  },
-  addButton: {
-    border: "1px dashed #303e51",
-    backgroundColor: "#fff",
-    color: "#303e51",
-    padding: "8px 14px",
-    borderRadius: "8px",
-    fontWeight: 600,
-    cursor: "pointer",
-    fontSize: "13px",
-  },
-
-  searchWrapper: {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    padding: "0 12px",
-    border: "1px solid #cbd5e1",
-    borderRadius: "8px",
-    backgroundColor: "#ffffff",
-  },
-  searchIcon: {
-    fontSize: "20px",
-    color: "#64748b",
-    flexShrink: 0,
-  },
-  searchInput: {
-    flex: 1,
-    border: "none",
-    outline: "none",
-    padding: "10px 0",
-    fontSize: "14px",
-    backgroundColor: "transparent",
-    color: "#111c2d",
-    fontFamily: "Inter, sans-serif",
-  },
-  searchClear: {
-    border: "none",
-    background: "transparent",
-    color: "#64748b",
-    cursor: "pointer",
-    fontSize: "14px",
-    padding: "4px 6px",
-    borderRadius: "4px",
-    flexShrink: 0,
-  },
-  searchInfo: {
-    margin: 0,
-    fontSize: "12px",
-    color: "#64748b",
-    fontStyle: "italic",
-  },
-
-  itemRow: {
-    display: "flex",
-    gap: "10px",
-    alignItems: "center",
-  },
-  removeButton: {
-    border: "1px solid #fecaca",
-    backgroundColor: "#fff",
-    color: "#b91c1c",
-    padding: "10px 14px",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontWeight: 700,
-    fontSize: "14px",
-  },
-  totalBox: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "14px 16px",
-    backgroundColor: "#f1f5f9",
-    borderRadius: "10px",
-    border: "1px solid #e2e8f0",
-  },
-  totalLabel: { color: "#303e51", fontWeight: 600, fontSize: "14px" },
-  totalValue: { color: "#111c2d", fontSize: "20px" },
 };

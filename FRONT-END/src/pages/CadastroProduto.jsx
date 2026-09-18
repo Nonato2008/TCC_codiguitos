@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import Sidebar from "../components/Sidebar";
 import FormField from "../components/FormField";
 import AlertMessage from "../components/AlertMessage";
 import PrimaryButton from "../components/PrimaryButton";
 import { codiguitos_api } from "../services/tcc.api";
+import { formatErrorMessage } from "../utils/formatErrorMessage";
+import { ThemeContext } from "../contexts/ThemeContext";
 
 const estadoInicial = {
     idFornecedor: "1",
@@ -15,6 +17,9 @@ const estadoInicial = {
 };
 
 export default function CadastroProdutos() {
+
+    const { theme } = useContext(ThemeContext);
+    const isDark = theme === "dark";
 
     const [form, setForm] = useState(estadoInicial);
 
@@ -252,9 +257,10 @@ export default function CadastroProdutos() {
 
                 type: "error",
 
-                text:
-                    error?.response?.data?.message ||
-                    "Erro ao cadastrar produto."
+                text: formatErrorMessage(
+                    error,
+                    "Erro ao cadastrar produto. Verifique os dados do formulário e tente novamente."
+                )
 
             });
 
@@ -267,29 +273,30 @@ export default function CadastroProdutos() {
 
     return (
 
-        <div style={styles.layout}>
+        <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
 
             <Sidebar />
 
-            <main style={styles.page}>
+            <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
 
                 <header style={styles.header}>
 
-                    <h2 style={styles.title}>
+                    <h2 style={{ ...styles.title, ...(isDark ? styles.titleDark : {}) }}>
                         Cadastro de Produtos
                     </h2>
 
-                    <p style={styles.subtitle}>
+                    <p style={{ ...styles.subtitle, ...(isDark ? styles.subtitleDark : {}) }}>
                         Adicione novos itens ao estoque da adega.
                     </p>
 
                 </header>
 
-                <section style={styles.card}>
+                <section style={{ ...styles.card, ...(isDark ? styles.cardDark : {}) }}>
 
                     <AlertMessage
                         type={mensagem.type}
                         message={mensagem.text}
+                        dark={isDark}
                     />
 
                     <form
@@ -306,6 +313,7 @@ export default function CadastroProdutos() {
                                 min="1"
                                 value={form.idFornecedor}
                                 onChange={atualizarCampo}
+                                dark={isDark}
                             />
 
                             <FormField
@@ -314,6 +322,7 @@ export default function CadastroProdutos() {
                                 placeholder="Ex: Vinho Tinto"
                                 value={form.nome}
                                 onChange={atualizarCampo}
+                                dark={isDark}
                             />
 
                             <FormField
@@ -325,6 +334,7 @@ export default function CadastroProdutos() {
                                 placeholder="0.00"
                                 value={form.preco}
                                 onChange={atualizarCampo}
+                                dark={isDark}
                             />
 
                             <FormField
@@ -336,6 +346,7 @@ export default function CadastroProdutos() {
                                 placeholder="0"
                                 value={form.quantidade}
                                 onChange={atualizarCampo}
+                                dark={isDark}
                             />
 
                             <FormField
@@ -344,11 +355,12 @@ export default function CadastroProdutos() {
                                 type="date"
                                 value={form.dataVenc}
                                 onChange={atualizarCampo}
+                                dark={isDark}
                             />
 
-                            <label style={styles.field}>
+                            <label style={{ ...styles.field, ...(isDark ? styles.fieldDark : {}) }}>
 
-                                <span style={styles.label}>
+                                <span style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>
                                     Imagem do produto
                                 </span>
 
@@ -357,7 +369,7 @@ export default function CadastroProdutos() {
                                     name="imagem"
                                     accept="image/png,image/jpeg"
                                     onChange={atualizarCampo}
-                                    style={styles.fileInput}
+                                    style={{ ...styles.fileInput, ...(isDark ? styles.fileInputDark : {}) }}
                                 />
 
                             </label>
@@ -383,29 +395,29 @@ export default function CadastroProdutos() {
 
                     {notaFiscal && (
 
-                        <div style={styles.nota}>
+                        <div style={{ ...styles.nota, ...(isDark ? styles.notaDark : {}) }}>
 
-                            <div style={styles.notaHeader}>
+                            <div style={{ ...styles.notaHeader, ...(isDark ? styles.notaHeaderDark : {}) }}>
 
                                 <div>
 
-                                    <h3 style={styles.notaTitle}>
+                                    <h3 style={{ ...styles.notaTitle, ...(isDark ? styles.notaTitleDark : {}) }}>
                                         Nota Fiscal
                                     </h3>
 
-                                    <p style={styles.notaNumero}>
+                                    <p style={{ ...styles.notaNumero, ...(isDark ? styles.notaNumeroDark : {}) }}>
                                         Nº {notaFiscal.numero}
                                     </p>
 
                                 </div>
 
-                                <span style={styles.notaStatus}>
+                                <span style={{ ...styles.notaStatus, ...(isDark ? styles.notaStatusDark : {}) }}>
                                     Gerada
                                 </span>
 
                             </div>
 
-                            <div style={styles.notaLinha}>
+                            <div style={{ ...styles.notaLinha, ...(isDark ? styles.notaLinhaDark : {}) }}>
 
                                 <span>
                                     Data de emissão
@@ -419,7 +431,7 @@ export default function CadastroProdutos() {
 
                             </div>
 
-                            <div style={styles.notaLinha}>
+                            <div style={{ ...styles.notaLinha, ...(isDark ? styles.notaLinhaDark : {}) }}>
 
                                 <span>
                                     Produto
@@ -431,7 +443,7 @@ export default function CadastroProdutos() {
 
                             </div>
 
-                            <div style={styles.notaLinha}>
+                            <div style={{ ...styles.notaLinha, ...(isDark ? styles.notaLinhaDark : {}) }}>
 
                                 <span>
                                     Quantidade
@@ -443,7 +455,7 @@ export default function CadastroProdutos() {
 
                             </div>
 
-                            <div style={styles.notaLinha}>
+                            <div style={{ ...styles.notaLinha, ...(isDark ? styles.notaLinhaDark : {}) }}>
 
                                 <span>
                                     Preço unitário
@@ -463,7 +475,7 @@ export default function CadastroProdutos() {
 
                             </div>
 
-                            <div style={styles.total}>
+                            <div style={{ ...styles.total, ...(isDark ? styles.totalDark : {}) }}>
 
                                 <span>
                                     TOTAL
@@ -483,7 +495,7 @@ export default function CadastroProdutos() {
 
                             </div>
 
-                            <p style={styles.avisoNota}>
+                            <p style={{ ...styles.avisoNota, ...(isDark ? styles.avisoNotaDark : {}) }}>
                                 Esta nota fiscal foi gerada
                                 automaticamente e não foi salva
                                 no banco de dados.
@@ -510,12 +522,21 @@ const styles = {
         backgroundColor: "#f3f5f9",
     },
 
+    layoutDark: {
+        backgroundColor: "#0f172a",
+    },
+
     page: {
         marginLeft: "256px",
         width: "calc(100% - 256px)",
         padding: "32px",
         boxSizing: "border-box",
         fontFamily: "Inter, sans-serif",
+    },
+
+    pageDark: {
+        backgroundColor: "#111827",
+        color: "#f3f4f6",
     },
 
     header: {
@@ -529,9 +550,17 @@ const styles = {
         fontWeight: 700,
     },
 
+    titleDark: {
+        color: "#f9fafb",
+    },
+
     subtitle: {
         margin: "8px 0 0",
         color: "#4a5568",
+    },
+
+    subtitleDark: {
+        color: "#d1d5db",
     },
 
     card: {
@@ -541,6 +570,11 @@ const styles = {
         padding: "24px",
         boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
         maxWidth: "900px",
+    },
+
+    cardDark: {
+        backgroundColor: "#111827",
+        borderColor: "#374151",
     },
 
     form: {
@@ -562,9 +596,17 @@ const styles = {
         gap: "8px",
     },
 
+    fieldDark: {
+        color: "#e5e7eb",
+    },
+
     label: {
         fontWeight: 600,
         color: "#303e51",
+    },
+
+    labelDark: {
+        color: "#e5e7eb",
     },
 
     fileInput: {
@@ -574,6 +616,13 @@ const styles = {
         borderRadius: "10px",
         padding: "12px",
         backgroundColor: "#f8fafc",
+        color: "#111827",
+    },
+
+    fileInputDark: {
+        backgroundColor: "#1f2937",
+        borderColor: "#4b5563",
+        color: "#f9fafb",
     },
 
     actions: {
@@ -589,6 +638,11 @@ const styles = {
         backgroundColor: "#f8fafc",
     },
 
+    notaDark: {
+        backgroundColor: "#1f2937",
+        borderColor: "#4b5563",
+    },
+
     notaHeader: {
         display: "flex",
         justifyContent: "space-between",
@@ -598,16 +652,28 @@ const styles = {
         marginBottom: "16px",
     },
 
+    notaHeaderDark: {
+        borderBottomColor: "#4b5563",
+    },
+
     notaTitle: {
         margin: 0,
         fontSize: "24px",
         color: "#111c2d",
     },
 
+    notaTitleDark: {
+        color: "#f9fafb",
+    },
+
     notaNumero: {
         margin: "6px 0 0",
         color: "#64748b",
         fontSize: "14px",
+    },
+
+    notaNumeroDark: {
+        color: "#cbd5e1",
     },
 
     notaStatus: {
@@ -619,6 +685,11 @@ const styles = {
         fontWeight: 600,
     },
 
+    notaStatusDark: {
+        backgroundColor: "#064e3b",
+        color: "#d1fae5",
+    },
+
     notaLinha: {
         display: "flex",
         justifyContent: "space-between",
@@ -627,13 +698,22 @@ const styles = {
         color: "#475569",
     },
 
+    notaLinhaDark: {
+        borderBottomColor: "#ffffff",
+        color: "#e5e7eb",
+    },
+
     total: {
         display: "flex",
         justifyContent: "space-between",
         marginTop: "18px",
         paddingTop: "18px",
         fontSize: "20px",
-        color: "#111c2d",
+        color: "#ffffff",
+    },
+
+    totalDark: {
+        color: "#f9fafb",
     },
 
     avisoNota: {
@@ -644,5 +724,10 @@ const styles = {
         color: "#9a3412",
         fontSize: "13px",
         textAlign: "center",
+    },
+
+    avisoNotaDark: {
+        backgroundColor: "#3f2715",
+        color: "#fed7aa",
     },
 };
