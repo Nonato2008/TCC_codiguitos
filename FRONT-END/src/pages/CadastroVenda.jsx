@@ -530,14 +530,19 @@ export default function CadastroVendas() {
                       }}
                     >
                       <option value="">Selecione um produto</option>
-                      {produtosFiltrados.map((produto) => (
-                        <option
-                          key={getIdProduto(produto)}
-                          value={getIdProduto(produto)}
-                        >
-                          {getNomeProduto(produto)}
-                        </option>
-                      ))}
+                      {produtosFiltrados.map((produto) => {
+                        const idProduto = getIdProduto(produto);
+                        const nomeProduto = getNomeProduto(produto);
+                        const preçoProduto = Number(getPrecoProduto(produto) || 0);
+                        const estoqueProduto = Number(getEstoqueProduto(produto) || 0);
+
+                        return (
+                          <option key={idProduto} value={idProduto}>
+                            {nomeProduto} — Estoque: {estoqueProduto} — R${" "}
+                            {preçoProduto.toFixed(2).replace(".", ",")}
+                          </option>
+                        );
+                      })}
                     </select>
                   </label>
 
