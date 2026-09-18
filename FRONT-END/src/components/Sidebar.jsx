@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useContext } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { ThemeContext } from "../contexts/ThemeContext";
 
 // Lista de itens do menu lateral.
 const menu = [
@@ -31,8 +32,9 @@ const menu = [
 ];
 
 export default function Sidebar() {
-
     const navigate = useNavigate();
+    const { theme, toggleTheme } = useContext(ThemeContext);
+    const isDark = theme === "dark";
 
     // Função chamada ao clicar em "Sair": redireciona o usuário para a tela de login
     function sair() {
@@ -40,11 +42,11 @@ export default function Sidebar() {
     }
 
     return (
-        <aside style={styles.sidebar}>
+        <aside style={{ ...styles.sidebar, ...(isDark ? styles.sidebarDark : {}) }}>
 
             {/* Cabeçalho da sidebar: logo + nome do sistema */}
             <div style={styles.logoContainer}>
-                <div style={styles.logo}>
+                <div style={{ ...styles.logo, ...(isDark ? styles.logoDark : {}) }}>
                     <img
                         src="/logo.png"
                         alt="Adega do Nelson"
@@ -53,11 +55,11 @@ export default function Sidebar() {
                 </div>
 
                 <div>
-                    <h1 style={styles.logoTitle}>
+                    <h1 style={{ ...styles.logoTitle, ...(isDark ? styles.logoTitleDark : {}) }}>
                         Adega do Nelson
                     </h1>
 
-                    <p style={styles.logoSubtitle}>
+                    <p style={{ ...styles.logoSubtitle, ...(isDark ? styles.logoSubtitleDark : {}) }}>
                         Melhores Bebidas
                     </p>
                 </div>
@@ -73,7 +75,9 @@ export default function Sidebar() {
                         // NavLink permite estilizar condicionalmente o item ativo (rota atual)
                         style={({ isActive }) => ({
                             ...styles.menuItem,
-                            ...(isActive ? styles.menuItemActive : {})
+                            ...(isDark ? styles.menuItemDark : {}),
+                            ...(isActive ? styles.menuItemActive : {}),
+                            ...(isActive && isDark ? styles.menuItemActiveDark : {})
                         })}
                     >
                         <span className="material-symbols-outlined">
@@ -86,12 +90,24 @@ export default function Sidebar() {
 
             </nav>
 
-            {/* Rodapé da sidebar, com o botão de logout separado do menu principal */}
             <div style={styles.bottomMenu}>
+                <button
+                    type="button"
+                    onClick={toggleTheme}
+                    style={{
+                        ...styles.themeButton,
+                        ...(isDark ? styles.themeButtonDark : {})
+                    }}
+                >
+                    <span className="material-symbols-outlined">
+                        {isDark ? "light_mode" : "dark_mode"}
+                    </span>
+                    {isDark ? "Modo claro" : "Modo escuro"}
+                </button>
 
                 <button
                     type="button"
-                    style={styles.bottomItem}
+                    style={{ ...styles.bottomItem, ...(isDark ? styles.bottomItemDark : {}) }}
                     onClick={sair}
                 >
                     <span className="material-symbols-outlined">
@@ -122,7 +138,13 @@ const styles = {
         padding: "16px",
         display: "flex",
         flexDirection: "column",
-        zIndex: 100
+        zIndex: 100,
+        transition: "background-color 0.3s ease, border-color 0.3s ease"
+    },
+
+    sidebarDark: {
+        backgroundColor: "#111827",
+        borderRight: "1px solid #374151"
     },
 
     // Área do topo com logo + título/subtítulo, alinhados lado a lado
@@ -143,6 +165,10 @@ const styles = {
         flexShrink: 0
     },
 
+    logoDark: {
+        borderColor: "#4b5563"
+    },
+
     // Faz a imagem preencher a caixa do logo sem distorcer
     logoImage: {
         width: "100%",
@@ -158,11 +184,19 @@ const styles = {
         margin: 0
     },
 
+    logoTitleDark: {
+        color: "#f9fafb"
+    },
+
     logoSubtitle: {
         fontFamily: "Inter, sans-serif",
         fontSize: "12px",
         color: "#44474c",
         margin: "2px 0 0"
+    },
+
+    logoSubtitleDark: {
+        color: "#d1d5db"
     },
 
     // Container do menu: cresce para ocupar o espaço disponível (empurra o rodapé para baixo)
@@ -189,29 +223,19 @@ const styles = {
         cursor: "pointer"
     },
 
+    menuItemDark: {
+        color: "#e5e7eb"
+    },
+
     // Estilo aplicado por cima do menuItem quando a rota está ativa (mesclado via spread no NavLink)
     menuItemActive: {
         backgroundColor: "#303e51",
         color: "#ffffff"
     },
 
-    // Estilo não utilizado no JSX atual (parece ser de um botão "Nova Venda" que foi removido)
-    newSale: {
-        width: "100%",
-        border: "none",
-        backgroundColor: "#303e51",
-        color: "#ffffff",
-        padding: "12px",
-        borderRadius: "8px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "8px",
-        fontFamily: "Inter, sans-serif",
-        fontSize: "14px",
-        fontWeight: "600",
-        cursor: "pointer",
-        marginBottom: "16px"
+    menuItemActiveDark: {
+        backgroundColor: "#1f2937",
+        color: "#f9fafb"
     },
 
     // Área inferior fixa, separada do menu por uma linha divisória
@@ -220,7 +244,31 @@ const styles = {
         paddingTop: "12px",
         display: "flex",
         flexDirection: "column",
-        gap: "4px"
+        gap: "8px"
+    },
+
+    themeButton: {
+        width: "100%",
+        border: "1px solid #d1d5db",
+        backgroundColor: "#ffffff",
+        color: "#111827",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "8px",
+        padding: "10px 12px",
+        borderRadius: "10px",
+        fontFamily: "Inter, sans-serif",
+        fontSize: "14px",
+        fontWeight: "600",
+        cursor: "pointer",
+        transition: "all 0.2s ease"
+    },
+
+    themeButtonDark: {
+        backgroundColor: "#1f2937",
+        borderColor: "#4b5563",
+        color: "#f9fafb"
     },
 
     // Estilo do botão "Sair" (visualmente parecido com os itens do menu, mas é um <button>)
@@ -239,5 +287,9 @@ const styles = {
         textAlign: "left",
         cursor: "pointer",
         transition: "all 0.3s ease"
+    },
+
+    bottomItemDark: {
+        color: "#e5e7eb"
     }
 };

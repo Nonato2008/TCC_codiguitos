@@ -146,11 +146,25 @@ export class Produtos {
         if (value === null || value === undefined || isNaN(Number(value)) || Number(value) <= 0) {
             throw new Error("O preço deve ser maior que zero.");
         }
+
+        const preco = Number(value);
+        const limiteMaximo = 9999999.99;
+
+        if (preco > limiteMaximo) {
+            throw new Error("O preço excede o limite permitido. Informe um valor até R$ 9.999.999,99 e verifique também o limite de 45 caracteres no nome do produto.");
+        }
     }
 
     #validarQuantidade(value) {
         if (isNaN(Number(value)) || Number(value) < 0) {
             throw new Error("A quantidade deve ser um número maior ou igual a zero.");
+        }
+
+        const quantidade = Number(value);
+        const limiteMaximo = 999999;
+
+        if (quantidade > limiteMaximo) {
+            throw new Error("A quantidade excede o limite permitido. Informe uma quantidade até 999.999 unidades.");
         }
     }
 

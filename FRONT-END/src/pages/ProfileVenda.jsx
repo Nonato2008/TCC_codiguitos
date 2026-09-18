@@ -1,11 +1,14 @@
-import React from "react";
+import React, { useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useVendaById } from "../hooks/useVendasById";
 import Sidebar from "../components/Sidebar";
+import { ThemeContext } from "../contexts/ThemeContext";
 
 export default function ProfileVenda() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { theme } = useContext(ThemeContext);
+    const isDark = theme === "dark";
 
     const {
         venda,
@@ -15,11 +18,11 @@ export default function ProfileVenda() {
 
     if (loading) {
         return (
-            <div style={styles.layout}>
+            <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
                 <Sidebar />
 
-                <main style={styles.page}>
-                    <p style={styles.loading}>
+                <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
+                    <p style={{ ...styles.loading, ...(isDark ? styles.loadingDark : {}) }}>
                         Carregando informações da venda...
                     </p>
                 </main>
@@ -29,11 +32,11 @@ export default function ProfileVenda() {
 
     if (error) {
         return (
-            <div style={styles.layout}>
+            <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
                 <Sidebar />
 
-                <main style={styles.page}>
-                    <div style={styles.error}>
+                <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
+                    <div style={{ ...styles.error, ...(isDark ? styles.errorDark : {}) }}>
                         {error}
                     </div>
                 </main>
@@ -43,11 +46,11 @@ export default function ProfileVenda() {
 
     if (!venda) {
         return (
-            <div style={styles.layout}>
+            <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
                 <Sidebar />
 
-                <main style={styles.page}>
-                    <div style={styles.error}>
+                <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
+                    <div style={{ ...styles.error, ...(isDark ? styles.errorDark : {}) }}>
                         Venda não encontrada.
                     </div>
                 </main>
@@ -58,11 +61,11 @@ export default function ProfileVenda() {
     const itens = venda.Itens || [];
 
     return (
-        <div style={styles.layout}>
+        <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
 
             <Sidebar />
 
-            <main style={styles.page}>
+            <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
 
                 {/* CABEÇALHO */}
                 <div style={styles.header}>
@@ -70,12 +73,12 @@ export default function ProfileVenda() {
                     <div>
                         <button
                             onClick={() => navigate("/vendas")}
-                            style={styles.backButton}
+                            style={{ ...styles.backButton, ...(isDark ? styles.backButtonDark : {}) }}
                         >
                             ← Voltar
                         </button>
 
-                        <p style={styles.subtitle}>
+                        <p style={{ ...styles.subtitle, ...(isDark ? styles.subtitleDark : {}) }}>
                             Detalhes da venda
                         </p>
                     </div>
@@ -84,25 +87,25 @@ export default function ProfileVenda() {
 
 
                 {/* INFORMAÇÕES DA VENDA */}
-                <section style={styles.infoCard}>
+                <section style={{ ...styles.infoCard, ...(isDark ? styles.infoCardDark : {}) }}>
 
                     <div style={styles.infoItem}>
-                        <span style={styles.label}>
+                        <span style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>
                             Nº da Venda
                         </span>
 
-                        <strong style={styles.value}>
+                        <strong style={{ ...styles.value, ...(isDark ? styles.valueDark : {}) }}>
                             {venda.Id}
                         </strong>
                     </div>
 
 
                     <div style={styles.infoItem}>
-                        <span style={styles.label}>
+                        <span style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>
                             Vendedor
                         </span>
 
-                        <strong style={styles.value}>
+                        <strong style={{ ...styles.value, ...(isDark ? styles.valueDark : {}) }}>
                             {venda.NomeVendedor ||
                                 `Vendedor #${venda.IdVendedor}`}
                         </strong>
@@ -110,22 +113,22 @@ export default function ProfileVenda() {
 
 
                     <div style={styles.infoItem}>
-                        <span style={styles.label}>
+                        <span style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>
                             Data da Venda
                         </span>
 
-                        <strong style={styles.value}>
+                        <strong style={{ ...styles.value, ...(isDark ? styles.valueDark : {}) }}>
                             {formatarData(venda.DataCad)}
                         </strong>
                     </div>
 
 
                     <div style={styles.infoItem}>
-                        <span style={styles.label}>
+                        <span style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>
                             Valor Total
                         </span>
 
-                        <strong style={styles.totalValue}>
+                        <strong style={{ ...styles.totalValue, ...(isDark ? styles.totalValueDark : {}) }}>
                             R$ {formatarMoeda(venda.ValorTotal)}
                         </strong>
                     </div>
@@ -134,15 +137,15 @@ export default function ProfileVenda() {
 
 
                 {/* PRODUTOS */}
-                <section style={styles.productsCard}>
+                <section style={{ ...styles.productsCard, ...(isDark ? styles.productsCardDark : {}) }}>
 
                     <div style={styles.sectionHeader}>
                         <div>
-                            <h2 style={styles.sectionTitle}>
+                            <h2 style={{ ...styles.sectionTitle, ...(isDark ? styles.sectionTitleDark : {}) }}>
                                 Produtos da venda
                             </h2>
 
-                            <p style={styles.sectionSubtitle}>
+                            <p style={{ ...styles.sectionSubtitle, ...(isDark ? styles.sectionSubtitleDark : {}) }}>
                                 {itens.length}{" "}
                                 {itens.length === 1
                                     ? "produto"
@@ -154,7 +157,7 @@ export default function ProfileVenda() {
 
                     {itens.length === 0 ? (
 
-                        <div style={styles.empty}>
+                        <div style={{ ...styles.empty, ...(isDark ? styles.emptyDark : {}) }}>
                             <p>
                                 Nenhum produto encontrado nesta venda.
                             </p>
@@ -168,19 +171,19 @@ export default function ProfileVenda() {
 
                                 <thead>
                                     <tr>
-                                        <th style={styles.th}>
+                                        <th style={{ ...styles.th, ...(isDark ? styles.thDark : {}) }}>
                                             Produto
                                         </th>
 
-                                        <th style={styles.th}>
+                                        <th style={{ ...styles.th, ...(isDark ? styles.thDark : {}) }}>
                                             Quantidade
                                         </th>
 
-                                        <th style={styles.th}>
+                                        <th style={{ ...styles.th, ...(isDark ? styles.thDark : {}) }}>
                                             Valor unitário
                                         </th>
 
-                                        <th style={styles.th}>
+                                        <th style={{ ...styles.th, ...(isDark ? styles.thDark : {}) }}>
                                             Subtotal
                                         </th>
                                     </tr>
@@ -203,7 +206,7 @@ export default function ProfileVenda() {
                                         return (
                                             <tr key={item.Id}>
 
-                                                <td style={styles.td}>
+                                                <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
                                                     <strong>
                                                         {item.NomeProduto ||
                                                             `Produto #${item.IdProduto}`}
@@ -211,12 +214,12 @@ export default function ProfileVenda() {
                                                 </td>
 
 
-                                                <td style={styles.td}>
+                                                <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
                                                     {quantidade}
                                                 </td>
 
 
-                                                <td style={styles.td}>
+                                                <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
                                                     R$ {formatarMoeda(valor)}
                                                 </td>
 
@@ -224,6 +227,7 @@ export default function ProfileVenda() {
                                                 <td
                                                     style={{
                                                         ...styles.td,
+                                                        ...(isDark ? styles.tdDark : {}),
                                                         fontWeight: "700"
                                                     }}
                                                 >
@@ -247,15 +251,15 @@ export default function ProfileVenda() {
 
 
                 {/* RESUMO */}
-                <section style={styles.summary}>
+                <section style={{ ...styles.summary, ...(isDark ? styles.summaryDark : {}) }}>
 
                     <div>
-                        <span style={styles.summaryLabel}>
+                        <span style={{ ...styles.summaryLabel, ...(isDark ? styles.summaryLabelDark : {}) }}>
                             Total da venda
                         </span>
                     </div>
 
-                    <strong style={styles.summaryValue}>
+                    <strong style={{ ...styles.summaryValue, ...(isDark ? styles.summaryValueDark : {}) }}>
                         R$ {formatarMoeda(venda.ValorTotal)}
                     </strong>
 
@@ -297,11 +301,20 @@ const styles = {
         backgroundColor: "#f5f6f8",
     },
 
+    layoutDark: {
+        backgroundColor: "#0f172a",
+    },
+
     page: {
         marginLeft: "363px",
         minHeight: "100vh",
         padding: "25px 25px",
         boxSizing: "border-box",
+    },
+
+    pageDark: {
+        backgroundColor: "#111827",
+        color: "#f3f4f6",
     },
 
     header: {
@@ -320,6 +333,12 @@ const styles = {
         marginBottom: "12px",
     },
 
+    backButtonDark: {
+        backgroundColor: "#1f2937",
+        borderColor: "#4b5563",
+        color: "#f9fafb",
+    },
+
     title: {
         margin: 0,
         fontSize: "28px",
@@ -332,6 +351,10 @@ const styles = {
         marginBottom: 0,
         fontSize: "14px",
         color: "#718096",
+    },
+
+    subtitleDark: {
+        color: "#d1d5db",
     },
 
     infoCard: {
@@ -348,6 +371,11 @@ const styles = {
         boxSizing: "border-box",
     },
 
+    infoCardDark: {
+        backgroundColor: "#1f2937",
+        boxShadow: "0 2px 7px rgba(0, 0, 0, 0.2)",
+    },
+
     infoItem: {
         display: "flex",
         flexDirection: "column",
@@ -359,14 +387,26 @@ const styles = {
         fontSize: "13px",
     },
 
+    labelDark: {
+        color: "#cbd5e1",
+    },
+
     value: {
         color: "#1f2937",
         fontSize: "16px",
     },
 
+    valueDark: {
+        color: "#f9fafb",
+    },
+
     totalValue: {
         color: "#303e51",
         fontSize: "18px",
+    },
+
+    totalValueDark: {
+        color: "#10b981",
     },
 
     productsCard: {
@@ -379,6 +419,11 @@ const styles = {
         boxSizing: "border-box",
     },
 
+    productsCardDark: {
+        backgroundColor: "#1f2937",
+        boxShadow: "0 2px 7px rgba(0, 0, 0, 0.2)",
+    },
+
     sectionHeader: {
         marginBottom: "15px",
     },
@@ -389,11 +434,19 @@ const styles = {
         color: "#243447",
     },
 
+    sectionTitleDark: {
+        color: "#f9fafb",
+    },
+
     sectionSubtitle: {
         marginTop: "4px",
         marginBottom: 0,
         color: "#777",
         fontSize: "14px",
+    },
+
+    sectionSubtitleDark: {
+        color: "#cbd5e1",
     },
 
     tableContainer: {
@@ -415,6 +468,12 @@ const styles = {
         fontSize: "13px",
     },
 
+    thDark: {
+        backgroundColor: "#111827",
+        borderBottomColor: "#4b5563",
+        color: "#e5e7eb",
+    },
+
     td: {
         padding: "12px",
         borderBottom: "1px solid #eee",
@@ -422,10 +481,19 @@ const styles = {
         fontSize: "14px",
     },
 
+    tdDark: {
+        borderBottomColor: "#4b5563",
+        color: "#f9fafb",
+    },
+
     empty: {
         textAlign: "center",
         padding: "30px",
         color: "#777",
+    },
+
+    emptyDark: {
+        color: "#cbd5e1",
     },
 
     summary: {
@@ -442,10 +510,19 @@ const styles = {
         boxSizing: "border-box",
     },
 
+    summaryDark: {
+        backgroundColor: "#1f2937",
+        boxShadow: "0 2px 7px rgba(0, 0, 0, 0.2)",
+    },
+
     summaryLabel: {
         fontSize: "16px",
         fontWeight: "600",
         color: "#444",
+    },
+
+    summaryLabelDark: {
+        color: "#cbd5e1",
     },
 
     summaryValue: {
@@ -453,9 +530,17 @@ const styles = {
         color: "#18a937",
     },
 
+    summaryValueDark: {
+        color: "#10b981",
+    },
+
     loading: {
         fontSize: "16px",
         color: "#666",
+    },
+
+    loadingDark: {
+        color: "#cbd5e1",
     },
 
     error: {
@@ -463,5 +548,10 @@ const styles = {
         backgroundColor: "#ffe5e5",
         color: "#b00020",
         borderRadius: "8px",
+    },
+
+    errorDark: {
+        backgroundColor: "#3f1721",
+        color: "#fecdd3",
     },
 };

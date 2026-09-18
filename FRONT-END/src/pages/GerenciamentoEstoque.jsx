@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import Sidebar from "../components/Sidebar";
 import { useProdutos } from "../hooks/useProdutos";
 import { useFornecedores } from "../hooks/useFornecedores";
 import { atualizarProduto } from "../services/produtosService";
+import { formatErrorMessage } from "../utils/formatErrorMessage";
+import { ThemeContext } from "../contexts/ThemeContext";
 
 function getImagemProduto(imagem) {
   if (!imagem) {
@@ -31,6 +33,8 @@ function montarPayloadProduto(produto, quantidadeAtual) {
 export default function GerenciamentoEstoque() {
   const { produtos, loading, error } = useProdutos();
   const { fornecedores } = useFornecedores();
+  const { theme } = useContext(ThemeContext);
+  const isDark = theme === "dark";
   const [listaProdutos, setListaProdutos] = useState([]);
 
   const getFornecedorNome = (produto) => {
@@ -68,12 +72,8 @@ export default function GerenciamentoEstoque() {
     );
   }, [produtos]);
 
-  function atualizarQuantidadeEntrada(
-    event,
-    idProduto
-  ) {
-    const valorDigitado =
-      event.target.value;
+  function atualizarQuantidadeEntrada(event, idProduto) {
+    const valorDigitado = event.target.value;
 
     if (valorDigitado === "") {
       setListaProdutos((atual) =>
@@ -101,10 +101,7 @@ export default function GerenciamentoEstoque() {
         produto.id === idProduto
           ? {
               ...produto,
-              quantidadeAjuste: Math.max(
-                0,
-                Math.floor(valor)
-              ),
+              quantidadeAjuste: Math.max(0, Math.floor(valor)),
             }
           : produto
       )
@@ -167,20 +164,22 @@ export default function GerenciamentoEstoque() {
             : produto
         )
       );
-      alert("Falha ao atualizar o estoque no banco de dados.");
+      alert(
+        formatErrorMessage(
+          err,
+          "Falha ao atualizar o estoque no banco de dados."
+        )
+      );
     }
   }
 
-  function alternarDisponibilidade(
-    idProduto
-  ) {
+  function alternarDisponibilidade(idProduto) {
     setListaProdutos((atual) =>
       atual.map((produto) =>
         produto.id === idProduto
           ? {
               ...produto,
-              ativoParaVenda:
-                !produto.ativoParaVenda,
+              ativoParaVenda: !produto.ativoParaVenda,
             }
           : produto
       )
@@ -188,31 +187,31 @@ export default function GerenciamentoEstoque() {
   }
 
   return (
-    <div style={styles.layout}>
+    <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
       <Sidebar />
 
-      <main style={styles.page}>
+      <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
         <header style={styles.header}>
           <div>
-            <h2 style={styles.title}>Gerenciamento de Estoque</h2>
-            <p style={styles.subtitle}>
+            <h2 style={{ ...styles.title, ...(isDark ? styles.titleDark : {}) }}>Gerenciamento de Estoque</h2>
+            <p style={{ ...styles.subtitle, ...(isDark ? styles.subtitleDark : {}) }}>
               Ajuste o estoque dos produtos cadastrados e controle a disponibilidade para venda.
             </p>
           </div>
         </header>
 
-        {loading && <div style={styles.emptyState}>Carregando produtos...</div>}
+        {loading && <div style={{ ...styles.emptyState, ...(isDark ? styles.emptyStateDark : {}) }}>Carregando produtos...</div>}
 
-        {!loading && error && <div style={styles.emptyStateError}>{error}</div>}
+        {!loading && error && <div style={{ ...styles.emptyStateError, ...(isDark ? styles.emptyStateErrorDark : {}) }}>{error}</div>}
 
         {!loading && !error && listaProdutos.length === 0 && (
-          <div style={styles.emptyState}>Nenhum produto cadastrado.</div>
+          <div style={{ ...styles.emptyState, ...(isDark ? styles.emptyStateDark : {}) }}>Nenhum produto cadastrado.</div>
         )}
 
         {!loading && !error && listaProdutos.length > 0 && (
           <div style={styles.listContainer}>
             {listaProdutos.map((produto) => (
-              <section key={String(produto.id)} style={styles.card}>
+              <section key={String(produto.id)} style={{ ...styles.card, ...(isDark ? styles.cardDark : {}) }}>
                 <div style={styles.productContent}>
                   <div style={styles.imageBox}>
                     <img src={produto.imagem} alt={produto.nome} style={styles.productImage} />
@@ -220,29 +219,30 @@ export default function GerenciamentoEstoque() {
 
                   <div style={styles.infoArea}>
                     <div style={styles.badgeRow}>
-                      <span style={styles.badge}>{produto.categoria || "Produto"}</span>
+                      <span style={{ ...styles.badge, ...(isDark ? styles.badgeDark : {}) }}>{produto.categoria || "Produto"}</span>
                       <span
                         style={{
                           ...styles.statusBadge,
                           ...(produto.ativoParaVenda ? styles.statusAtivo : styles.statusInativo),
+                          ...(isDark ? styles.statusBadgeDark : {}),
                         }}
                       >
                         {produto.ativoParaVenda ? "Disponível para venda" : "Desativado para venda"}
                       </span>
                     </div>
 
-                    <h3 style={styles.productName}>{produto.nome}</h3>
-                    <div style={styles.fornecedorName}>{getFornecedorNome(produto)}</div>
+                    <h3 style={{ ...styles.productName, ...(isDark ? styles.productNameDark : {}) }}>{produto.nome}</h3>
+                    <div style={{ ...styles.fornecedorName, ...(isDark ? styles.fornecedorNameDark : {}) }}>{getFornecedorNome(produto)}</div>
 
                     <div style={styles.stockSummary}>
-                      <span style={styles.label}>Estoque atual</span>
-                      <strong style={styles.stockValue}>{produto.quantidade} unidades</strong>
+                      <span style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>Estoque atual</span>
+                      <strong style={{ ...styles.stockValue, ...(isDark ? styles.stockValueDark : {}) }}>{produto.quantidade} unidades</strong>
                     </div>
 
                     <div style={styles.controlBox}>
                       <button
                         type="button"
-                        style={styles.circleButton}
+                        style={{ ...styles.circleButton, ...(isDark ? styles.circleButtonDark : {}) }}
                         onClick={() => ajustarEstoque("menos", produto.id)}
                         aria-label={`Diminuir estoque de ${produto.nome}`}
                       >
@@ -254,13 +254,12 @@ export default function GerenciamentoEstoque() {
                         min="0"
                         value={produto.quantidadeAjuste}
                         onChange={(event) => atualizarQuantidadeEntrada(event, produto.id)}
-                        style={styles.input}
-                        aria-label={`Quantidade para ajustar o estoque de ${produto.nome}`}
+                        style={{ ...styles.input, ...(isDark ? styles.inputDark : {}) }}
                       />
 
                       <button
                         type="button"
-                        style={styles.circleButton}
+                        style={{ ...styles.circleButton, ...(isDark ? styles.circleButtonDark : {}) }}
                         onClick={() => ajustarEstoque("mais", produto.id)}
                         aria-label={`Aumentar estoque de ${produto.nome}`}
                       >
@@ -268,15 +267,13 @@ export default function GerenciamentoEstoque() {
                       </button>
                     </div>
 
-                    <div style={styles.actions}>
-                      <button
-                        type="button"
-                        style={produto.ativoParaVenda ? styles.disableButton : styles.enableButton}
-                        onClick={() => alternarDisponibilidade(produto.id)}
-                      >
-                        {produto.ativoParaVenda ? "Desativar para venda" : "Ativar para venda"}
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => alternarDisponibilidade(produto.id)}
+                      style={{ ...styles.toggleButton, ...(isDark ? styles.toggleButtonDark : {}) }}
+                    >
+                      {produto.ativoParaVenda ? "Desativar para venda" : "Ativar para venda"}
+                    </button>
                   </div>
                 </div>
               </section>
@@ -289,236 +286,47 @@ export default function GerenciamentoEstoque() {
 }
 
 const styles = {
-  layout: {
-    display: "flex",
-    minHeight: "100vh",
-    backgroundColor: "#f3f5f9",
-    fontFamily: "Inter, sans-serif",
-  },
-
-  page: {
-    marginLeft: "256px",
-    width: "calc(100% - 256px)",
-    padding: "32px",
-    boxSizing: "border-box",
-  },
-
-  header: {
-    marginBottom: "24px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: "20px",
-  },
-
-  title: {
-    margin: 0,
-    fontSize: "32px",
-    color: "#111c2d",
-    fontWeight: 700,
-  },
-
-  subtitle: {
-    margin: "8px 0 0",
-    color: "#4a5568",
-  },
-
-  entradaButton: {
-    border: "none",
-    backgroundColor: "#16a34a",
-    color: "#ffffff",
-    padding: "13px 20px",
-    borderRadius: "10px",
-    fontSize: "15px",
-    fontWeight: 700,
-    cursor: "pointer",
-    whiteSpace: "nowrap",
-  },
-
-  listContainer: {
-    display: "grid",
-    gap: "22px",
-    maxWidth: "980px",
-  },
-
-  card: {
-    backgroundColor: "#ffffff",
-    border: "1px solid #e2e8f0",
-    borderRadius: "14px",
-    boxShadow:
-      "0 4px 12px rgba(0,0,0,0.04)",
-    padding: "28px",
-  },
-
-  productContent: {
-    display: "flex",
-    gap: "28px",
-    alignItems: "center",
-  },
-
-  imageBox: {
-    width: "220px",
-    height: "220px",
-    borderRadius: "18px",
-    backgroundColor: "#f8fafc",
-    border: "1px solid #e2e8f0",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
-  },
-
-  productImage: {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-  },
-
-  infoArea: {
-    flex: 1,
-    display: "flex",
-    flexDirection: "column",
-    gap: "18px",
-  },
-
-  badgeRow: {
-    display: "flex",
-    gap: "10px",
-    flexWrap: "wrap",
-    alignItems: "center",
-  },
-
-  badge: {
-    backgroundColor: "#eef2ff",
-    color: "#3730a3",
-    borderRadius: "999px",
-    padding: "6px 12px",
-    fontSize: "12px",
-    fontWeight: 700,
-  },
-
-  statusBadge: {
-    borderRadius: "999px",
-    padding: "6px 12px",
-    fontSize: "12px",
-    fontWeight: 700,
-  },
-
-  statusAtivo: {
-    backgroundColor: "#ecfdf5",
-    color: "#166534",
-  },
-
-  statusInativo: {
-    backgroundColor: "#fef2f2",
-    color: "#991b1b",
-  },
-
-  productName: {
-    margin: "0 0 6px",
-    fontSize: "22px",
-    color: "#111c2d",
-    fontWeight: 700,
-  },
-  fornecedorName: {
-    margin: "0 0 14px",
-    fontSize: "14px",
-    color: "#54657a",
-    fontWeight: 600,
-  },
-
-  stockSummary: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "4px",
-  },
-
-  label: {
-    color: "#64748b",
-    fontSize: "13px",
-    textTransform: "uppercase",
-    letterSpacing: "0.06em",
-  },
-
-  stockValue: {
-    fontSize: "28px",
-    color: "#111c2d",
-  },
-
-  controlBox: {
-    display: "flex",
-    alignItems: "center",
-    gap: "14px",
-    marginTop: "8px",
-  },
-
-  circleButton: {
-    width: "52px",
-    height: "52px",
-    borderRadius: "50%",
-    border: "none",
-    backgroundColor: "#303e51",
-    color: "#ffffff",
-    fontSize: "30px",
-    fontWeight: 700,
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  input: {
-    width: "120px",
-    height: "52px",
-    textAlign: "center",
-    border: "1px solid #d7dfeb",
-    borderRadius: "10px",
-    fontSize: "22px",
-    fontWeight: 600,
-    outline: "none",
-    color: "#111827",
-    backgroundColor: "#ffffff",
-  },
-
-  actions: {
-    marginTop: "8px",
-  },
-
-  disableButton: {
-    border: "none",
-    backgroundColor: "#dc2626",
-    color: "#ffffff",
-    padding: "12px 18px",
-    borderRadius: "10px",
-    fontWeight: 600,
-    cursor: "pointer",
-  },
-
-  enableButton: {
-    border: "none",
-    backgroundColor: "#16a34a",
-    color: "#ffffff",
-    padding: "12px 18px",
-    borderRadius: "10px",
-    fontWeight: 600,
-    cursor: "pointer",
-  },
-
-  emptyState: {
-    backgroundColor: "#ffffff",
-    borderRadius: "12px",
-    border: "1px solid #e2e8f0",
-    padding: "18px 20px",
-    color: "#4a5568",
-    maxWidth: "980px",
-  },
-
-  emptyStateError: {
-    backgroundColor: "#fff1f2",
-    borderRadius: "12px",
-    border: "1px solid #fecdd3",
-    padding: "18px 20px",
-    color: "#9f1239",
-    maxWidth: "980px",
-  },
+  layout: { display: "flex", minHeight: "100vh", backgroundColor: "#f3f5f9" },
+  layoutDark: { backgroundColor: "#0f172a" },
+  page: { marginLeft: "256px", width: "calc(100% - 256px)", padding: "32px", boxSizing: "border-box" },
+  pageDark: { backgroundColor: "#111827", color: "#f3f4f6" },
+  header: { marginBottom: "24px" },
+  title: { margin: 0, fontSize: "32px", color: "#111c2d", fontWeight: 700 },
+  titleDark: { color: "#f9fafb" },
+  subtitle: { margin: "8px 0 0", color: "#4a5568" },
+  subtitleDark: { color: "#d1d5db" },
+  emptyState: { backgroundColor: "#ffffff", color: "#475569", borderRadius: "10px", padding: "18px", border: "1px solid #e2e8f0" },
+  emptyStateDark: { backgroundColor: "#1f2937", color: "#e5e7eb", borderColor: "#374151" },
+  emptyStateError: { backgroundColor: "#fee2e2", color: "#991b1b", borderRadius: "10px", padding: "18px", border: "1px solid #fecaca" },
+  emptyStateErrorDark: { backgroundColor: "#3f1721", color: "#fecdd3", borderColor: "#7f1d1d" },
+  listContainer: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: "20px" },
+  card: { backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "18px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" },
+  cardDark: { backgroundColor: "#111827", borderColor: "#374151" },
+  productContent: { display: "flex", gap: "16px" },
+  imageBox: { width: "120px", height: "120px", borderRadius: "10px", overflow: "hidden", backgroundColor: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  productImage: { width: "100%", height: "100%", objectFit: "cover" },
+  infoArea: { flex: 1, display: "flex", flexDirection: "column", gap: "10px" },
+  badgeRow: { display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center" },
+  badge: { backgroundColor: "#e2e8f0", color: "#0f172a", borderRadius: "999px", padding: "4px 8px", fontSize: "12px" },
+  badgeDark: { backgroundColor: "#334155", color: "#e2e8f0" },
+  statusBadge: { borderRadius: "999px", padding: "4px 8px", fontSize: "12px", fontWeight: 600 },
+  statusBadgeDark: { opacity: 1 },
+  statusAtivo: { backgroundColor: "#dcfce7", color: "#166534" },
+  statusInativo: { backgroundColor: "#fee2e2", color: "#991b1b" },
+  productName: { margin: 0, color: "#111c2d", fontSize: "20px" },
+  productNameDark: { color: "#f9fafb" },
+  fornecedorName: { color: "#64748b", fontSize: "13px" },
+  fornecedorNameDark: { color: "#d1d5db" },
+  stockSummary: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", padding: "8px 0" },
+  label: { color: "#475569", fontSize: "12px" },
+  labelDark: { color: "#d1d5db" },
+  stockValue: { color: "#111827", fontSize: "16px" },
+  stockValueDark: { color: "#f9fafb" },
+  controlBox: { display: "flex", alignItems: "center", gap: "8px" },
+  circleButton: { width: "32px", height: "32px", borderRadius: "50%", border: "1px solid #cbd5e1", backgroundColor: "#f8fafc", color: "#111827", cursor: "pointer", fontSize: "20px" },
+  circleButtonDark: { backgroundColor: "#1f2937", borderColor: "#4b5563", color: "#f9fafb" },
+  input: { width: "90px", textAlign: "center", borderRadius: "8px", border: "1px solid #d7dfeb", padding: "8px 10px", backgroundColor: "#ffffff", color: "#111827" },
+  inputDark: { backgroundColor: "#1f2937", borderColor: "#4b5563", color: "#f9fafb" },
+  toggleButton: { border: "1px solid #d1d5db", backgroundColor: "#ffffff", color: "#111827", borderRadius: "8px", padding: "8px 12px", cursor: "pointer" },
+  toggleButtonDark: { backgroundColor: "#1f2937", borderColor: "#4b5563", color: "#f9fafb" },
 };

@@ -1,12 +1,13 @@
-import React from "react";
+import React, {useContext} from "react";
 import Sidebar from "../components/Sidebar";
 import { useProdutos } from "../hooks/useProdutos";
 import { useVendas } from "../hooks/useVendas";
 import { useNavigate } from "react-router-dom";
+import { ThemeContext } from "../contexts/ThemeContext";
 
 export default function Painel() {
   const navigate = useNavigate();
-
+  const { theme } = useContext(ThemeContext);
   const { produtos, loading, error } = useProdutos();
 
   const {
@@ -23,27 +24,31 @@ export default function Painel() {
 
   const produtosEsgotados = Array.isArray(produtos)
     ? produtos.filter((produto) => {
-        const status = String(produto.Status ?? "").toLowerCase();
+      const status = String(produto.Status ?? "").toLowerCase();
 
-        return status === "esgotado";
-      }).length
+      return status === "esgotado";
+    }).length
     : 0;
 
   const produtosVencimento = Array.isArray(produtos)
     ? produtos.filter((produto) => {
-        const status = String(produto.Status ?? "").toLowerCase();
+      const status = String(produto.Status ?? "").toLowerCase();
 
-        return status === "vencido";
-      }).length
+      return status === "vencido";
+    }).length
     : 0;
+
+  const isDark = theme === "dark";
 
   if (loading) {
     return (
-      <div style={styles.layout}>
+      <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
         <Sidebar />
 
-        <main style={styles.page}>
-          <div style={styles.loadingBox}>Carregando resumo do painel...</div>
+        <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
+          <div style={{ ...styles.loadingBox, ...(isDark ? styles.loadingBoxDark : {}) }}>
+            Carregando resumo do painel...
+          </div>
         </main>
       </div>
     );
@@ -51,26 +56,31 @@ export default function Painel() {
 
   if (error) {
     return (
-      <div style={styles.layout}>
+      <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
         <Sidebar />
 
-        <main style={styles.page}>
-          <div style={styles.errorBox}>{error}</div>
+        <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
+          <div style={{ ...styles.errorBox, ...(isDark ? styles.errorBoxDark : {}) }}>{error}</div>
         </main>
       </div>
     );
   }
 
   return (
-    <div style={styles.layout}>
+    <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
       <Sidebar />
 
-      <main style={styles.page}>
+      <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
         {/* CABEÇALHO */}
         <header style={styles.header}>
-          <h2 style={styles.title}>Visão Geral</h2>
-
-          <p style={styles.subtitle}>Resumo operacional da loja.</p>
+          <div style={styles.headerRow}>
+            <div>
+              <h2 style={{ ...styles.title, ...(isDark ? styles.titleDark : {}) }}>Visão Geral</h2>
+              <p style={{ ...styles.subtitle, ...(isDark ? styles.subtitleDark : {}) }}>
+                Resumo operacional da loja.
+              </p>
+            </div>
+          </div>
         </header>
 
         {/* CARDS */}
@@ -79,6 +89,7 @@ export default function Painel() {
             titulo="Produtos Totais"
             valor={produtosTotais}
             icone="inventory"
+            dark={isDark}
           />
 
           <DashboardCard
@@ -86,6 +97,7 @@ export default function Painel() {
             valor={produtosEsgotados}
             icone="production_quantity_limits"
             tipo="error"
+            dark={isDark}
           />
 
           <DashboardCard
@@ -93,26 +105,29 @@ export default function Painel() {
             valor={produtosVencimento}
             icone="event_busy"
             tipo="warning"
+            dark={isDark}
           />
         </section>
 
         {/* PARTE INFERIOR */}
         <section style={styles.bottom}>
           {/* VENDAS RECENTES */}
-          <div style={styles.largeCard}>
+          <div style={{ ...styles.largeCard, ...(isDark ? styles.largeCardDark : {}) }}>
             <div style={styles.cardHeader}>
-              <h3 style={styles.cardTitle}>Vendas Recentes</h3>
+              <h3 style={{ ...styles.cardTitle, ...(isDark ? styles.cardTitleDark : {}) }}>
+                Vendas Recentes
+              </h3>
 
               <button
                 onClick={() => navigate("/vendas")}
-                style={styles.linkButton}
+                style={{ ...styles.linkButton, ...(isDark ? styles.linkButtonDark : {}) }}
               >
                 Ver todas
               </button>
             </div>
 
             {loadingVendas ? (
-              <div style={styles.empty}>
+              <div style={{ ...styles.empty, ...(isDark ? styles.emptyDark : {}) }}>
                 <span className="material-symbols-outlined">
                   progress_activity
                 </span>
@@ -120,7 +135,7 @@ export default function Painel() {
                 <span>Carregando vendas...</span>
               </div>
             ) : errorVendas ? (
-              <div style={styles.empty}>
+              <div style={{ ...styles.empty, ...(isDark ? styles.emptyDark : {}) }}>
                 <span className="material-symbols-outlined">error</span>
 
                 <span>{errorVendas}</span>
@@ -128,18 +143,18 @@ export default function Painel() {
             ) : vendasLista.length > 0 ? (
               <div style={styles.vendasLista}>
                 {ultimasVendas.map((venda) => (
-                  <div key={venda.Id} style={styles.vendaItem}>
+                  <div key={venda.Id} style={{ ...styles.vendaItem, ...(isDark ? styles.vendaItemDark : {}) }}>
                     <div style={styles.vendaInfo}>
-                      <strong style={styles.vendaTitulo}>
+                      <strong style={{ ...styles.vendaTitulo, ...(isDark ? styles.vendaTituloDark : {}) }}>
                         Venda #{venda.Id}
                       </strong>
 
-                      <span style={styles.vendaVendedor}>
+                      <span style={{ ...styles.vendaVendedor, ...(isDark ? styles.vendaVendedorDark : {}) }}>
                         Vendedor #{venda.IdVendedor}
                       </span>
                     </div>
 
-                    <strong style={styles.vendaValor}>
+                    <strong style={{ ...styles.vendaValor, ...(isDark ? styles.vendaValorDark : {}) }}>
                       R${" "}
                       {Number(venda.ValorTotal || 0)
                         .toFixed(2)
@@ -149,7 +164,7 @@ export default function Painel() {
                 ))}
               </div>
             ) : (
-              <div style={styles.empty}>
+              <div style={{ ...styles.empty, ...(isDark ? styles.emptyDark : {}) }}>
                 <span className="material-symbols-outlined">point_of_sale</span>
 
                 <span>Nenhuma venda encontrada.</span>
@@ -158,11 +173,11 @@ export default function Painel() {
           </div>
 
           {/* LUCRO TOTAL */}
-          <div style={styles.largeCard}>
+          <div style={{ ...styles.largeCard, ...(isDark ? styles.largeCardDark : {}) }}>
             <div style={styles.cardHeader}>
-              <h3 style={styles.cardTitle}>Lucro total</h3>
+              <h3 style={{ ...styles.cardTitle, ...(isDark ? styles.cardTitleDark : {}) }}>Lucro total</h3>
 
-              <span className="material-symbols-outlined">
+              <span className="material-symbols-outlined" style={isDark ? styles.iconDark : {}}>
                 local_fire_department
               </span>
             </div>
@@ -179,14 +194,13 @@ export default function Painel() {
   );
 }
 
-function DashboardCard({ titulo, valor, icone, tipo }) {
+function DashboardCard({ titulo, valor, icone, tipo, dark }) {
   return (
     <div
       style={{
         ...styles.card,
-
+        ...(dark ? styles.cardDark : {}),
         ...(tipo === "error" ? styles.errorCard : {}),
-
         ...(tipo === "warning" ? styles.warningCard : {}),
       }}
     >
@@ -195,16 +209,15 @@ function DashboardCard({ titulo, valor, icone, tipo }) {
           <div
             style={{
               ...styles.icon,
-
+              ...(dark ? styles.iconDark : {}),
               ...(tipo === "error" ? styles.errorIcon : {}),
-
               ...(tipo === "warning" ? styles.warningIcon : {}),
             }}
           >
             <span className="material-symbols-outlined">{icone}</span>
           </div>
 
-          <h3 style={styles.cardLabel}>{titulo}</h3>
+          <h3 style={{ ...styles.cardLabel, ...(dark ? styles.cardLabelDark : {}) }}>{titulo}</h3>
         </div>
 
         <span className="material-symbols-outlined" style={styles.arrow}>
@@ -214,7 +227,7 @@ function DashboardCard({ titulo, valor, icone, tipo }) {
       <strong
         style={{
           ...styles.value,
-
+          ...(dark ? styles.valueDark : {}),
           ...(tipo === "error" ? styles.errorValue : {}),
         }}
       >
@@ -229,6 +242,11 @@ const styles = {
     display: "flex",
     minHeight: "100vh",
     backgroundColor: "#f3f5f9",
+    transition: "background-color 0.3s ease, color 0.3s ease",
+  },
+
+  layoutDark: {
+    backgroundColor: "#0f172a",
   },
 
   page: {
@@ -237,6 +255,12 @@ const styles = {
     padding: "32px 32px 40px",
     boxSizing: "border-box",
     fontFamily: "Inter, sans-serif",
+    transition: "background-color 0.3s ease, color 0.3s ease",
+  },
+
+  pageDark: {
+    backgroundColor: "#111827",
+    color: "#f3f4f6",
   },
 
   loadingBox: {
@@ -251,6 +275,12 @@ const styles = {
     fontWeight: "600",
   },
 
+  loadingBoxDark: {
+    backgroundColor: "#1f2937",
+    borderColor: "#374151",
+    color: "#f3f4f6",
+  },
+
   errorBox: {
     minHeight: "160px",
     display: "flex",
@@ -263,8 +293,21 @@ const styles = {
     fontWeight: "600",
   },
 
+  errorBoxDark: {
+    backgroundColor: "#3f1721",
+    borderColor: "#7f1d1d",
+    color: "#fecdd3",
+  },
+
   header: {
     marginBottom: "40px",
+  },
+
+  headerRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "16px",
   },
 
   title: {
@@ -275,10 +318,18 @@ const styles = {
     color: "#111c2d",
   },
 
+  titleDark: {
+    color: "#f9fafb",
+  },
+
   subtitle: {
     color: "#44474c",
     marginTop: "5px",
     marginBottom: 0,
+  },
+
+  subtitleDark: {
+    color: "#d1d5db",
   },
 
   cards: {
@@ -295,6 +346,12 @@ const styles = {
     borderRadius: "10px",
     minHeight: "155px",
     boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
+    transition: "background-color 0.3s ease, border-color 0.3s ease",
+  },
+
+  cardDark: {
+    backgroundColor: "#1f2937",
+    borderColor: "#374151",
   },
 
   errorCard: {
@@ -328,6 +385,11 @@ const styles = {
     justifyContent: "center",
   },
 
+  iconDark: {
+    backgroundColor: "#2b3a4f",
+    color: "#dbeafe",
+  },
+
   errorIcon: {
     backgroundColor: "#ffdad6",
     color: "#ba1a1a",
@@ -345,6 +407,10 @@ const styles = {
     margin: 0,
   },
 
+  cardLabelDark: {
+    color: "#e5e7eb",
+  },
+
   arrow: {
     color: "#c4c6cd",
   },
@@ -355,6 +421,10 @@ const styles = {
     fontSize: "38px",
     fontWeight: "700",
     color: "#111c2d",
+  },
+
+  valueDark: {
+    color: "#f9fafb",
   },
 
   errorValue: {
@@ -373,6 +443,12 @@ const styles = {
     borderRadius: "10px",
     padding: "24px",
     minHeight: "260px",
+    transition: "background-color 0.3s ease, border-color 0.3s ease",
+  },
+
+  largeCardDark: {
+    backgroundColor: "#1f2937",
+    borderColor: "#374151",
   },
 
   cardHeader: {
@@ -389,12 +465,20 @@ const styles = {
     color: "#111c2d",
   },
 
+  cardTitleDark: {
+    color: "#f9fafb",
+  },
+
   linkButton: {
     border: "none",
     backgroundColor: "transparent",
     color: "#303e51",
     fontWeight: "600",
     cursor: "pointer",
+  },
+
+  linkButtonDark: {
+    color: "#dbeafe",
   },
 
   empty: {
@@ -405,6 +489,10 @@ const styles = {
     justifyContent: "center",
     gap: "8px",
     color: "#75777d",
+  },
+
+  emptyDark: {
+    color: "#d1d5db",
   },
 
   vendasLista: {
@@ -423,6 +511,11 @@ const styles = {
     backgroundColor: "#ffffff",
   },
 
+  vendaItemDark: {
+    borderColor: "#4b5563",
+    backgroundColor: "#111827",
+  },
+
   vendaInfo: {
     display: "flex",
     flexDirection: "column",
@@ -434,20 +527,34 @@ const styles = {
     color: "#111c2d",
   },
 
+  vendaTituloDark: {
+    color: "#f9fafb",
+  },
+
   vendaVendedor: {
     fontSize: "12px",
     color: "#75777d",
+  },
+
+  vendaVendedorDark: {
+    color: "#cbd5e1",
   },
 
   vendaValor: {
     fontSize: "15px",
     color: "#111c2d",
   },
+
+  vendaValorDark: {
+    color: "#f9fafb",
+  },
+
   lucro: {
     fontSize: "38px",
     fontWeight: "700",
     color: "#06c100",
   },
+
   lucroContainer: {
     minHeight: "170px",
     display: "flex",

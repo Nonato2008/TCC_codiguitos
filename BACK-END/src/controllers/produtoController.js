@@ -162,6 +162,28 @@ const produtoController = {
 
             console.error(error);
 
+            const mensagem = (error?.message || "").toLowerCase();
+
+            if (
+                mensagem.includes("out of range value for column 'preco'") ||
+                mensagem.includes("out of range value for column \"preco\"") ||
+                mensagem.includes("preco excede o limite permitido")
+            ) {
+                return res.status(400).json({
+                    message: "Preço fora do limite permitido. Informe um valor até R$ 9.999.999,99 e verifique também o limite de 45 caracteres no nome do produto."
+                });
+            }
+
+            if (
+                mensagem.includes("out of range value for column 'quantidade'") ||
+                mensagem.includes("out of range value for column \"quantidade\"") ||
+                mensagem.includes("quantidade excede o limite permitido")
+            ) {
+                return res.status(400).json({
+                    message: "Quantidade fora do limite permitido. Informe uma quantidade até 999.999 unidades."
+                });
+            }
+
             res.status(500).json({
 
                 message:
