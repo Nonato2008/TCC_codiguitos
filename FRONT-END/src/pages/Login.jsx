@@ -1,30 +1,49 @@
-import { useState, useContext } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
     login as apiLogin,
+    cadastro as apiCadastro,
     saveUser
 } from "../services/authService.js";
-import { formatErrorMessage } from "../utils/formatErrorMessage";
-import { ThemeContext } from "../contexts/ThemeContext";
 
 export default function Login() {
 
     const navigate = useNavigate();
-    const { theme } = useContext(ThemeContext);
-    const isDark = theme === "dark";
+
+    const [modoCadastro, setModoCadastro] = useState(false);
 
     const [nome, setNome] = useState("");
     const [senha, setSenha] = useState("");
+    const [confirmarSenha, setConfirmarSenha] = useState("");
+    const [tipo, setTipo] = useState("VENDEDOR");
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [success, setSuccess] = useState("");
+
+    function limparMensagens() {
+        setError("");
+        setSuccess("");
+    }
+
+    function trocarModo() {
+
+        limparMensagens();
+
+        setNome("");
+        setSenha("");
+        setConfirmarSenha("");
+        setTipo("VENDEDOR");
+
+        setModoCadastro(!modoCadastro);
+    }
 
     async function entrar(event) {
 
         event.preventDefault();
 
-        setError("");
+        limparMensagens();
 
         if (!nome.trim()) {
             setError("Digite seu nome.");
@@ -48,20 +67,50 @@ export default function Login() {
             if (result.error) {
 
                 setError(
-                    formatErrorMessage(
-                        result.error,
-                        "Nome ou senha incorretos."
-                    )
+                    result.error.message ||
+                    "Nome ou senha incorretos."
                 );
 
                 return;
             }
 
-            const usuario = result.data?.usuario;
+            const usuarioRecebido = result.data?.usuario;
 
-            if (usuario) {
-                saveUser(usuario);
+            if (!usuarioRecebido) {
+
+                setError(
+                    "Não foi possível identificar o usuário."
+                );
+
+                return;
             }
+
+            const nomeUsuario =
+                usuarioRecebido.nome ||
+                usuarioRecebido.Nome ||
+                nome.trim();
+
+            const perfilUsuario =
+                usuarioRecebido.perfil ||
+                usuarioRecebido.Perfil ||
+                usuarioRecebido.tipo ||
+                usuarioRecebido.Tipo ||
+                usuarioRecebido.role ||
+                usuarioRecebido.Role ||
+                "Vendedor";
+
+            const usuario = {
+                ...usuarioRecebido,
+                nome: nomeUsuario,
+                perfil: perfilUsuario
+            };
+
+            saveUser(usuario);
+
+            localStorage.setItem(
+                "usuario",
+                JSON.stringify(usuario)
+            );
 
             navigate("/painel");
 
@@ -70,10 +119,94 @@ export default function Login() {
             console.error(error);
 
             setError(
-                formatErrorMessage(
-                    error,
-                    "Erro ao conectar ao servidor. Verifique se a API está disponível."
-                )
+                "Erro ao conectar ao servidor."
+            );
+
+        } finally {
+
+            setLoading(false);
+        }
+    }
+
+    async function cadastrar(event) {
+
+        event.preventDefault();
+
+        limparMensagens();
+
+        if (!nome.trim()) {
+            setError("Digite seu nome.");
+            return;
+        }
+
+        if (nome.trim().length < 3) {
+            setError(
+                "O nome deve possuir pelo menos 3 caracteres."
+            );
+            return;
+        }
+
+        if (!senha) {
+            setError("Digite uma senha.");
+            return;
+        }
+
+        if (senha.length < 6) {
+            setError(
+                "A senha deve possuir pelo menos 6 caracteres."
+            );
+            return;
+        }
+
+        if (senha !== confirmarSenha) {
+            setError(
+                "As senhas não coincidem."
+            );
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+
+            const result = await apiCadastro(
+                nome.trim(),
+                senha,
+                tipo
+            );
+
+            if (result.error) {
+
+                setError(
+                    result.error.message ||
+                    "Não foi possível realizar o cadastro."
+                );
+
+                return;
+            }
+
+            setSuccess(
+                "Cadastro realizado com sucesso! Agora faça login."
+            );
+
+            setNome("");
+            setSenha("");
+            setConfirmarSenha("");
+            setTipo("VENDEDOR");
+
+            setTimeout(() => {
+
+                setModoCadastro(false);
+                setSuccess("");
+
+            }, 1500);
+
+        } catch (error) {
+
+            console.error(error);
+
+            setError(
+                "Erro ao conectar ao servidor."
             );
 
         } finally {
@@ -83,15 +216,13 @@ export default function Login() {
     }
 
     return (
+        <div style={styles.container}>
 
-        <div style={{ ...styles.container, ...(isDark ? styles.containerDark : {}) }}>
+            <div style={styles.card}>
 
-            <div style={{ ...styles.card, ...(isDark ? styles.cardDark : {}) }}>
-
-                {/* LOGO */}
                 <div style={styles.logoContainer}>
 
-                    <div style={{ ...styles.logo, ...(isDark ? styles.logoDark : {}) }}>
+                    <div style={styles.logo}>
 
                         <img
                             src="/logo.png"
@@ -103,38 +234,48 @@ export default function Login() {
 
                 </div>
 
-                {/* TÍTULO */}
-                <h1 style={{ ...styles.title, ...(isDark ? styles.titleDark : {}) }}>
+                <h1 style={styles.title}>
                     Adega do Nelson
                 </h1>
 
-                <p style={{ ...styles.subtitle, ...(isDark ? styles.subtitleDark : {}) }}>
-                    Entre na sua conta para acessar o sistema.
+                <p style={styles.subtitle}>
+                    {modoCadastro
+                        ? "Crie sua conta para acessar o sistema."
+                        : "Entre na sua conta para acessar o sistema."
+                    }
                 </p>
 
-                <h2 style={{ ...styles.formTitle, ...(isDark ? styles.formTitleDark : {}) }}>
-                    Login
+                <h2 style={styles.formTitle}>
+                    {modoCadastro
+                        ? "Criar Cadastro"
+                        : "Login"
+                    }
                 </h2>
 
-                {/* ERRO */}
                 {error && (
-
-                    <div style={{ ...styles.alertError, ...(isDark ? styles.alertErrorDark : {}) }}>
+                    <div style={styles.alertError}>
                         {error}
                     </div>
-
                 )}
 
-                {/* FORMULÁRIO */}
+                {success && (
+                    <div style={styles.alertSuccess}>
+                        {success}
+                    </div>
+                )}
+
                 <form
                     style={styles.form}
-                    onSubmit={entrar}
+                    onSubmit={
+                        modoCadastro
+                            ? cadastrar
+                            : entrar
+                    }
                 >
 
-                    {/* NOME */}
                     <div style={styles.inputGroup}>
 
-                        <label style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>
+                        <label style={styles.label}>
                             Nome
                         </label>
 
@@ -145,17 +286,17 @@ export default function Login() {
                             onChange={(event) =>
                                 setNome(event.target.value)
                             }
-                            style={{ ...styles.input, ...(isDark ? styles.inputDark : {}) }}
+                            style={styles.input}
                             minLength={3}
                             required
                             disabled={loading}
                         />
+
                     </div>
 
-                    {/* SENHA */}
                     <div style={styles.inputGroup}>
 
-                        <label style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>
+                        <label style={styles.label}>
                             Senha
                         </label>
 
@@ -166,7 +307,7 @@ export default function Login() {
                             onChange={(event) =>
                                 setSenha(event.target.value)
                             }
-                            style={{ ...styles.input, ...(isDark ? styles.inputDark : {}) }}
+                            style={styles.input}
                             minLength={6}
                             required
                             disabled={loading}
@@ -174,45 +315,106 @@ export default function Login() {
 
                     </div>
 
-                    {/* BOTÃO ENTRAR */}
+                    {modoCadastro && (
+                        <>
+
+                            <div style={styles.inputGroup}>
+
+                                <label style={styles.label}>
+                                    Confirmar Senha
+                                </label>
+
+                                <input
+                                    type="password"
+                                    placeholder="Digite a senha novamente"
+                                    value={confirmarSenha}
+                                    onChange={(event) =>
+                                        setConfirmarSenha(
+                                            event.target.value
+                                        )
+                                    }
+                                    style={styles.input}
+                                    minLength={6}
+                                    required
+                                    disabled={loading}
+                                />
+
+                            </div>
+
+                            <div style={styles.inputGroup}>
+
+                                <label style={styles.label}>
+                                    Tipo de Usuário
+                                </label>
+
+                                <select
+                                    value={tipo}
+                                    onChange={(event) =>
+                                        setTipo(event.target.value)
+                                    }
+                                    style={styles.input}
+                                    disabled={loading}
+                                >
+
+                                    <option value="VENDEDOR">
+                                        Vendedor
+                                    </option>
+
+                                    <option value="PROPRIETARIO">
+                                        Proprietário
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                        </>
+                    )}
+
                     <button
                         type="submit"
                         style={{
                             ...styles.button,
-                            ...(loading ? styles.buttonDisabled : {}),
-                            ...(isDark ? styles.buttonDark : {})
+                            ...(loading
+                                ? styles.buttonDisabled
+                                : {})
                         }}
                         disabled={loading}
                     >
                         {loading
-                            ? "Entrando..."
-                            : "Entrar"
+                            ? "Aguarde..."
+                            : modoCadastro
+                                ? "Cadastrar"
+                                : "Entrar"
                         }
-
                     </button>
 
                 </form>
 
-                {/* IR PARA CADASTRO */}
                 <div style={styles.registerText}>
 
-                    <span style={{ ...(isDark ? styles.registerTextDark : {}) }}>
-                        Não possui uma conta?
+                    <span>
+                        {modoCadastro
+                            ? "Já possui uma conta?"
+                            : "Não possui uma conta?"
+                        }
                     </span>
 
                     <button
                         type="button"
-                        onClick={() => navigate("/cadastro")}
-                        style={{ ...styles.registerLink, ...(isDark ? styles.registerLinkDark : {}) }}
+                        onClick={trocarModo}
+                        style={styles.registerLink}
                         disabled={loading}
                     >
-                        Criar conta
+                        {modoCadastro
+                            ? "Fazer login"
+                            : "Criar conta"
+                        }
                     </button>
 
                 </div>
 
-                {/* RODAPÉ */}
-                <p style={{ ...styles.footer, ...(isDark ? styles.footerDark : {}) }}>
+                <p style={styles.footer}>
                     Sistema de gerenciamento da Adega do Nelson
                 </p>
 
@@ -233,12 +435,7 @@ const styles = {
         justifyContent: "center",
         fontFamily: "Inter, sans-serif",
         padding: "24px",
-        boxSizing: "border-box",
-        transition: "background-color 0.3s ease"
-    },
-
-    containerDark: {
-        backgroundColor: "#0f172a",
+        boxSizing: "border-box"
     },
 
     card: {
@@ -249,14 +446,7 @@ const styles = {
         borderRadius: "16px",
         padding: "40px",
         boxShadow: "0 10px 30px rgba(0, 0, 0, 0.06)",
-        boxSizing: "border-box",
-        transition: "background-color 0.3s ease, border-color 0.3s ease"
-    },
-
-    cardDark: {
-        backgroundColor: "#111827",
-        borderColor: "#374151",
-        boxShadow: "0 10px 30px rgba(0, 0, 0, 0.35)",
+        boxSizing: "border-box"
     },
 
     logoContainer: {
@@ -273,10 +463,6 @@ const styles = {
         border: "1px solid #e2e8f0"
     },
 
-    logoDark: {
-        borderColor: "#4b5563"
-    },
-
     logoImage: {
         width: "100%",
         height: "100%",
@@ -284,43 +470,36 @@ const styles = {
     },
 
     title: {
-        margin: 0,
+        fontFamily: "Montserrat, sans-serif",
         textAlign: "center",
         fontSize: "28px",
-        fontWeight: 700,
-        color: "#111827"
-    },
-
-    titleDark: {
-        color: "#f9fafb"
+        fontWeight: "700",
+        color: "#303e51",
+        margin: 0
     },
 
     subtitle: {
-        margin: "12px 0 0",
         textAlign: "center",
-        color: "#475569",
-        fontSize: "15px"
-    },
-
-    subtitleDark: {
-        color: "#d1d5db"
+        color: "#44474c",
+        fontSize: "14px",
+        lineHeight: "1.5",
+        marginTop: "8px",
+        marginBottom: "28px"
     },
 
     formTitle: {
-        margin: "28px 0 18px",
-        fontSize: "24px",
-        fontWeight: 700,
-        color: "#111827"
-    },
-
-    formTitleDark: {
-        color: "#f9fafb"
+        textAlign: "center",
+        fontSize: "20px",
+        fontWeight: "700",
+        color: "#303e51",
+        marginTop: 0,
+        marginBottom: "24px"
     },
 
     form: {
         display: "flex",
         flexDirection: "column",
-        gap: "18px"
+        gap: "20px"
     },
 
     inputGroup: {
@@ -330,105 +509,89 @@ const styles = {
     },
 
     label: {
-        fontWeight: 600,
-        color: "#303e51",
-        fontSize: "14px"
-    },
-
-    labelDark: {
-        color: "#e5e7eb"
+        fontSize: "14px",
+        fontWeight: "600",
+        color: "#303e51"
     },
 
     input: {
         width: "100%",
         boxSizing: "border-box",
-        borderRadius: "10px",
-        border: "1px solid #d7dfeb",
-        padding: "12px 14px",
+        padding: "13px 14px",
+        border: "1px solid #cbd5e1",
+        borderRadius: "8px",
+        outline: "none",
         fontSize: "14px",
+        fontFamily: "Inter, sans-serif",
         backgroundColor: "#ffffff",
-        color: "#111827",
-        outline: "none"
-    },
-
-    inputDark: {
-        backgroundColor: "#1f2937",
-        borderColor: "#4b5563",
-        color: "#f9fafb"
+        color: "#303e51"
     },
 
     button: {
         width: "100%",
+        boxSizing: "border-box",
+        padding: "14px",
+        marginTop: "4px",
         border: "none",
-        borderRadius: "10px",
-        padding: "12px 16px",
         backgroundColor: "#303e51",
         color: "#ffffff",
+        borderRadius: "8px",
         fontSize: "15px",
-        fontWeight: 700,
+        fontWeight: "600",
         cursor: "pointer"
     },
 
-    buttonDark: {
-        backgroundColor: "#2563eb",
+    buttonDisabled: {
+        opacity: 0.6,
+        cursor: "not-allowed"
     },
 
-    buttonDisabled: {
-        opacity: 0.7,
-        cursor: "not-allowed"
+    registerText: {
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        gap: "6px",
+        marginTop: "22px",
+        color: "#44474c",
+        fontSize: "14px"
+    },
+
+    registerLink: {
+        color: "#303e51",
+        fontWeight: "700",
+        textDecoration: "none",
+        border: "none",
+        backgroundColor: "transparent",
+        cursor: "pointer",
+        fontSize: "14px",
+        padding: 0
     },
 
     alertError: {
         backgroundColor: "#fef2f2",
         border: "1px solid #fecaca",
-        color: "#991b1b",
-        borderRadius: "10px",
-        padding: "12px 14px",
+        color: "#b91c1c",
+        borderRadius: "8px",
+        padding: "12px",
         fontSize: "14px",
-        marginBottom: "18px"
+        marginBottom: "20px"
     },
 
-    alertErrorDark: {
-        backgroundColor: "#3f1721",
-        borderColor: "#7f1d1d",
-        color: "#fecdd3",
-    },
-
-    registerText: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "8px",
-        marginTop: "18px",
+    alertSuccess: {
+        backgroundColor: "#f0fdf4",
+        border: "1px solid #bbf7d0",
+        color: "#15803d",
+        borderRadius: "8px",
+        padding: "12px",
         fontSize: "14px",
-        color: "#475569"
-    },
-
-    registerTextDark: {
-        color: "#d1d5db"
-    },
-
-    registerLink: {
-        background: "transparent",
-        border: "none",
-        color: "#303e51",
-        fontWeight: 600,
-        cursor: "pointer",
-        padding: 0
-    },
-
-    registerLinkDark: {
-        color: "#93c5fd"
+        marginBottom: "20px"
     },
 
     footer: {
         textAlign: "center",
-        margin: "24px 0 0",
-        fontSize: "13px",
-        color: "#64748b"
-    },
-
-    footerDark: {
-        color: "#cbd5e1"
+        color: "#777b82",
+        fontSize: "12px",
+        marginTop: "28px",
+        marginBottom: 0
     }
 };
