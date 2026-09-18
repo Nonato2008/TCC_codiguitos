@@ -38,7 +38,7 @@ function getPrecoProduto(produto) {
       produto?.valor ??
       produto?.PrecoVenda ??
       produto?.precoVenda ??
-      0
+      0,
   );
 }
 
@@ -52,7 +52,7 @@ function getEstoqueProduto(produto) {
       produto?.quantidadeEstoque ??
       produto?.Qtd ??
       produto?.qtd ??
-      0
+      0,
   );
 }
 
@@ -152,7 +152,8 @@ export default function CadastroVendas() {
       if (!raw) return;
       const parsed = JSON.parse(raw);
       if (parsed?.form) setForm(parsed.form);
-      if (Array.isArray(parsed?.itens) && parsed.itens.length > 0) setItens(parsed.itens);
+      if (Array.isArray(parsed?.itens) && parsed.itens.length > 0)
+        setItens(parsed.itens);
       if (parsed?.buscaProduto) setBuscaProduto(parsed.buscaProduto);
     } catch (err) {
       console.warn("Erro ao restaurar última venda:", err);
@@ -180,8 +181,7 @@ export default function CadastroVendas() {
     // Verifica duplicidade ao trocar o produto
     if (campo === "idProduto" && valor) {
       const jaExiste = itens.some(
-        (item, i) =>
-          i !== index && Number(item.idProduto) === Number(valor)
+        (item, i) => i !== index && Number(item.idProduto) === Number(valor),
       );
 
       if (jaExiste) {
@@ -199,7 +199,7 @@ export default function CadastroVendas() {
 
       if (campo === "idProduto" || campo === "quantidade") {
         const produto = produtos.find(
-          (p) => Number(getIdProduto(p)) === Number(item.idProduto)
+          (p) => Number(getIdProduto(p)) === Number(item.idProduto),
         );
 
         if (produto) {
@@ -238,7 +238,7 @@ export default function CadastroVendas() {
   // ---------- Total geral ----------
   const totalGeral = itens.reduce(
     (acc, item) => acc + (Number(item.valorTotal) || 0),
-    0
+    0,
   );
 
   // ---------- Produtos filtrados pela busca ----------
@@ -265,7 +265,7 @@ export default function CadastroVendas() {
     }
 
     const itensValidos = itens.filter(
-      (i) => i.idProduto && Number(i.quantidade) > 0
+      (i) => i.idProduto && Number(i.quantidade) > 0,
     );
     if (itensValidos.length === 0) {
       setMensagem({
@@ -280,13 +280,11 @@ export default function CadastroVendas() {
     for (const item of itensValidos) {
       const id = Number(item.idProduto);
       if (idsUsados.has(id)) {
-        const produto = produtos.find(
-          (p) => Number(getIdProduto(p)) === id
-        );
+        const produto = produtos.find((p) => Number(getIdProduto(p)) === id);
         setMensagem({
           type: "error",
           text: `O produto "${getNomeProduto(
-            produto
+            produto,
           )}" está duplicado. Remova uma das linhas.`,
         });
         return;
@@ -297,7 +295,7 @@ export default function CadastroVendas() {
     // Valida estoque
     for (const item of itensValidos) {
       const produto = produtos.find(
-        (p) => Number(getIdProduto(p)) === Number(item.idProduto)
+        (p) => Number(getIdProduto(p)) === Number(item.idProduto),
       );
       const estoque = produto ? getEstoqueProduto(produto) : 0;
 
@@ -305,7 +303,7 @@ export default function CadastroVendas() {
         setMensagem({
           type: "error",
           text: `A quantidade do produto "${getNomeProduto(
-            produto
+            produto,
           )}" ultrapassa o estoque disponível (${estoque}).`,
         });
         return;
@@ -355,10 +353,17 @@ export default function CadastroVendas() {
         {/* ---------- Cabeçalho ---------- */}
         <header style={styles.header}>
           <div>
-            <h1 style={{ ...styles.title, ...(isDark ? styles.titleDark : {}) }}>
+            <h1
+              style={{ ...styles.title, ...(isDark ? styles.titleDark : {}) }}
+            >
               Cadastro de venda
             </h1>
-            <p style={{ ...styles.subtitle, ...(isDark ? styles.subtitleDark : {}) }}>
+            <p
+              style={{
+                ...styles.subtitle,
+                ...(isDark ? styles.subtitleDark : {}),
+              }}
+            >
               Registre uma nova venda com produtos, vendedor e proprietário.
             </p>
           </div>
@@ -366,7 +371,10 @@ export default function CadastroVendas() {
           <button
             type="button"
             onClick={() => navigate("/vendas")}
-            style={{ ...styles.backButton, ...(isDark ? styles.backButtonDark : {}) }}
+            style={{
+              ...styles.backButton,
+              ...(isDark ? styles.backButtonDark : {}),
+            }}
           >
             <span className="material-symbols-outlined">arrow_back</span>
             Voltar
@@ -374,41 +382,75 @@ export default function CadastroVendas() {
         </header>
 
         <section style={{ ...styles.card, ...(isDark ? styles.cardDark : {}) }}>
-          <AlertMessage type={mensagem.type} message={mensagem.text} dark={isDark} />
+          <AlertMessage
+            type={mensagem.type}
+            message={mensagem.text}
+            dark={isDark}
+          />
 
           <form onSubmit={cadastrarVenda} style={styles.form}>
             {/* ---------- Proprietário + Vendedor (linha) ---------- */}
             <div style={styles.grid}>
-              <label style={{ ...styles.field, ...(isDark ? styles.fieldDark : {}) }}>
-                <span style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>Proprietário</span>
+              <label
+                style={{ ...styles.field, ...(isDark ? styles.fieldDark : {}) }}
+              >
+                <span
+                  style={{
+                    ...styles.label,
+                    ...(isDark ? styles.labelDark : {}),
+                  }}
+                >
+                  Proprietário
+                </span>
                 <select
                   name="idProprietario"
                   value={form.idProprietario}
                   onChange={atualizarCampo}
-                  style={{ ...styles.select, ...(isDark ? styles.selectDark : {}) }}
+                  style={{
+                    ...styles.select,
+                    ...(isDark ? styles.selectDark : {}),
+                  }}
                   disabled={carregandoProprietarios}
                 >
                   <option value="">Selecione</option>
                   {proprietarios.map((proprietario) => (
-                    <option key={proprietario.Id ?? proprietario.id} value={proprietario.Id ?? proprietario.id}>
+                    <option
+                      key={proprietario.Id ?? proprietario.id}
+                      value={proprietario.Id ?? proprietario.id}
+                    >
                       {proprietario.Nome ?? proprietario.nome}
                     </option>
                   ))}
                 </select>
               </label>
 
-              <label style={{ ...styles.field, ...(isDark ? styles.fieldDark : {}) }}>
-                <span style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>Vendedor</span>
+              <label
+                style={{ ...styles.field, ...(isDark ? styles.fieldDark : {}) }}
+              >
+                <span
+                  style={{
+                    ...styles.label,
+                    ...(isDark ? styles.labelDark : {}),
+                  }}
+                >
+                  Vendedor
+                </span>
                 <select
                   name="idVendedor"
                   value={form.idVendedor}
                   onChange={atualizarCampo}
-                  style={{ ...styles.select, ...(isDark ? styles.selectDark : {}) }}
+                  style={{
+                    ...styles.select,
+                    ...(isDark ? styles.selectDark : {}),
+                  }}
                   disabled={carregandoVendedores}
                 >
                   <option value="">Selecione</option>
                   {vendedores.map((vendedor) => (
-                    <option key={vendedor.Id ?? vendedor.id} value={vendedor.Id ?? vendedor.id}>
+                    <option
+                      key={vendedor.Id ?? vendedor.id}
+                      value={vendedor.Id ?? vendedor.id}
+                    >
                       {vendedor.Nome ?? vendedor.nome}
                     </option>
                   ))}
@@ -424,17 +466,30 @@ export default function CadastroVendas() {
                 value={buscaProduto}
                 onChange={(e) => setBuscaProduto(e.target.value)}
                 placeholder="Buscar produto por nome ou código"
-                style={{ ...styles.searchInput, ...(isDark ? styles.searchInputDark : {}) }}
+                style={{
+                  ...styles.searchInput,
+                  ...(isDark ? styles.searchInputDark : {}),
+                }}
               />
             </div>
 
             {/* ---------- Lista de produtos ---------- */}
             <div style={styles.itensHeader}>
-              <h2 style={{ ...styles.sectionTitle, ...(isDark ? styles.sectionTitleDark : {}) }}>Produtos da venda</h2>
+              <h2
+                style={{
+                  ...styles.sectionTitle,
+                  ...(isDark ? styles.sectionTitleDark : {}),
+                }}
+              >
+                Produtos da venda
+              </h2>
               <button
                 type="button"
                 onClick={adicionarItem}
-                style={{ ...styles.addButton, ...(isDark ? styles.addButtonDark : {}) }}
+                style={{
+                  ...styles.addButton,
+                  ...(isDark ? styles.addButtonDark : {}),
+                }}
               >
                 <span className="material-symbols-outlined">add</span>
                 Adicionar item
@@ -442,46 +497,107 @@ export default function CadastroVendas() {
             </div>
 
             {itens.map((item, index) => (
-              <div key={index} style={{ ...styles.itemCard, ...(isDark ? styles.itemCardDark : {}) }}>
+              <div
+                key={index}
+                style={{
+                  ...styles.itemCard,
+                  ...(isDark ? styles.itemCardDark : {}),
+                }}
+              >
                 <div style={styles.grid}>
-                  <label style={{ ...styles.field, ...(isDark ? styles.fieldDark : {}) }}>
-                    <span style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>Produto</span>
+                  <label
+                    style={{
+                      ...styles.field,
+                      ...(isDark ? styles.fieldDark : {}),
+                    }}
+                  >
+                    <span
+                      style={{
+                        ...styles.label,
+                        ...(isDark ? styles.labelDark : {}),
+                      }}
+                    >
+                      Produto
+                    </span>
                     <select
                       value={item.idProduto}
-                      onChange={(event) => atualizarItem(index, "idProduto", event.target.value)}
-                      style={{ ...styles.select, ...(isDark ? styles.selectDark : {}) }}
+                      onChange={(event) =>
+                        atualizarItem(index, "idProduto", event.target.value)
+                      }
+                      style={{
+                        ...styles.select,
+                        ...(isDark ? styles.selectDark : {}),
+                      }}
                     >
                       <option value="">Selecione um produto</option>
                       {produtosFiltrados.map((produto) => (
-                        <option key={getIdProduto(produto)} value={getIdProduto(produto)}>
+                        <option
+                          key={getIdProduto(produto)}
+                          value={getIdProduto(produto)}
+                        >
                           {getNomeProduto(produto)}
                         </option>
                       ))}
                     </select>
                   </label>
 
-                  <label style={{ ...styles.field, ...(isDark ? styles.fieldDark : {}) }}>
-                    <span style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>Quantidade</span>
+                  <label
+                    style={{
+                      ...styles.field,
+                      ...(isDark ? styles.fieldDark : {}),
+                    }}
+                  >
+                    <span
+                      style={{
+                        ...styles.label,
+                        ...(isDark ? styles.labelDark : {}),
+                      }}
+                    >
+                      Quantidade
+                    </span>
                     <input
                       type="number"
                       min="1"
                       value={item.quantidade}
-                      onChange={(event) => atualizarItem(index, "quantidade", event.target.value)}
-                      style={{ ...styles.input, ...(isDark ? styles.inputDark : {}) }}
+                      onChange={(event) =>
+                        atualizarItem(index, "quantidade", event.target.value)
+                      }
+                      style={{
+                        ...styles.input,
+                        ...(isDark ? styles.inputDark : {}),
+                      }}
                     />
                   </label>
                 </div>
 
-                <div style={{ ...styles.itemMeta, ...(isDark ? styles.itemMetaDark : {}) }}>
-                  <span>Valor unitário: R$ {Number(item.valorUnitario || 0).toFixed(2).replace(".", ",")}</span>
-                  <span>Total: R$ {Number(item.valorTotal || 0).toFixed(2).replace(".", ",")}</span>
+                <div
+                  style={{
+                    ...styles.itemMeta,
+                    ...(isDark ? styles.itemMetaDark : {}),
+                  }}
+                >
+                  <span>
+                    Valor unitário: R${" "}
+                    {Number(item.valorUnitario || 0)
+                      .toFixed(2)
+                      .replace(".", ",")}
+                  </span>
+                  <span>
+                    Total: R${" "}
+                    {Number(item.valorTotal || 0)
+                      .toFixed(2)
+                      .replace(".", ",")}
+                  </span>
                 </div>
 
                 {itens.length > 1 && (
                   <button
                     type="button"
                     onClick={() => removerItem(index)}
-                    style={{ ...styles.removeButton, ...(isDark ? styles.removeButtonDark : {}) }}
+                    style={{
+                      ...styles.removeButton,
+                      ...(isDark ? styles.removeButtonDark : {}),
+                    }}
                   >
                     Remover
                   </button>
@@ -491,21 +607,35 @@ export default function CadastroVendas() {
 
             {/* ---------- Total geral ---------- */}
             <div style={styles.totalBox}>
-              <span style={{ ...(isDark ? styles.totalLabelDark : {}) }}>Total da venda</span>
-              <strong style={{ ...styles.totalValue, ...(isDark ? styles.totalValueDark : {}) }}>
+              <span style={{ ...(isDark ? styles.totalLabelDark : {}) }}>
+                Total da venda
+              </span>
+              <strong
+                style={{
+                  ...styles.totalValue,
+                  ...(isDark ? styles.totalValueDark : {}),
+                }}
+              >
                 R$ {totalGeral.toFixed(2).replace(".", ",")}
               </strong>
             </div>
 
             {/* ---------- Observações ---------- */}
             <div style={styles.formGroup}>
-              <label style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>Observações</label>
+              <label
+                style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}
+              >
+                Observações
+              </label>
               <textarea
                 name="observacoes"
                 value={form.observacoes}
                 onChange={atualizarCampo}
                 rows={4}
-                style={{ ...styles.textarea, ...(isDark ? styles.textareaDark : {}) }}
+                style={{
+                  ...styles.textarea,
+                  ...(isDark ? styles.textareaDark : {}),
+                }}
                 placeholder="Observações adicionais da venda"
               />
             </div>
@@ -526,48 +656,196 @@ export default function CadastroVendas() {
 const styles = {
   layout: { display: "flex", minHeight: "100vh", backgroundColor: "#f3f5f9" },
   layoutDark: { backgroundColor: "#0f172a" },
-  page: { marginLeft: "256px", width: "calc(100% - 256px)", padding: "32px 32px 40px", boxSizing: "border-box", fontFamily: "Inter, sans-serif" },
+  page: {
+    marginLeft: "256px",
+    width: "calc(100% - 256px)",
+    padding: "32px 32px 40px",
+    boxSizing: "border-box",
+    fontFamily: "Inter, sans-serif",
+  },
   pageDark: { backgroundColor: "#111827", color: "#f3f4f6" },
-  header: { display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "24px" },
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    marginBottom: "24px",
+  },
   title: { margin: 0, fontSize: "32px", color: "#111c2d", fontWeight: 700 },
   titleDark: { color: "#f9fafb" },
   subtitle: { margin: "8px 0 0", color: "#4a5568" },
   subtitleDark: { color: "#d1d5db" },
-  backButton: { display: "flex", alignItems: "center", gap: "8px", padding: "10px 16px", border: "1px solid #e2e8f0", borderRadius: "8px", backgroundColor: "#f9f9ff", color: "#303e51", fontSize: "14px", fontWeight: "600", cursor: "pointer" },
-  backButtonDark: { backgroundColor: "#1f2937", borderColor: "#4b5563", color: "#f9fafb" },
-  card: { backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "24px", boxShadow: "0 4px 12px rgba(0,0,0,0.04)", maxWidth: "950px" },
+  backButton: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    padding: "10px 16px",
+    border: "1px solid #e2e8f0",
+    borderRadius: "8px",
+    backgroundColor: "#f9f9ff",
+    color: "#303e51",
+    fontSize: "14px",
+    fontWeight: "600",
+    cursor: "pointer",
+  },
+  backButtonDark: {
+    backgroundColor: "#1f2937",
+    borderColor: "#4b5563",
+    color: "#f9fafb",
+  },
+  card: {
+    backgroundColor: "#ffffff",
+    border: "1px solid #e2e8f0",
+    borderRadius: "12px",
+    padding: "24px",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
+    maxWidth: "950px",
+  },
   cardDark: { backgroundColor: "#111827", borderColor: "#374151" },
   form: { display: "flex", flexDirection: "column", gap: "20px" },
-  grid: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "20px" },
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gap: "20px",
+  },
   field: { display: "flex", flexDirection: "column", gap: "8px" },
   fieldDark: { color: "#e5e7eb" },
   label: { fontWeight: 600, color: "#303e51" },
   labelDark: { color: "#e5e7eb" },
-  select: { width: "100%", boxSizing: "border-box", border: "1px solid #d7dfeb", borderRadius: "10px", padding: "12px 14px", fontSize: "14px", outline: "none", backgroundColor: "#ffffff", color: "#111827" },
-  selectDark: { backgroundColor: "#1f2937", borderColor: "#4b5563", color: "#f9fafb" },
-  input: { width: "100%", boxSizing: "border-box", border: "1px solid #d7dfeb", borderRadius: "10px", padding: "12px 14px", fontSize: "14px", outline: "none", backgroundColor: "#ffffff", color: "#111827" },
-  inputDark: { backgroundColor: "#1f2937", borderColor: "#4b5563", color: "#f9fafb" },
-  searchBox: { display: "flex", alignItems: "center", gap: "8px", padding: "10px 12px", borderRadius: "10px", border: "1px solid #d7dfeb", backgroundColor: "#f8fafc" },
-  searchInput: { width: "100%", border: "none", backgroundColor: "transparent", outline: "none", color: "#111827" },
+  select: {
+    width: "100%",
+    boxSizing: "border-box",
+    border: "1px solid #d7dfeb",
+    borderRadius: "10px",
+    padding: "12px 14px",
+    fontSize: "14px",
+    outline: "none",
+    backgroundColor: "#ffffff",
+    color: "#111827",
+  },
+  selectDark: {
+    backgroundColor: "#1f2937",
+    borderColor: "#4b5563",
+    color: "#f9fafb",
+  },
+  input: {
+    width: "100%",
+    boxSizing: "border-box",
+    border: "1px solid #d7dfeb",
+    borderRadius: "10px",
+    padding: "12px 14px",
+    fontSize: "14px",
+    outline: "none",
+    backgroundColor: "#ffffff",
+    color: "#111827",
+  },
+  inputDark: {
+    backgroundColor: "#1f2937",
+    borderColor: "#4b5563",
+    color: "#f9fafb",
+  },
+  searchBox: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    padding: "10px 12px",
+    borderRadius: "10px",
+    border: "1px solid #d7dfeb",
+    backgroundColor: "#f8fafc",
+  },
+  searchInput: {
+    width: "100%",
+    border: "none",
+    backgroundColor: "transparent",
+    outline: "none",
+    color: "#111827",
+  },
   searchInputDark: { color: "#f9fafb" },
-  itensHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" },
+  itensHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "12px",
+  },
   sectionTitle: { margin: 0, fontSize: "22px", color: "#111c2d" },
   sectionTitleDark: { color: "#f9fafb" },
-  addButton: { display: "flex", alignItems: "center", gap: "6px", border: "1px solid #cbd5e1", backgroundColor: "#f8fafc", color: "#111827", borderRadius: "10px", padding: "8px 12px", cursor: "pointer" },
-  addButtonDark: { backgroundColor: "#1f2937", borderColor: "#4b5563", color: "#f9fafb" },
-  itemCard: { border: "1px solid #e2e8f0", borderRadius: "10px", padding: "18px", backgroundColor: "#f8fafc" },
+  addButton: {
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    border: "1px solid #cbd5e1",
+    backgroundColor: "#f8fafc",
+    color: "#111827",
+    borderRadius: "10px",
+    padding: "8px 12px",
+    cursor: "pointer",
+  },
+  addButtonDark: {
+    backgroundColor: "#1f2937",
+    borderColor: "#4b5563",
+    color: "#f9fafb",
+  },
+  itemCard: {
+    border: "1px solid #e2e8f0",
+    borderRadius: "10px",
+    padding: "18px",
+    backgroundColor: "#f8fafc",
+  },
   itemCardDark: { backgroundColor: "#1f2937", borderColor: "#374151" },
-  itemMeta: { display: "flex", justifyContent: "space-between", marginTop: "12px", color: "#475569", fontSize: "13px" },
+  itemMeta: {
+    display: "flex",
+    justifyContent: "space-between",
+    marginTop: "12px",
+    color: "#475569",
+    fontSize: "13px",
+  },
   itemMetaDark: { color: "#d1d5db" },
-  removeButton: { marginTop: "12px", border: "1px solid #fca5a5", backgroundColor: "#fff1f2", color: "#991b1b", borderRadius: "8px", padding: "8px 12px", cursor: "pointer" },
-  removeButtonDark: { backgroundColor: "#3f1721", borderColor: "#7f1d1d", color: "#fecdd3" },
-  totalBox: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 18px", backgroundColor: "#0d2230", borderRadius: "10px", color: "#0f172a" },
-  totalBoxDark: { backgroundColor: "#0b1220", border: "1px solid #334155", color: "#f8fafc" },
+  removeButton: {
+    marginTop: "12px",
+    border: "1px solid #fca5a5",
+    backgroundColor: "#fff1f2",
+    color: "#991b1b",
+    borderRadius: "8px",
+    padding: "8px 12px",
+    cursor: "pointer",
+  },
+  removeButtonDark: {
+    backgroundColor: "#3f1721",
+    borderColor: "#7f1d1d",
+    color: "#fecdd3",
+  },
+  totalBox: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "16px 18px",
+    backgroundColor: "#0d2230",
+    borderRadius: "10px",
+    color: "#0f172a",
+  },
+  totalBoxDark: {
+    backgroundColor: "#0b1220",
+    border: "1px solid #334155",
+    color: "#f8fafc",
+  },
   totalLabelDark: { color: "#cbd5e1" },
   totalValue: { fontSize: "22px", color: "#0f172a" },
   totalValueDark: { color: "#f9fafb" },
   formGroup: { display: "flex", flexDirection: "column", gap: "8px" },
-  textarea: { width: "100%", boxSizing: "border-box", border: "1px solid #d7dfeb", borderRadius: "10px", padding: "12px 14px", fontSize: "14px", backgroundColor: "#ffffff", color: "#111827", resize: "vertical" },
-  textareaDark: { backgroundColor: "#1f2937", borderColor: "#4b5563", color: "#f9fafb" },
+  textarea: {
+    width: "100%",
+    boxSizing: "border-box",
+    border: "1px solid #d7dfeb",
+    borderRadius: "10px",
+    padding: "12px 14px",
+    fontSize: "14px",
+    backgroundColor: "#ffffff",
+    color: "#111827",
+    resize: "vertical",
+  },
+  textareaDark: {
+    backgroundColor: "#1f2937",
+    borderColor: "#4b5563",
+    color: "#f9fafb",
+  },
   actions: { display: "flex", justifyContent: "flex-end" },
 };
