@@ -5,6 +5,7 @@ export function formatErrorMessage(error, fallback = "Ocorreu um erro inesperado
     return error.trim() || fallback;
   }
 
+  const status = Number(error?.response?.status ?? error?.status ?? 0);
   const payload = error.response?.data ?? error.data ?? error;
   const detalhes = [];
 
@@ -25,10 +26,36 @@ export function formatErrorMessage(error, fallback = "Ocorreu um erro inesperado
     payload?.error,
     payload?.details,
     error?.message,
+    typeof payload === "string" ? payload : "",
   ]
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
+
+  if (
+    status === 401 ||
+    textoBruto.includes("request failed with status code 401") ||
+    textoBruto.includes("err_bad_request") ||
+    textoBruto.includes("nome ou senha incorretos") ||
+    textoBruto.includes("credenciais inválidas") ||
+    textoBruto.includes("unauthorized") ||
+    textoBruto.includes("invalid credentials")
+  ) {
+    return "Nome ou senha incorretos.";
+  }
+
+  // Erros de servidor ao inserir/processar dados (500 / ERR_BAD_RESPONSE / exceptions internas)
+  if (
+    status === 500 ||
+    textoBruto.includes("request failed with status code 500") ||
+    textoBruto.includes("err_bad_response") ||
+    textoBruto.includes("cannot read properties of null") ||
+    textoBruto.includes("cannot read properties of undefined") ||
+    textoBruto.includes("toString()") ||
+    textoBruto.includes("cannot read")
+  ) {
+    return "Erro ao inserir/processar o produto. Verifique os dados e tente novamente mais tarde.";
+  }
 
   if (
     textoBruto.includes("nome deve possuir entre 3 e 45 caracteres") ||

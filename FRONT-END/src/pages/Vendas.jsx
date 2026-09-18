@@ -12,6 +12,7 @@ export default function Vendas() {
     const isDark = theme === "dark";
 
     const [vendedores, setVendedores] = useState([]);
+    const [dataFiltro, setDataFiltro] = useState("");
 
     useEffect(() => {
         const carregarVendedores = async () => {
@@ -35,6 +36,24 @@ export default function Vendas() {
         ...venda,
         NomeVendedor: encontrarNomeVendedor(venda.IdVendedor),
     }));
+
+    const formatarDataLocal = (data) => {
+        const dataLocal = new Date(data);
+        if (Number.isNaN(dataLocal.getTime())) return "";
+
+        const offset = dataLocal.getTimezoneOffset();
+        const localDate = new Date(dataLocal.getTime() - offset * 60000);
+        return localDate.toISOString().slice(0, 10);
+    };
+
+    const vendasFiltradas = vendasComVendedor.filter((venda) => {
+        if (!dataFiltro) return true;
+
+        const dataVenda = venda.DataCad ?? venda.dataCad ?? venda.Data;
+        const dataVendaFormatada = formatarDataLocal(dataVenda);
+
+        return dataVendaFormatada === dataFiltro;
+    });
 
     if (loading) {
         return (
@@ -105,9 +124,33 @@ export default function Vendas() {
 
                     <div style={styles.headerRight}>
                         <div style={{ ...styles.total, ...(isDark ? styles.totalDark : {}) }}>
-                            {vendas.length} {" "}
-                            {vendas.length === 1 ? "venda" : "vendas"}
+                            {vendasFiltradas.length} {" "}
+                            {vendasFiltradas.length === 1 ? "venda" : "vendas"}
                         </div>
+
+                        <input
+                            type="date"
+                            value={dataFiltro}
+                            onChange={(event) => setDataFiltro(event.target.value)}
+                            style={{
+                                ...styles.dateInput,
+                                ...(isDark ? styles.dateInputDark : {}),
+                            }}
+                            aria-label="Filtrar vendas por data"
+                        />
+
+                        {dataFiltro && (
+                            <button
+                                type="button"
+                                onClick={() => setDataFiltro("")}
+                                style={{
+                                    ...styles.clearFilterButton,
+                                    ...(isDark ? styles.clearFilterButtonDark : {}),
+                                }}
+                            >
+                                Limpar
+                            </button>
+                        )}
 
                         <Link to="/vendas/cadastrar" style={{ textDecoration: "none" }}>
                             <button style={{ ...styles.primaryButton, ...(isDark ? styles.primaryButtonDark : {}) }}>+ Nova venda</button>
@@ -116,13 +159,15 @@ export default function Vendas() {
                 </header>
 
                 <section style={styles.content}>
-                    {vendas.length === 0 ? (
+                    {vendasFiltradas.length === 0 ? (
                         <div style={{ ...styles.empty, ...(isDark ? styles.emptyDark : {}) }}>
                             <span className="material-symbols-outlined">point_of_sale</span>
-                            <p style={{ ...(isDark ? styles.textDark : {}) }}>Nenhuma venda encontrada.</p>
+                            <p style={{ ...(isDark ? styles.textDark : {}) }}>
+                                {dataFiltro ? "Nenhuma venda encontrada para a data selecionada." : "Nenhuma venda encontrada."}
+                            </p>
                         </div>
                     ) : (
-                        <VendasList vendas={vendasComVendedor} />
+                        <VendasList vendas={vendasFiltradas} />
                     )}
                 </section>
             </main>
@@ -237,5 +282,35 @@ const styles = {
     },
     textDark: {
         color: "#e5e7eb",
+    },
+    dateInput: {
+        border: "1px solid #cbd5e1",
+        borderRadius: "8px",
+        padding: "9px 10px",
+        backgroundColor: "#ffffff",
+        color: "#243447",
+        fontSize: "14px",
+        fontFamily: "Inter, sans-serif",
+        outline: "none",
+    },
+    dateInputDark: {
+        backgroundColor: "#1f2937",
+        borderColor: "#4b5563",
+        color: "#f9fafb",
+    },
+    clearFilterButton: {
+        border: "1px solid #cbd5e1",
+        borderRadius: "8px",
+        padding: "9px 10px",
+        backgroundColor: "#f8fafc",
+        color: "#243447",
+        fontWeight: 600,
+        fontSize: "13px",
+        cursor: "pointer",
+    },
+    clearFilterButtonDark: {
+        backgroundColor: "#1f2937",
+        borderColor: "#4b5563",
+        color: "#f9fafb",
     },
 };

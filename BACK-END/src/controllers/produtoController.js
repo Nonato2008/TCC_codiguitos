@@ -121,7 +121,7 @@ const produtoController = {
                 );
 
             const pdfBase64 =
-                pdf.toString("base64");
+                pdf ? pdf.toString("base64") : null;
 
             res.status(201).json({
 

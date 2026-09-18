@@ -6,9 +6,10 @@ import PrimaryButton from "../components/PrimaryButton";
 import { codiguitos_api } from "../services/tcc.api";
 import { formatErrorMessage } from "../utils/formatErrorMessage";
 import { ThemeContext } from "../contexts/ThemeContext";
+import { useFornecedores } from "../hooks/useFornecedores";
 
 const estadoInicial = {
-    idFornecedor: "1",
+    idFornecedor: "",
     nome: "",
     preco: "",
     quantidade: "",
@@ -20,6 +21,7 @@ export default function CadastroProdutos() {
 
     const { theme } = useContext(ThemeContext);
     const isDark = theme === "dark";
+    const { fornecedores, loading: carregandoFornecedores } = useFornecedores();
 
     const [form, setForm] = useState(estadoInicial);
 
@@ -133,6 +135,16 @@ export default function CadastroProdutos() {
             return;
         }
 
+        if (!form.idFornecedor) {
+
+            setMensagem({
+                type: "error",
+                text: "Selecione um fornecedor existente."
+            });
+
+            return;
+        }
+
         if (!form.preco || Number(form.preco) <= 0) {
 
             setMensagem({
@@ -189,7 +201,7 @@ export default function CadastroProdutos() {
 
             dados.append(
                 "idFornecedor",
-                String(form.idFornecedor || 1)
+                String(form.idFornecedor)
             );
 
             dados.append(
@@ -223,9 +235,14 @@ export default function CadastroProdutos() {
 
                         const data = resposta?.data || {};
 
-                        // Mensagem de sucesso construída dinamicamente
-                        let sucessoTexto = "Produto cadastrado com sucesso!";
-                        if (data.notaFiscal) sucessoTexto += " Nota fiscal gerada.";
+                        const mensagemBase = (
+                            data?.message ||
+                            "Produto cadastrado com sucesso!"
+                        ).trim();
+
+                        const sucessoTexto = data?.notaFiscal
+                            ? `${mensagemBase}${mensagemBase.endsWith(".") ? "" : "."} Nota fiscal gerada.`
+                            : mensagemBase;
 
                         setMensagem({ type: "success", text: sucessoTexto });
 
@@ -306,15 +323,41 @@ export default function CadastroProdutos() {
 
                         <div style={styles.grid}>
 
-                            <FormField
-                                label="Fornecedor"
-                                name="idFornecedor"
-                                type="number"
-                                min="1"
-                                value={form.idFornecedor}
-                                onChange={atualizarCampo}
-                                dark={isDark}
-                            />
+                            <label style={{ ...styles.field, ...(isDark ? styles.fieldDark : {}) }}>
+                                <span style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>
+                                    Fornecedor
+                                </span>
+                                <select
+                                    name="idFornecedor"
+                                    value={form.idFornecedor}
+                                    onChange={atualizarCampo}
+                                    disabled={carregandoFornecedores || fornecedores.length === 0}
+                                    style={{ ...styles.select, ...(isDark ? styles.selectDark : {}) }}
+                                >
+                                    <option value="">
+                                        {carregandoFornecedores
+                                            ? "Carregando fornecedores..."
+                                            : fornecedores.length === 0
+                                            ? "Nenhum fornecedor cadastrado"
+                                            : "Selecione um fornecedor..."}
+                                    </option>
+                                    {fornecedores
+                                        .filter((fornecedor) => {
+                                            const id = fornecedor.Id ?? fornecedor.id;
+                                            const nome = fornecedor.Nome ?? fornecedor.nome;
+                                            return id && nome;
+                                        })
+                                        .map((fornecedor) => {
+                                            const id = fornecedor.Id ?? fornecedor.id;
+                                            const nome = fornecedor.Nome ?? fornecedor.nome;
+                                            return (
+                                                <option key={id} value={id}>
+                                                    {nome}
+                                                </option>
+                                            );
+                                        })}
+                                </select>
+                            </label>
 
                             <FormField
                                 label="Nome do produto"
@@ -729,5 +772,22 @@ const styles = {
     avisoNotaDark: {
         backgroundColor: "#3f2715",
         color: "#fed7aa",
+    },
+
+    select: {
+        width: "100%",
+        boxSizing: "border-box",
+        border: "1px solid #cbd5e1",
+        borderRadius: "8px",
+        padding: "12px",
+        backgroundColor: "#f8fafc",
+        color: "#111827",
+        fontSize: "16px",
+    },
+
+    selectDark: {
+        backgroundColor: "#1f2937",
+        borderColor: "#374151",
+        color: "#f9fafb",
     },
 };

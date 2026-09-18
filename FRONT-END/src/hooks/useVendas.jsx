@@ -26,8 +26,14 @@ export function useVendas() {
             )
           : [];
 
+        const vendasOrdenadas = vendasUnicas.sort((a, b) => {
+          const dataA = new Date(a.DataCad ?? a.dataCad ?? a.Data ?? 0).getTime();
+          const dataB = new Date(b.DataCad ?? b.dataCad ?? b.Data ?? 0).getTime();
+          return dataB - dataA;
+        });
+
         if (isMounted) {
-          setVendas(vendasUnicas);
+          setVendas(vendasOrdenadas);
         }
       } catch (error) {
         if (isMounted) {

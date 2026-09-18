@@ -7,6 +7,7 @@ import PrimaryButton from "../components/PrimaryButton";
 import { codiguitos_api } from "../services/tcc.api";
 import { buscarProdutos } from "../services/produtosService";
 import { ThemeContext } from "../contexts/ThemeContext";
+import { LinhaItemVenda, TotalVenda } from "../components/LinhaItemVenda";
 
 const itemVazio = {
   idProduto: "",
@@ -372,79 +373,54 @@ export default function CadastroVendas() {
           <form onSubmit={cadastrarVenda} style={styles.form}>
             {/* ---------- Proprietário + Vendedor (linha) ---------- */}
             <div style={styles.row}>
-              <div style={styles.field}>
-                <label
-                  style={{
-                    ...styles.label,
-                    ...(isDark ? styles.labelDark : {}),
-                  }}
-                >
-                  Proprietário
-                </label>
-                <select
-                  name="idProprietario"
-                  value={form.idProprietario}
-                  onChange={atualizarCampo}
-                  style={{
-                    ...styles.select,
-                    ...(isDark ? styles.selectDark : {}),
-                  }}
-                  disabled={carregandoProprietarios}
-                >
-                  <option value="">
-                    {carregandoProprietarios
-                      ? "Carregando proprietários..."
-                      : "Selecione um proprietário..."}
-                  </option>
-                  {proprietarios.map((proprietario) => {
-                    const id = proprietario.Id ?? proprietario.id;
-                    const nome =
-                      proprietario.Nome ?? proprietario.nome ?? "Sem nome";
-                    return (
-                      <option key={id} value={id}>
-                        {nome}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
+              <SelectField
+                label="Proprietário"
+                name="idProprietario"
+                value={form.idProprietario}
+                onChange={atualizarCampo}
+                disabled={carregandoProprietarios}
+                isDark={isDark}
+              >
+                <option value="">
+                  {carregandoProprietarios
+                    ? "Carregando proprietários..."
+                    : "Selecione um proprietário..."}
+                </option>
+                {proprietarios.map((proprietario) => {
+                  const id = proprietario.Id ?? proprietario.id;
+                  const nome =
+                    proprietario.Nome ?? proprietario.nome ?? "Sem nome";
+                  return (
+                    <option key={id} value={id}>
+                      {nome}
+                    </option>
+                  );
+                })}
+              </SelectField>
 
-              <div style={styles.field}>
-                <label
-                  style={{
-                    ...styles.label,
-                    ...(isDark ? styles.labelDark : {}),
-                  }}
-                >
-                  Vendedor
-                </label>
-                <select
-                  name="idVendedor"
-                  value={form.idVendedor}
-                  onChange={atualizarCampo}
-                  style={{
-                    ...styles.select,
-                    ...(isDark ? styles.selectDark : {}),
-                  }}
-                  disabled={carregandoVendedores}
-                >
-                  <option value="">
-                    {carregandoVendedores
-                      ? "Carregando vendedores..."
-                      : "Selecione um vendedor..."}
-                  </option>
-                  {vendedores.map((vendedor) => {
-                    const id = vendedor.Id ?? vendedor.id;
-                    const nome =
-                      vendedor.Nome ?? vendedor.nome ?? "Sem nome";
-                    return (
-                      <option key={id} value={id}>
-                        {nome}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
+              <SelectField
+                label="Vendedor"
+                name="idVendedor"
+                value={form.idVendedor}
+                onChange={atualizarCampo}
+                disabled={carregandoVendedores}
+                isDark={isDark}
+              >
+                <option value="">
+                  {carregandoVendedores
+                    ? "Carregando vendedores..."
+                    : "Selecione um vendedor..."}
+                </option>
+                {vendedores.map((vendedor) => {
+                  const id = vendedor.Id ?? vendedor.id;
+                  const nome = vendedor.Nome ?? vendedor.nome ?? "Sem nome";
+                  return (
+                    <option key={id} value={id}>
+                      {nome}
+                    </option>
+                  );
+                })}
+              </SelectField>
             </div>
 
             {/* ---------- Lista de produtos ---------- */}
@@ -590,164 +566,27 @@ export default function CadastroVendas() {
                   estoqueAtual !== undefined &&
                   Number(item.quantidade) >= estoqueAtual;
 
-                // Produtos já usados em OUTRAS linhas
                 const idsUsadosEmOutrasLinhas = itens
                   .filter((_, i) => i !== index)
                   .map((i) => Number(i.idProduto))
                   .filter((v) => !Number.isNaN(v) && v > 0);
 
-                // Produtos disponíveis para ESTA linha
-                const produtosParaSelect = [...produtosFiltrados];
-
-                // Mantém o produto selecionado visível mesmo que filtrado
-                if (
-                  produtoAtual &&
-                  !produtosParaSelect.some(
-                    (p) =>
-                      Number(getIdProduto(p)) === Number(item.idProduto)
-                  )
-                ) {
-                  produtosParaSelect.unshift(produtoAtual);
-                }
-
                 return (
-                  <div
+                  <LinhaItemVenda
                     key={index}
-                    style={{
-                      ...styles.itemCard,
-                      ...(isDark ? styles.itemCardDark : {}),
-                    }}
-                  >
-                    <div style={styles.itemRow}>
-                      <select
-                        value={item.idProduto}
-                        onChange={(e) =>
-                          atualizarItem(index, "idProduto", e.target.value)
-                        }
-                        style={{
-                          ...styles.select,
-                          ...(isDark ? styles.selectDark : {}),
-                        }}
-                      >
-                        <option value="">
-                          {carregandoProdutos && produtos.length === 0
-                            ? "Carregando produtos..."
-                            : produtos.length === 0
-                            ? "Nenhum produto cadastrado"
-                            : produtosParaSelect.length === 0
-                            ? "Nenhum produto encontrado"
-                            : "Selecione um produto..."}
-                        </option>
-                        {produtosParaSelect.map((produto) => {
-                          const id = getIdProduto(produto);
-                          const nome = getNomeProduto(produto);
-                          const preco = getPrecoProduto(produto);
-                          const estoque = getEstoqueProduto(produto);
-                          const semEstoque = estoque <= 0;
-                          const jaUsadoEmOutra =
-                            idsUsadosEmOutrasLinhas.includes(Number(id));
-
-                          return (
-                            <option
-                              key={id}
-                              value={id}
-                              disabled={semEstoque || jaUsadoEmOutra}
-                            >
-                              {nome} - R$ {preco.toFixed(2)}
-                              {jaUsadoEmOutra
-                                ? " (já adicionado)"
-                                : semEstoque
-                                ? " (sem estoque)"
-                                : ` • Estoque: ${estoque}`}
-                            </option>
-                          );
-                        })}
-                      </select>
-
-                      <input
-                        type="number"
-                        min="1"
-                        max={estoqueAtual ?? undefined}
-                        step="1"
-                        value={item.quantidade}
-                        onChange={(e) =>
-                          atualizarItem(index, "quantidade", e.target.value)
-                        }
-                        style={{
-                          ...styles.input,
-                          ...(isDark ? styles.inputDark : {}),
-                          width: "90px",
-                          textAlign: "center",
-                          borderColor: noLimite
-                            ? "#f59e0b"
-                            : isDark
-                            ? "#4b5563"
-                            : "#cbd5e1",
-                        }}
-                        placeholder="Qtd"
-                        title={
-                          estoqueAtual !== undefined
-                            ? `Máximo disponível: ${estoqueAtual}`
-                            : undefined
-                        }
-                      />
-
-                      <input
-                        type="text"
-                        value={`R$ ${Number(item.valorTotal).toFixed(2)}`}
-                        readOnly
-                        style={{
-                          ...styles.input,
-                          ...(isDark ? styles.inputDark : {}),
-                          width: "130px",
-                          textAlign: "right",
-                          background: isDark ? "#0b1220" : "#f1f5f9",
-                        }}
-                      />
-
-                      {itens.length > 1 ? (
-                        <button
-                          type="button"
-                          style={{
-                            ...styles.removeButton,
-                            ...(isDark ? styles.removeButtonDark : {}),
-                          }}
-                          onClick={() => removerItem(index)}
-                          title="Remover produto"
-                        >
-                          ✕
-                        </button>
-                      ) : (
-                        <span style={styles.removePlaceholder} />
-                      )}
-                    </div>
-                  </div>
+                    index={index}
+                    item={item}
+                    produtos={produtos}
+                    produtosFiltrados={produtosFiltrados}
+                    idsUsadosEmOutrasLinhas={idsUsadosEmOutrasLinhas}
+                    atualizarItem={atualizarItem}
+                    removerItem={removerItem}
+                    isDark={isDark}
+                  />
                 );
               })}
 
-              <div
-                style={{
-                  ...styles.totalBox,
-                  ...(isDark ? styles.totalBoxDark : {}),
-                }}
-              >
-                <span
-                  style={{
-                    ...styles.totalLabel,
-                    ...(isDark ? styles.totalLabelDark : {}),
-                  }}
-                >
-                  Total da venda
-                </span>
-                <strong
-                  style={{
-                    ...styles.totalValue,
-                    ...(isDark ? styles.totalValueDark : {}),
-                  }}
-                >
-                  R$ {totalGeral.toFixed(2)}
-                </strong>
-              </div>
+              <TotalVenda totalGeral={totalGeral} isDark={isDark} />
             </div>
 
             {/* ---------- Observações ---------- */}
@@ -1086,3 +925,30 @@ const styles = {
   totalValue: { color: "#111c2d", fontSize: "20px" },
   totalValueDark: { color: "#f9fafb" },
 };
+
+function SelectField({ label, name, value, onChange, disabled, isDark, children }) {
+  return (
+    <div style={styles.field}>
+      <label
+        style={{
+          ...styles.label,
+          ...(isDark ? styles.labelDark : {}),
+        }}
+      >
+        {label}
+      </label>
+      <select
+        name={name}
+        value={value}
+        onChange={onChange}
+        style={{
+          ...styles.select,
+          ...(isDark ? styles.selectDark : {}),
+        }}
+        disabled={disabled}
+      >
+        {children}
+      </select>
+    </div>
+  );
+}
