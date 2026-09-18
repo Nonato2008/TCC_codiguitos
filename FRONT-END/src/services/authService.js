@@ -1,4 +1,5 @@
 import { codiguitos_api } from "./tcc.api.js";
+import { formatErrorMessage } from "../utils/formatErrorMessage";
 
 export async function login(nome, senha) {
 
@@ -15,17 +16,12 @@ export async function login(nome, senha) {
 
     } catch (error) {
 
-        if (error.response?.data) {
-
-            return {
-                error: error.response.data
-            };
-
-        }
-
         return {
             error: {
-                message: "Erro ao conectar ao servidor."
+                message: formatErrorMessage(
+                    error,
+                    "Erro ao conectar ao servidor. Verifique a URL da API ou o estado do servidor."
+                )
             }
         };
     }
@@ -47,17 +43,12 @@ export async function cadastro(nome, senha, tipo) {
 
     } catch (error) {
 
-        if (error.response?.data) {
-
-            return {
-                error: error.response.data
-            };
-
-        }
-
         return {
             error: {
-                message: "Erro ao conectar ao servidor."
+                message: formatErrorMessage(
+                    error,
+                    "Erro ao conectar ao servidor. Verifique a URL da API ou o estado do servidor."
+                )
             }
         };
     }

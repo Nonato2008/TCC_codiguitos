@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useContext } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { ThemeContext } from "../contexts/ThemeContext";
 
 const menu = [
     {
@@ -30,8 +31,9 @@ const menu = [
 ];
 
 export default function Sidebar() {
-
     const navigate = useNavigate();
+    const { theme, toggleTheme } = useContext(ThemeContext);
+    const isDark = theme === "dark";
 
     const usuarioSalvo =
         localStorage.getItem("usuario");
@@ -71,12 +73,10 @@ export default function Sidebar() {
     }
 
     return (
-        <aside style={styles.sidebar}>
+        <aside style={{ ...styles.sidebar, ...(isDark ? styles.sidebarDark : {}) }}>
 
             <div style={styles.logoContainer}>
-
-                <div style={styles.logo}>
-
+                <div style={{ ...styles.logo, ...(isDark ? styles.logoDark : {}) }}>
                     <img
                         src="/logo.png"
                         alt="Adega do Nelson"
@@ -86,12 +86,11 @@ export default function Sidebar() {
                 </div>
 
                 <div>
-
-                    <h1 style={styles.logoTitle}>
+                    <h1 style={{ ...styles.logoTitle, ...(isDark ? styles.logoTitleDark : {}) }}>
                         Adega do Nelson
                     </h1>
 
-                    <p style={styles.logoSubtitle}>
+                    <p style={{ ...styles.logoSubtitle, ...(isDark ? styles.logoSubtitleDark : {}) }}>
                         Melhores Bebidas
                     </p>
 
@@ -131,9 +130,9 @@ export default function Sidebar() {
                         to={item.rota}
                         style={({ isActive }) => ({
                             ...styles.menuItem,
-                            ...(isActive
-                                ? styles.menuItemActive
-                                : {})
+                            ...(isDark ? styles.menuItemDark : {}),
+                            ...(isActive ? styles.menuItemActive : {}),
+                            ...(isActive && isDark ? styles.menuItemActiveDark : {})
                         })}
                     >
 
@@ -150,11 +149,24 @@ export default function Sidebar() {
 
             </nav>
 
-            <div style={styles.bottomMenu}>
+            <div style={{ ...styles.bottomMenu, ...(isDark ? styles.bottomMenuDark : {}) }}>
+                <button
+                    type="button"
+                    onClick={toggleTheme}
+                    style={{
+                        ...styles.themeButton,
+                        ...(isDark ? styles.themeButtonDark : {})
+                    }}
+                >
+                    <span className="material-symbols-outlined">
+                        {isDark ? "light_mode" : "dark_mode"}
+                    </span>
+                    {isDark ? "Modo claro" : "Modo escuro"}
+                </button>
 
                 <button
                     type="button"
-                    style={styles.bottomItem}
+                    style={{ ...styles.bottomItem, ...(isDark ? styles.bottomItemDark : {}) }}
                     onClick={sair}
                 >
 
@@ -186,7 +198,12 @@ const styles = {
         display: "flex",
         flexDirection: "column",
         zIndex: 100,
-        boxSizing: "border-box"
+        transition: "background-color 0.3s ease, border-color 0.3s ease"
+    },
+
+    sidebarDark: {
+        backgroundColor: "#111827",
+        borderRight: "1px solid #374151"
     },
 
     logoContainer: {
@@ -205,6 +222,11 @@ const styles = {
         flexShrink: 0
     },
 
+    logoDark: {
+        borderColor: "#4b5563"
+    },
+
+    // Faz a imagem preencher a caixa do logo sem distorcer
     logoImage: {
         width: "100%",
         height: "100%",
@@ -219,6 +241,10 @@ const styles = {
         margin: 0
     },
 
+    logoTitleDark: {
+        color: "#f9fafb"
+    },
+
     logoSubtitle: {
         fontFamily: "Inter, sans-serif",
         fontSize: "12px",
@@ -226,52 +252,11 @@ const styles = {
         margin: "2px 0 0"
     },
 
-    usuarioContainer: {
-        display: "flex",
-        alignItems: "center",
-        gap: "10px",
-        padding: "12px",
-        marginBottom: "24px",
-        backgroundColor: "#eef1f6",
-        borderRadius: "10px",
-        border: "1px solid #e2e8f0"
+    logoSubtitleDark: {
+        color: "#d1d5db"
     },
 
-    usuarioIcon: {
-        width: "34px",
-        height: "34px",
-        borderRadius: "50%",
-        backgroundColor: "#303e51",
-        color: "#ffffff",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexShrink: 0
-    },
-
-    usuarioInfo: {
-        display: "flex",
-        flexDirection: "column",
-        minWidth: 0
-    },
-
-    usuarioNome: {
-        fontFamily: "Inter, sans-serif",
-        fontSize: "13px",
-        fontWeight: "700",
-        color: "#303e51",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap"
-    },
-
-    usuarioPerfil: {
-        fontFamily: "Inter, sans-serif",
-        fontSize: "12px",
-        color: "#64748b",
-        marginTop: "2px"
-    },
-
+    // Container do menu: cresce para ocupar o espaço disponível (empurra o rodapé para baixo)
     navigation: {
         display: "flex",
         flexDirection: "column",
@@ -294,17 +279,56 @@ const styles = {
         cursor: "pointer"
     },
 
+    menuItemDark: {
+        color: "#e5e7eb"
+    },
+
+    // Estilo aplicado por cima do menuItem quando a rota está ativa (mesclado via spread no NavLink)
     menuItemActive: {
         backgroundColor: "#303e51",
         color: "#ffffff"
     },
 
+    menuItemActiveDark: {
+        backgroundColor: "#1f2937",
+        color: "#f9fafb"
+    },
+
+    // Área inferior fixa, separada do menu por uma linha divisória
     bottomMenu: {
         borderTop: "1px solid #e2e8f0",
         paddingTop: "12px",
         display: "flex",
         flexDirection: "column",
-        gap: "4px"
+        gap: "8px"
+    },
+
+    bottomMenuDark: {
+        borderTopColor: "#374151"
+    },
+
+    themeButton: {
+        width: "100%",
+        border: "1px solid #d1d5db",
+        backgroundColor: "#ffffff",
+        color: "#111827",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "8px",
+        padding: "10px 12px",
+        borderRadius: "10px",
+        fontFamily: "Inter, sans-serif",
+        fontSize: "14px",
+        fontWeight: "600",
+        cursor: "pointer",
+        transition: "all 0.2s ease"
+    },
+
+    themeButtonDark: {
+        backgroundColor: "#1f2937",
+        borderColor: "#4b5563",
+        color: "#f9fafb"
     },
 
     bottomItem: {
@@ -322,5 +346,9 @@ const styles = {
         textAlign: "left",
         cursor: "pointer",
         transition: "all 0.3s ease"
+    },
+
+    bottomItemDark: {
+        color: "#e5e7eb"
     }
 };
