@@ -606,9 +606,21 @@ export default function CadastroVendas() {
             ))}
 
             {/* ---------- Total geral ---------- */}
-            <div style={{ ...styles.totalBox, ...(isDark ? styles.totalBoxDark : {}) }}>
-              <span style={{ ...(isDark ? styles.totalLabelDark : {}) }}>Total da venda</span>
-              <strong style={{ ...styles.totalValue, ...(isDark ? styles.totalValueDark : {}) }}>
+            <div
+              style={{
+                ...styles.totalBox,
+                ...(isDark ? styles.totalBoxDark : {}),
+              }}
+            >
+              <span style={{ ...(isDark ? styles.totalLabelDark : {}) }}>
+                Total da venda
+              </span>
+              <strong
+                style={{
+                  ...styles.totalValue,
+                  ...(isDark ? styles.totalValueDark : {}),
+                }}
+              >
                 R$ {totalGeral.toFixed(2).replace(".", ",")}
               </strong>
             </div>
@@ -792,10 +804,35 @@ const styles = {
     fontSize: "13px",
   },
   itemMetaDark: { color: "#d1d5db" },
-  removeButton: { marginTop: "12px", border: "1px solid #fca5a5", backgroundColor: "#fff1f2", color: "#991b1b", borderRadius: "8px", padding: "8px 12px", cursor: "pointer" },
-  removeButtonDark: { backgroundColor: "#3f1721", borderColor: "#7f1d1d", color: "#fecdd3" },
-  totalBox: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 18px", backgroundColor: "#ffffff", borderRadius: "10px", color: "#0f172a", border: "1px solid #e2e8f0" },
-  totalBoxDark: { backgroundColor: "#0b1220", border: "1px solid #334155", color: "#f8fafc" },
+  removeButton: {
+    marginTop: "12px",
+    border: "1px solid #fca5a5",
+    backgroundColor: "#fff1f2",
+    color: "#991b1b",
+    borderRadius: "8px",
+    padding: "8px 12px",
+    cursor: "pointer",
+  },
+  removeButtonDark: {
+    backgroundColor: "#3f1721",
+    borderColor: "#7f1d1d",
+    color: "#fecdd3",
+  },
+  totalBox: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "16px 18px",
+    backgroundColor: "#ffffff",
+    borderRadius: "10px",
+    color: "#0f172a",
+    border: "1px solid #e2e8f0",
+  },
+  totalBoxDark: {
+    backgroundColor: "#0b1220",
+    border: "1px solid #334155",
+    color: "#f8fafc",
+  },
   totalLabelDark: { color: "#cbd5e1" },
   totalValue: { fontSize: "22px", color: "#0f172a" },
   totalValueDark: { color: "#f9fafb" },
