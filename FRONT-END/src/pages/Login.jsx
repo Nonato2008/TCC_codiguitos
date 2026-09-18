@@ -53,9 +53,14 @@ export default function Login() {
 
             const usuario = result.data?.usuario;
 
-            if (usuario) {
-                saveUser(usuario);
+            if (!usuario) {
+                setError(
+                    "Não foi possível identificar o usuário."
+                );
+                return;
             }
+
+            saveUser(usuario);
 
             navigate("/painel");
 
@@ -79,7 +84,6 @@ export default function Login() {
 
             <div style={styles.card}>
 
-                {/* LOGO */}
                 <div style={styles.logoContainer}>
 
                     <div style={styles.logo}>
@@ -94,7 +98,6 @@ export default function Login() {
 
                 </div>
 
-                {/* TÍTULO */}
                 <h1 style={styles.title}>
                     Adega do Nelson
                 </h1>
@@ -107,7 +110,6 @@ export default function Login() {
                     Login
                 </h2>
 
-                {/* ERRO */}
                 {error && (
 
                     <div style={styles.alertError}>
@@ -116,13 +118,11 @@ export default function Login() {
 
                 )}
 
-                {/* FORMULÁRIO */}
                 <form
                     style={styles.form}
                     onSubmit={entrar}
                 >
 
-                    {/* NOME */}
                     <div style={styles.inputGroup}>
 
                         <label style={styles.label}>
@@ -141,9 +141,9 @@ export default function Login() {
                             required
                             disabled={loading}
                         />
+
                     </div>
 
-                    {/* SENHA */}
                     <div style={styles.inputGroup}>
 
                         <label style={styles.label}>
@@ -165,7 +165,6 @@ export default function Login() {
 
                     </div>
 
-                    {/* BOTÃO ENTRAR */}
                     <button
                         type="submit"
                         style={{
@@ -180,12 +179,10 @@ export default function Login() {
                             ? "Entrando..."
                             : "Entrar"
                         }
-
                     </button>
 
                 </form>
 
-                {/* IR PARA CADASTRO */}
                 <div style={styles.registerText}>
 
                     <span>
@@ -203,7 +200,6 @@ export default function Login() {
 
                 </div>
 
-                {/* RODAPÉ */}
                 <p style={styles.footer}>
                     Sistema de gerenciamento da Adega do Nelson
                 </p>
