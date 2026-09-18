@@ -66,6 +66,8 @@ function normalizarLista(lista) {
 export default function CadastroVendas() {
   const navigate = useNavigate();
 
+  const STORAGE_KEY = "ultimaVenda";
+
   const [form, setForm] = useState(estadoInicial);
   const [itens, setItens] = useState([{ ...itemVazio }]);
 
@@ -139,6 +141,30 @@ export default function CadastroVendas() {
     carregarVendedores();
     carregarProprietarios();
   }, []);
+
+  // Restaurar últimos dados salvos (se houver)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed?.form) setForm(parsed.form);
+      if (Array.isArray(parsed?.itens) && parsed.itens.length > 0) setItens(parsed.itens);
+      if (parsed?.buscaProduto) setBuscaProduto(parsed.buscaProduto);
+    } catch (err) {
+      console.warn("Erro ao restaurar última venda:", err);
+    }
+  }, []);
+
+  // Salvar automaticamente última venda no localStorage
+  useEffect(() => {
+    try {
+      const payload = { form, itens, buscaProduto };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    } catch (err) {
+      console.warn("Erro ao salvar última venda:", err);
+    }
+  }, [form, itens, buscaProduto]);
 
   // ---------- Campos do formulário ----------
   function atualizarCampo(event) {
@@ -305,9 +331,7 @@ export default function CadastroVendas() {
       });
 
       setMensagem({ type: "success", text: "Venda registrada com sucesso!" });
-      setForm(estadoInicial);
-      setItens([{ ...itemVazio }]);
-      setBuscaProduto("");
+      // Mantemos os dados preenchidos (persistidos em localStorage) para reutilização
     } catch (error) {
       console.error(error);
       setMensagem({
