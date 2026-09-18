@@ -6,34 +6,44 @@ const menu = [
     {
         nome: "Painel",
         icone: "dashboard",
-        rota: "/painel"
+        rota: "/painel",
+        acesso: ["PROPRIETARIO"]
     },
     {
         nome: "Vendas",
         icone: "point_of_sale",
-        rota: "/vendas"
+        rota: "/vendas",
+        acesso: ["PROPRIETARIO", "VENDEDOR"]
     },
     {
         nome: "Gerenciamento de Estoque",
         icone: "inventory",
-        rota: "/gerenciamentoEstoque"
+        rota: "/gerenciamentoEstoque",
+        acesso: ["PROPRIETARIO", "VENDEDOR"]
     },
     {
         nome: "Cadastro de Produtos",
         icone: "inventory_2",
-        rota: "/cadastroProdutos"
+        rota: "/cadastroProdutos",
+        acesso: ["PROPRIETARIO"]
     },
     {
         nome: "Fornecedores",
         icone: "business",
-        rota: "/fornecedores"
+        rota: "/fornecedores",
+        acesso: ["PROPRIETARIO"]
     }
 ];
 
 export default function Sidebar() {
+
     const navigate = useNavigate();
-    const { theme, toggleTheme } = useContext(ThemeContext);
-    const isDark = theme === "dark";
+
+    const { theme, toggleTheme } =
+        useContext(ThemeContext);
+
+    const isDark =
+        theme === "dark";
 
     const usuarioSalvo =
         localStorage.getItem("usuario");
@@ -58,12 +68,33 @@ export default function Sidebar() {
         usuario?.Nome ||
         "Usuário";
 
-    const perfilUsuario =
+    const perfilOriginal =
         usuario?.perfil ||
-        usuario?.tipo ||
-        usuario?.role ||
         usuario?.Perfil ||
-        "Usuário";
+        usuario?.tipo ||
+        usuario?.Tipo ||
+        usuario?.role ||
+        usuario?.Role ||
+        "VENDEDOR";
+
+    const perfilNormalizado =
+        String(perfilOriginal)
+            .trim()
+            .toUpperCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
+
+    const perfilUsuario =
+        perfilNormalizado === "PROPRIETARIO"
+            ? "Proprietário"
+            : "Vendedor";
+
+    const menuPermitido =
+        menu.filter((item) =>
+            item.acesso.includes(
+                perfilNormalizado
+            )
+        );
 
     function sair() {
 
@@ -73,10 +104,27 @@ export default function Sidebar() {
     }
 
     return (
-        <aside style={{ ...styles.sidebar, ...(isDark ? styles.sidebarDark : {}) }}>
+
+        <aside
+            style={{
+                ...styles.sidebar,
+                ...(isDark
+                    ? styles.sidebarDark
+                    : {})
+            }}
+        >
 
             <div style={styles.logoContainer}>
-                <div style={{ ...styles.logo, ...(isDark ? styles.logoDark : {}) }}>
+
+                <div
+                    style={{
+                        ...styles.logo,
+                        ...(isDark
+                            ? styles.logoDark
+                            : {})
+                    }}
+                >
+
                     <img
                         src="/logo.png"
                         alt="Adega do Nelson"
@@ -86,11 +134,26 @@ export default function Sidebar() {
                 </div>
 
                 <div>
-                    <h1 style={{ ...styles.logoTitle, ...(isDark ? styles.logoTitleDark : {}) }}>
+
+                    <h1
+                        style={{
+                            ...styles.logoTitle,
+                            ...(isDark
+                                ? styles.logoTitleDark
+                                : {})
+                        }}
+                    >
                         Adega do Nelson
                     </h1>
 
-                    <p style={{ ...styles.logoSubtitle, ...(isDark ? styles.logoSubtitleDark : {}) }}>
+                    <p
+                        style={{
+                            ...styles.logoSubtitle,
+                            ...(isDark
+                                ? styles.logoSubtitleDark
+                                : {})
+                        }}
+                    >
                         Melhores Bebidas
                     </p>
 
@@ -98,9 +161,23 @@ export default function Sidebar() {
 
             </div>
 
-            <div style={styles.usuarioContainer}>
+            <div
+                style={{
+                    ...styles.usuarioContainer,
+                    ...(isDark
+                        ? styles.usuarioContainerDark
+                        : {})
+                }}
+            >
 
-                <div style={styles.usuarioIcon}>
+                <div
+                    style={{
+                        ...styles.usuarioIcon,
+                        ...(isDark
+                            ? styles.usuarioIconDark
+                            : {})
+                    }}
+                >
 
                     <span className="material-symbols-outlined">
                         person
@@ -110,11 +187,25 @@ export default function Sidebar() {
 
                 <div style={styles.usuarioInfo}>
 
-                    <span style={styles.usuarioNome}>
+                    <span
+                        style={{
+                            ...styles.usuarioNome,
+                            ...(isDark
+                                ? styles.usuarioNomeDark
+                                : {})
+                        }}
+                    >
                         {nomeUsuario}
                     </span>
 
-                    <span style={styles.usuarioPerfil}>
+                    <span
+                        style={{
+                            ...styles.usuarioPerfil,
+                            ...(isDark
+                                ? styles.usuarioPerfilDark
+                                : {})
+                        }}
+                    >
                         {perfilUsuario}
                     </span>
 
@@ -124,15 +215,25 @@ export default function Sidebar() {
 
             <nav style={styles.navigation}>
 
-                {menu.map((item) => (
+                {menuPermitido.map((item) => (
+
                     <NavLink
                         key={item.rota}
                         to={item.rota}
                         style={({ isActive }) => ({
                             ...styles.menuItem,
-                            ...(isDark ? styles.menuItemDark : {}),
-                            ...(isActive ? styles.menuItemActive : {}),
-                            ...(isActive && isDark ? styles.menuItemActiveDark : {})
+
+                            ...(isDark
+                                ? styles.menuItemDark
+                                : {}),
+
+                            ...(isActive
+                                ? styles.menuItemActive
+                                : {}),
+
+                            ...(isActive && isDark
+                                ? styles.menuItemActiveDark
+                                : {})
                         })}
                     >
 
@@ -145,28 +246,51 @@ export default function Sidebar() {
                         </span>
 
                     </NavLink>
+
                 ))}
 
             </nav>
 
-            <div style={{ ...styles.bottomMenu, ...(isDark ? styles.bottomMenuDark : {}) }}>
+            <div
+                style={{
+                    ...styles.bottomMenu,
+                    ...(isDark
+                        ? styles.bottomMenuDark
+                        : {})
+                }}
+            >
+
                 <button
                     type="button"
                     onClick={toggleTheme}
                     style={{
                         ...styles.themeButton,
-                        ...(isDark ? styles.themeButtonDark : {})
+                        ...(isDark
+                            ? styles.themeButtonDark
+                            : {})
                     }}
                 >
+
                     <span className="material-symbols-outlined">
-                        {isDark ? "light_mode" : "dark_mode"}
+                        {isDark
+                            ? "light_mode"
+                            : "dark_mode"}
                     </span>
-                    {isDark ? "Modo claro" : "Modo escuro"}
+
+                    {isDark
+                        ? "Modo claro"
+                        : "Modo escuro"}
+
                 </button>
 
                 <button
                     type="button"
-                    style={{ ...styles.bottomItem, ...(isDark ? styles.bottomItemDark : {}) }}
+                    style={{
+                        ...styles.bottomItem,
+                        ...(isDark
+                            ? styles.bottomItemDark
+                            : {})
+                    }}
                     onClick={sair}
                 >
 
@@ -198,7 +322,9 @@ const styles = {
         display: "flex",
         flexDirection: "column",
         zIndex: 100,
-        transition: "background-color 0.3s ease, border-color 0.3s ease"
+        transition:
+            "background-color 0.3s ease, border-color 0.3s ease",
+        boxSizing: "border-box"
     },
 
     sidebarDark: {
@@ -226,7 +352,6 @@ const styles = {
         borderColor: "#4b5563"
     },
 
-    // Faz a imagem preencher a caixa do logo sem distorcer
     logoImage: {
         width: "100%",
         height: "100%",
@@ -256,12 +381,76 @@ const styles = {
         color: "#d1d5db"
     },
 
-    // Container do menu: cresce para ocupar o espaço disponível (empurra o rodapé para baixo)
+    usuarioContainer: {
+        display: "flex",
+        alignItems: "center",
+        gap: "10px",
+        padding: "10px",
+        marginBottom: "20px",
+        backgroundColor: "#ffffff",
+        border: "1px solid #e2e8f0",
+        borderRadius: "10px",
+        transition: "all 0.3s ease"
+    },
+
+    usuarioContainerDark: {
+        backgroundColor: "#1f2937",
+        borderColor: "#374151"
+    },
+
+    usuarioIcon: {
+        width: "34px",
+        height: "34px",
+        borderRadius: "50%",
+        backgroundColor: "#303e51",
+        color: "#ffffff",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0
+    },
+
+    usuarioIconDark: {
+        backgroundColor: "#374151"
+    },
+
+    usuarioInfo: {
+        display: "flex",
+        flexDirection: "column",
+        minWidth: 0
+    },
+
+    usuarioNome: {
+        fontFamily: "Inter, sans-serif",
+        fontSize: "13px",
+        fontWeight: "700",
+        color: "#303e51",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap"
+    },
+
+    usuarioNomeDark: {
+        color: "#f9fafb"
+    },
+
+    usuarioPerfil: {
+        fontFamily: "Inter, sans-serif",
+        fontSize: "11px",
+        color: "#64748b",
+        marginTop: "2px"
+    },
+
+    usuarioPerfilDark: {
+        color: "#cbd5e1"
+    },
+
     navigation: {
         display: "flex",
         flexDirection: "column",
         gap: "8px",
-        flex: 1
+        flex: 1,
+        overflowY: "auto"
     },
 
     menuItem: {
@@ -283,7 +472,6 @@ const styles = {
         color: "#e5e7eb"
     },
 
-    // Estilo aplicado por cima do menuItem quando a rota está ativa (mesclado via spread no NavLink)
     menuItemActive: {
         backgroundColor: "#303e51",
         color: "#ffffff"
@@ -294,7 +482,6 @@ const styles = {
         color: "#f9fafb"
     },
 
-    // Área inferior fixa, separada do menu por uma linha divisória
     bottomMenu: {
         borderTop: "1px solid #e2e8f0",
         paddingTop: "12px",
