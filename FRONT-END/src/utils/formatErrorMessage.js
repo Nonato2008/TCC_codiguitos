@@ -1,3 +1,8 @@
+/*
+  Utilitário: formatErrorMessage.js
+  - Normaliza objetos de erro vindos da API em mensagens amigáveis para o usuário.
+  - Contém heurísticas para tratar casos comuns (401, 500, mensagens de campo, arrays de errors etc.).
+*/
 export function formatErrorMessage(error, fallback = "Ocorreu um erro inesperado.") {
   if (!error) return fallback;
 

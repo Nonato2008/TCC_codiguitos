@@ -8,6 +8,7 @@ import { formatErrorMessage } from "../utils/formatErrorMessage";
 import { ThemeContext } from "../contexts/ThemeContext";
 import { useFornecedores } from "../hooks/useFornecedores";
 
+// Estado inicial do formulário — usado para resetar após sucesso
 const estadoInicial = {
     idFornecedor: "",
     nome: "",
@@ -23,32 +24,30 @@ export default function CadastroProdutos() {
     const isDark = theme === "dark";
     const { fornecedores, loading: carregandoFornecedores } = useFornecedores();
 
+    // Hook customizado que carrega a lista de fornecedores para o select
+   
+
+    // Estados do formulário
     const [form, setForm] = useState(estadoInicial);
 
+    // Estados de controle da requisição e feedback
     const [loading, setLoading] = useState(false);
+    const [mensagem, setMensagem] = useState({ type: "", text: "" });
 
-    const [mensagem, setMensagem] = useState({
-        type: "",
-        text: ""
-    });
-
+    // Guarda os dados da nota fiscal gerada para exibir no card
     const [notaFiscal, setNotaFiscal] = useState(null);
 
+    // Atualiza um campo do formulário de forma genérica
+    // Trata o input de arquivo separadamente, pois usa `files`
     function atualizarCampo(event) {
 
-        const {
-            name,
-            value,
-            files
-        } = event.target;
+        const { name, value, files } = event.target;
 
         if (name === "imagem") {
-
             setForm((anterior) => ({
                 ...anterior,
                 imagem: files[0] || null
             }));
-
             return;
         }
 
@@ -58,64 +57,43 @@ export default function CadastroProdutos() {
         }));
     }
 
+    // Converte o PDF em base64 recebido da API e abre em nova aba
     function abrirPDF(base64) {
 
         try {
 
-            const byteCharacters =
-                atob(base64);
+            // Decodifica base64 em bytes
+            const byteCharacters = atob(base64);
+            const byteNumbers = new Array(byteCharacters.length);
 
-            const byteNumbers =
-                new Array(byteCharacters.length);
-
-            for (
-                let i = 0;
-                i < byteCharacters.length;
-                i++
-            ) {
-
-                byteNumbers[i] =
-                    byteCharacters.charCodeAt(i);
-
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
             }
 
-            const byteArray =
-                new Uint8Array(byteNumbers);
+            const byteArray = new Uint8Array(byteNumbers);
 
-            const blob =
-                new Blob(
-                    [byteArray],
-                    {
-                        type: "application/pdf"
-                    }
-                );
-
-            const url =
-                URL.createObjectURL(blob);
+            // Cria um Blob do tipo PDF e gera uma URL temporária
+            const blob = new Blob([byteArray], { type: "application/pdf" });
+            const url = URL.createObjectURL(blob);
 
             window.open(url, "_blank");
 
+            // Libera a URL depois de 10s para não vazar memória
             setTimeout(() => {
-
                 URL.revokeObjectURL(url);
-
             }, 10000);
 
         } catch (error) {
 
-            console.error(
-                "Erro ao abrir PDF:",
-                error
-            );
+            console.error("Erro ao abrir PDF:", error);
 
+            // Anexa aviso mantendo a mensagem de sucesso caso já exista
             setMensagem((anterior) => ({
-                // preserva mensagem de sucesso caso já exista, e anexa um aviso
                 type: anterior?.type === "success" ? "success" : "error",
                 text: anterior?.text
                     ? `${anterior.text} A nota foi gerada, mas não foi possível abrir o PDF.`
                     : "A nota foi gerada, mas não foi possível abrir o PDF.",
             }));
-
         }
     }
 
@@ -123,15 +101,17 @@ export default function CadastroProdutos() {
 
         event.preventDefault();
 
+        // Limpa a nota anterior antes de uma nova tentativa
         setNotaFiscal(null);
 
+        // Validações básicas antes de chamar a API
         if (!form.nome.trim()) {
+            setMensagem({ type: "error", text: "Informe o nome do produto." });
+            return;
+        }
 
-            setMensagem({
-                type: "error",
-                text: "Informe o nome do produto."
-            });
-
+        if (!form.idFornecedor) {
+            setMensagem({ type: "error", text: "Selecione um fornecedor existente." });
             return;
         }
 
@@ -146,145 +126,95 @@ export default function CadastroProdutos() {
         }
 
         if (!form.preco || Number(form.preco) <= 0) {
-
-            setMensagem({
-                type: "error",
-                text: "Informe um preço válido."
-            });
-
+            setMensagem({ type: "error", text: "Informe um preço válido." });
             return;
         }
 
-        if (
-            form.quantidade === "" ||
-            Number(form.quantidade) < 0
-        ) {
-
-            setMensagem({
-                type: "error",
-                text: "Informe a quantidade em estoque."
-            });
-
+        if (form.quantidade === "" || Number(form.quantidade) < 0) {
+            setMensagem({ type: "error", text: "Informe a quantidade em estoque." });
             return;
         }
 
         if (!form.dataVenc) {
-
-            setMensagem({
-                type: "error",
-                text: "Selecione a data de vencimento."
-            });
-
+            setMensagem({ type: "error", text: "Selecione a data de vencimento." });
             return;
         }
 
         if (!form.imagem) {
-
-            setMensagem({
-                type: "error",
-                text: "Selecione uma imagem do produto."
-            });
-
+            setMensagem({ type: "error", text: "Selecione uma imagem do produto." });
             return;
         }
 
         setLoading(true);
-
-        setMensagem({
-            type: "",
-            text: ""
-        });
+        setMensagem({ type: "", text: "" });
 
         try {
 
+            // FormData é necessário porque há upload de imagem
             const dados = new FormData();
 
-            dados.append(
-                "idFornecedor",
-                String(form.idFornecedor)
-            );
+            dados.append("idFornecedor", String(form.idFornecedor));
+            dados.append("nome", form.nome.trim());
+            dados.append("preco", String(form.preco));
+            dados.append("quantidade", String(form.quantidade));
+            dados.append("dataVenc", form.dataVenc);
+            dados.append("imagem", form.imagem);
 
-            dados.append(
-                "nome",
-                form.nome.trim()
-            );
+            // Envia o produto para a API
+            const resposta = await codiguitos_api.post("/produtos", dados, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
 
-            dados.append(
-                "preco",
-                String(form.preco)
-            );
+            const data = resposta?.data || {};
 
-            dados.append(
-                "quantidade",
-                String(form.quantidade)
-            );
+            // Monta a mensagem base e adiciona aviso de nota fiscal se houver
+            const mensagemBase = (
+                data?.message || "Produto cadastrado com sucesso!"
+            ).trim();
 
-            dados.append(
-                "dataVenc",
-                form.dataVenc
-            );
+            const sucessoTexto = data?.notaFiscal
+                ? `${mensagemBase}${mensagemBase.endsWith(".") ? "" : "."} Nota fiscal gerada.`
+                : mensagemBase;
 
-            dados.append(
-                "imagem",
-                form.imagem
-            );
+            setMensagem({ type: "success", text: sucessoTexto });
 
-                        const resposta = await codiguitos_api.post("/produtos", dados, {
-                            headers: { "Content-Type": "multipart/form-data" },
-                        });
+            // Guarda a nota fiscal para renderizar o card abaixo do formulário
+            if (data.notaFiscal) setNotaFiscal(data.notaFiscal);
 
-                        const data = resposta?.data || {};
+            // Se a API retornar o PDF, tenta abrir automaticamente
+            if (data.pdf) {
+                try {
+                    abrirPDF(data.pdf);
+                } catch (err) {
+                    console.error("Erro ao abrir PDF:", err);
+                    setMensagem((anterior) => ({
+                        type: anterior?.type === "success" ? "success" : "error",
+                        text: anterior?.text
+                            ? `${anterior.text} A nota foi gerada, mas não foi possível abrir o PDF.`
+                            : "A nota foi gerada, mas não foi possível abrir o PDF.",
+                    }));
+                }
+            }
 
-                        const mensagemBase = (
-                            data?.message ||
-                            "Produto cadastrado com sucesso!"
-                        ).trim();
-
-                        const sucessoTexto = data?.notaFiscal
-                            ? `${mensagemBase}${mensagemBase.endsWith(".") ? "" : "."} Nota fiscal gerada.`
-                            : mensagemBase;
-
-                        setMensagem({ type: "success", text: sucessoTexto });
-
-                        // Define notaFiscal apenas se presente na resposta
-                        if (data.notaFiscal) setNotaFiscal(data.notaFiscal);
-
-                        // Tenta abrir o PDF — se falhar, anexa aviso à mensagem de sucesso
-                        if (data.pdf) {
-                            try {
-                                abrirPDF(data.pdf);
-                            } catch (err) {
-                                console.error("Erro ao abrir PDF:", err);
-                                setMensagem((anterior) => ({
-                                    type: anterior?.type === "success" ? "success" : "error",
-                                    text: anterior?.text
-                                        ? `${anterior.text} A nota foi gerada, mas não foi possível abrir o PDF.`
-                                        : "A nota foi gerada, mas não foi possível abrir o PDF.",
-                                }));
-                            }
-                        }
-
-                        setForm(estadoInicial);
+            // Reseta o formulário para o estado inicial
+            setForm(estadoInicial);
 
         } catch (error) {
 
             console.error(error);
 
+            // Trata erros retornados pela API ou de conexão
             setMensagem({
-
                 type: "error",
-
                 text: formatErrorMessage(
                     error,
                     "Erro ao cadastrar produto. Verifique os dados do formulário e tente novamente."
                 )
-
             });
 
         } finally {
-
+            // Sempre desativa o loading, independentemente do resultado
             setLoading(false);
-
         }
     }
 
@@ -345,8 +275,7 @@ export default function CadastroProdutos() {
                                         .filter((fornecedor) => {
                                             const id = fornecedor.Id ?? fornecedor.id;
                                             const nome = fornecedor.Nome ?? fornecedor.nome;
-                                            const ativo = fornecedor.ativo ?? true;
-                                            return id && nome && ativo;
+                                            return id && nome;
                                         })
                                         .map((fornecedor) => {
                                             const id = fornecedor.Id ?? fornecedor.id;

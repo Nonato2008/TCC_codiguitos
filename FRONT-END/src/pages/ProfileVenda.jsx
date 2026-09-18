@@ -5,17 +5,23 @@ import Sidebar from "../components/Sidebar";
 import { ThemeContext } from "../contexts/ThemeContext";
 
 export default function ProfileVenda() {
+
+    // Pega o `id` da venda direto da URL (ex: /vendas/:id)
     const { id } = useParams();
+
     const navigate = useNavigate();
+
     const { theme } = useContext(ThemeContext);
     const isDark = theme === "dark";
 
+    // Hook customizado que busca a venda pelo id
     const {
         venda,
         loading,
         error
     } = useVendaById(id);
 
+    // Estado de carregamento
     if (loading) {
         return (
             <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
@@ -30,6 +36,7 @@ export default function ProfileVenda() {
         );
     }
 
+    // Estado de erro
     if (error) {
         return (
             <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
@@ -44,6 +51,7 @@ export default function ProfileVenda() {
         );
     }
 
+    // Venda não encontrada (id inválido ou inexistente)
     if (!venda) {
         return (
             <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
@@ -58,6 +66,7 @@ export default function ProfileVenda() {
         );
     }
 
+    // Lista de itens da venda (fallback para array vazio)
     const itens = venda.Itens || [];
 
     return (
@@ -194,12 +203,14 @@ export default function ProfileVenda() {
 
                                     {itens.map((item) => {
 
+                                        // Cada item da venda tem quantidade e valor unitário
                                         const quantidade =
                                             Number(item.Qtd);
 
                                         const valor =
                                             Number(item.Valor);
 
+                                        // Subtotal calculado no front
                                         const subtotal =
                                             quantidade * valor;
 

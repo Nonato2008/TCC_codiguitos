@@ -1,3 +1,8 @@
+/*
+  Entry: main.jsx
+  - Ponto de entrada da aplicação React; monta `<App />` em `#root`.
+  - Importa estilos globais (Bootstrap, index.css, App.css).
+*/
 import React from "react";
 import ReactDOM from "react-dom/client";
 

@@ -4,6 +4,7 @@ export default function VendasCard({ venda }) {
 
     const navigate = useNavigate();
 
+    // Navega para a tela de detalhes da venda usando o Id
     function irParaProfile() {
         navigate(`/vendas/${venda.Id}`);
     }
@@ -13,6 +14,7 @@ export default function VendasCard({ venda }) {
 
             <div style={styles.info}>
 
+                {/* Número da venda em destaque */}
                 <div style={styles.number}>
                     {venda.Id}
                 </div>
@@ -26,6 +28,7 @@ export default function VendasCard({ venda }) {
                             {venda.NomeVendedor}
                         </span>
 
+                        {/* Formata a data em pt-BR (dd/mm/aaaa); "-" se não houver */}
                         <span>
                             <strong>Data:</strong>{" "}
                             {venda.DataCad
@@ -37,6 +40,7 @@ export default function VendasCard({ venda }) {
 
                     </div>
 
+                    {/* Valor total formatado com 2 casas e vírgula decimal */}
                     <div style={styles.price}>
                         R$ {Number(venda.ValorTotal)
                             .toFixed(2)

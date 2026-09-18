@@ -7,13 +7,20 @@ import VendasList from "../components/VendasList";
 import { ThemeContext } from "../contexts/ThemeContext";
 
 export default function Vendas() {
+
+    // Hook que carrega a lista de vendas
     const { vendas, loading, error } = useVendas();
+
     const { theme } = useContext(ThemeContext);
     const isDark = theme === "dark";
 
+    // Lista de vendedores (para mostrar o nome a partir do IdVendedor)
     const [vendedores, setVendedores] = useState([]);
+
+    // Filtro de data (input do tipo date)
     const [dataFiltro, setDataFiltro] = useState("");
 
+    // Busca os vendedores uma única vez ao montar o componente
     useEffect(() => {
         const carregarVendedores = async () => {
             try {
@@ -27,16 +34,20 @@ export default function Vendas() {
         carregarVendedores();
     }, []);
 
+    // Descobre o nome do vendedor a partir do id (aceita Id/id, Nome/nome)
     const encontrarNomeVendedor = (idVendedor) => {
         const vendedor = vendedores.find((v) => v.Id === idVendedor || v.id === idVendedor);
         return vendedor ? vendedor.Nome ?? vendedor.nome : `Vendedor #${idVendedor}`;
     };
 
+    // Enriquece cada venda com o nome do vendedor
     const vendasComVendedor = (Array.isArray(vendas) ? vendas : []).map((venda) => ({
         ...venda,
         NomeVendedor: encontrarNomeVendedor(venda.IdVendedor),
     }));
 
+    // Converte uma data para o formato YYYY-MM-DD respeitando o fuso local
+    // (usado para comparar com o valor do input type="date")
     const formatarDataLocal = (data) => {
         const dataLocal = new Date(data);
         if (Number.isNaN(dataLocal.getTime())) return "";
@@ -46,6 +57,7 @@ export default function Vendas() {
         return localDate.toISOString().slice(0, 10);
     };
 
+    // Filtra as vendas pela data selecionada (se houver filtro)
     const vendasFiltradas = vendasComVendedor.filter((venda) => {
         if (!dataFiltro) return true;
 
@@ -55,6 +67,7 @@ export default function Vendas() {
         return dataVendaFormatada === dataFiltro;
     });
 
+    // Estado de carregamento
     if (loading) {
         return (
             <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
@@ -83,6 +96,7 @@ export default function Vendas() {
         );
     }
 
+    // Estado de erro
     if (error) {
         return (
             <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
@@ -123,11 +137,13 @@ export default function Vendas() {
                     </div>
 
                     <div style={styles.headerRight}>
+                        {/* Contador dinâmico (muda conforme o filtro) */}
                         <div style={{ ...styles.total, ...(isDark ? styles.totalDark : {}) }}>
                             {vendasFiltradas.length} {" "}
                             {vendasFiltradas.length === 1 ? "venda" : "vendas"}
                         </div>
 
+                        {/* Filtro por data */}
                         <input
                             type="date"
                             value={dataFiltro}
@@ -139,6 +155,7 @@ export default function Vendas() {
                             aria-label="Filtrar vendas por data"
                         />
 
+                        {/* Botão "Limpar" só aparece se houver filtro ativo */}
                         {dataFiltro && (
                             <button
                                 type="button"

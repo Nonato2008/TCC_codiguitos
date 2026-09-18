@@ -10,8 +10,11 @@ export default function CadastrarFornecedor() {
     const { theme } = useContext(ThemeContext);
     const isDark = theme === "dark";
 
+    // Estados do formulário
     const [nome, setNome] = useState("");
     const [imagem, setImagem] = useState(null);
+
+    // Estados de controle da requisição e feedback ao usuário
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
@@ -22,6 +25,7 @@ export default function CadastrarFornecedor() {
         setError("");
         setSuccess("");
 
+        // Validação: nome obrigatório
         if (!nome.trim()) {
             setError("Informe o nome do fornecedor.");
             return;
@@ -30,26 +34,32 @@ export default function CadastrarFornecedor() {
         try {
             setLoading(true);
 
+            // Usa FormData porque há upload de arquivo (imagem)
             const formData = new FormData();
 
             formData.append("nome", nome);
 
+            // Só anexa a imagem se o usuário tiver selecionado uma
             if (imagem) {
                 formData.append("imagem", imagem);
             }
 
+            // Chama a API para criar o fornecedor
             await criarFornecedor(formData);
 
+            // Sucesso: limpa o formulário
             setSuccess("Fornecedor cadastrado com sucesso!");
             setNome("");
             setImagem(null);
 
+            // Reseta manualmente o input de arquivo (não é controlado por state)
             const fileInput = document.getElementById("imagem");
             if (fileInput) {
                 fileInput.value = "";
             }
 
         } catch (error) {
+            // Trata erros retornados pela API ou de conexão
             console.error("Erro ao cadastrar fornecedor:", error);
 
             setError(
@@ -59,6 +69,7 @@ export default function CadastrarFornecedor() {
                 )
             );
         } finally {
+            // Sempre desativa o loading, independentemente do resultado
             setLoading(false);
         }
     };

@@ -13,11 +13,13 @@ export default function Cadastro() {
     const { theme } = useContext(ThemeContext);
     const isDark = theme === "dark";
 
+    // Estados dos campos do formulário
     const [nome, setNome] = useState("");
     const [senha, setSenha] = useState("");
     const [confirmarSenha, setConfirmarSenha] = useState("");
     const [tipo, setTipo] = useState("VENDEDOR");
 
+    // Estados de controle da requisição e feedback ao usuário
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
@@ -29,6 +31,7 @@ export default function Cadastro() {
         setError("");
         setSuccess("");
 
+        // Validações básicas do formulário antes de chamar a API
         if (!nome.trim()) {
             setError("Digite seu nome.");
             return;
@@ -64,12 +67,14 @@ export default function Cadastro() {
 
         try {
 
+            // Chama a API de cadastro com os dados do formulário
             const result = await apiCadastro(
                 nome.trim(),
                 senha,
                 tipo
             );
 
+            // Se a API retornar erro, exibe a mensagem formatada
             if (result.error) {
 
                 setError(
@@ -82,6 +87,7 @@ export default function Cadastro() {
                 return;
             }
 
+            // Sucesso: limpa o formulário e redireciona para o login
             setSuccess(
                 "Cadastro realizado com sucesso!"
             );
@@ -97,6 +103,7 @@ export default function Cadastro() {
 
         } catch (error) {
 
+            // Trata erros de conexão ou inesperados
             console.error(error);
 
             setError(
@@ -108,6 +115,7 @@ export default function Cadastro() {
 
         } finally {
 
+            // Sempre desativa o loading, independentemente do resultado
             setLoading(false);
         }
     }
