@@ -6,23 +6,35 @@ import { deletarFornecedor } from "../services/fornecedoresService";
 import { ThemeContext } from "../contexts/ThemeContext";
 
 export default function Fornecedor() {
+
+    // Hook customizado que busca os fornecedores na API
     const { fornecedores, loading, error } = useFornecedores();
+
     const { theme } = useContext(ThemeContext);
     const isDark = theme === "dark";
 
     const navigate = useNavigate();
 
+    // Lista local de fornecedores (permite remoção otimista sem refetch)
     const [listaFornecedores, setListaFornecedores] = useState([]);
+
+    // Fornecedor escolhido para exclusão (abre o modal de confirmação)
     const [fornecedorSelecionado, setFornecedorSelecionado] = useState(null);
+
+    // Estado de loading do processo de exclusão
     const [excluindo, setExcluindo] = useState(false);
 
+    // Sincroniza a lista local sempre que o hook retornar novos dados
     useEffect(() => {
         setListaFornecedores(fornecedores);
     }, [fornecedores]);
 
+    // Abre o modal de confirmação para o fornecedor clicado
     const handleExcluir = (fornecedor) => {
         setFornecedorSelecionado(fornecedor);
     };
+
+    // Confirma a exclusão do fornecedor selecionado
     const confirmarExclusao = async () => {
         if (!fornecedorSelecionado) {
             return;
@@ -31,8 +43,10 @@ export default function Fornecedor() {
         try {
             setExcluindo(true);
 
+            // Chama a API para deletar o fornecedor
             await deletarFornecedor(fornecedorSelecionado.Id);
 
+            // Remove o item da lista local (evita refetch da lista inteira)
             setListaFornecedores((listaAtual) =>
                 listaAtual.filter(
                     (item) => item.Id !== fornecedorSelecionado.Id
@@ -53,6 +67,7 @@ export default function Fornecedor() {
         }
     };
 
+    // Renderização de estado de carregamento
     if (loading) {
         return (
             <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
@@ -85,6 +100,7 @@ export default function Fornecedor() {
         );
     }
 
+    // Renderização de estado de erro
     if (error) {
         return (
             <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
@@ -210,6 +226,7 @@ export default function Fornecedor() {
 
                 )}
 
+                {/* Modal de confirmação de exclusão */}
                 {fornecedorSelecionado && (
 
                     <div style={styles.overlay}>
@@ -277,7 +294,10 @@ export default function Fornecedor() {
     );
 }
 
+// Card individual de fornecedor
 function FornecedorCard({ fornecedor, onExcluir, excluindo, dark }) {
+
+    // Monta a URL completa da imagem (a API retorna apenas o caminho)
     const imagem = fornecedor.Imagem
         ? `http://localhost:8000${fornecedor.Imagem}`
         : null;
@@ -290,6 +310,7 @@ function FornecedorCard({ fornecedor, onExcluir, excluindo, dark }) {
                         src={imagem}
                         alt={fornecedor.Nome}
                         style={styles.imagem}
+                        // Se a imagem falhar ao carregar, esconde o <img>
                         onError={(e) => {
                             e.currentTarget.style.display = "none";
                         }}

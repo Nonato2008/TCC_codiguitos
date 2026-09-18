@@ -2,6 +2,7 @@ import React, { useContext } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { ThemeContext } from "../contexts/ThemeContext";
 
+// Estrutura do menu: cada item tem nome, ícone, rota e quais perfis podem acessar
 const menu = [
     {
         nome: "Painel",
@@ -39,35 +40,27 @@ export default function Sidebar() {
 
     const navigate = useNavigate();
 
-    const { theme, toggleTheme } =
-        useContext(ThemeContext);
+    const { theme, toggleTheme } = useContext(ThemeContext);
+    const isDark = theme === "dark";
 
-    const isDark =
-        theme === "dark";
-
-    const usuarioSalvo =
-        localStorage.getItem("usuario");
+    // Lê o usuário do localStorage (pode vir null ou malformado)
+    const usuarioSalvo = localStorage.getItem("usuario");
 
     let usuario = null;
 
     try {
-
-        usuario =
-            usuarioSalvo
-                ? JSON.parse(usuarioSalvo)
-                : null;
-
+        usuario = usuarioSalvo ? JSON.parse(usuarioSalvo) : null;
     } catch (error) {
-
         usuario = null;
-
     }
 
+    // Nome do usuário (aceita "nome" ou "Nome")
     const nomeUsuario =
         usuario?.nome ||
         usuario?.Nome ||
         "Usuário";
 
+    // Perfil do usuário — aceita várias chaves possíveis vindas da API
     const perfilOriginal =
         usuario?.perfil ||
         usuario?.Perfil ||
@@ -77,6 +70,8 @@ export default function Sidebar() {
         usuario?.Role ||
         "VENDEDOR";
 
+    // Normaliza o perfil: trim, upper, remove acentos
+    // Ex: "Proprietário" -> "PROPRIETARIO"
     const perfilNormalizado =
         String(perfilOriginal)
             .trim()
@@ -84,22 +79,21 @@ export default function Sidebar() {
             .normalize("NFD")
             .replace(/[\u0300-\u036f]/g, "");
 
+    // Nome amigável para exibir na UI
     const perfilUsuario =
         perfilNormalizado === "PROPRIETARIO"
             ? "Proprietário"
             : "Vendedor";
 
+    // Filtra o menu com base no perfil normalizado
     const menuPermitido =
         menu.filter((item) =>
-            item.acesso.includes(
-                perfilNormalizado
-            )
+            item.acesso.includes(perfilNormalizado)
         );
 
+    // Logout: remove usuário e volta para o login
     function sair() {
-
         localStorage.removeItem("usuario");
-
         navigate("/login");
     }
 
@@ -108,9 +102,7 @@ export default function Sidebar() {
         <aside
             style={{
                 ...styles.sidebar,
-                ...(isDark
-                    ? styles.sidebarDark
-                    : {})
+                ...(isDark ? styles.sidebarDark : {})
             }}
         >
 
@@ -119,9 +111,7 @@ export default function Sidebar() {
                 <div
                     style={{
                         ...styles.logo,
-                        ...(isDark
-                            ? styles.logoDark
-                            : {})
+                        ...(isDark ? styles.logoDark : {})
                     }}
                 >
 
@@ -138,9 +128,7 @@ export default function Sidebar() {
                     <h1
                         style={{
                             ...styles.logoTitle,
-                            ...(isDark
-                                ? styles.logoTitleDark
-                                : {})
+                            ...(isDark ? styles.logoTitleDark : {})
                         }}
                     >
                         Adega do Nelson
@@ -149,9 +137,7 @@ export default function Sidebar() {
                     <p
                         style={{
                             ...styles.logoSubtitle,
-                            ...(isDark
-                                ? styles.logoSubtitleDark
-                                : {})
+                            ...(isDark ? styles.logoSubtitleDark : {})
                         }}
                     >
                         Melhores Bebidas
@@ -161,21 +147,18 @@ export default function Sidebar() {
 
             </div>
 
+            {/* Cartão do usuário logado (nome + perfil) */}
             <div
                 style={{
                     ...styles.usuarioContainer,
-                    ...(isDark
-                        ? styles.usuarioContainerDark
-                        : {})
+                    ...(isDark ? styles.usuarioContainerDark : {})
                 }}
             >
 
                 <div
                     style={{
                         ...styles.usuarioIcon,
-                        ...(isDark
-                            ? styles.usuarioIconDark
-                            : {})
+                        ...(isDark ? styles.usuarioIconDark : {})
                     }}
                 >
 
@@ -190,9 +173,7 @@ export default function Sidebar() {
                     <span
                         style={{
                             ...styles.usuarioNome,
-                            ...(isDark
-                                ? styles.usuarioNomeDark
-                                : {})
+                            ...(isDark ? styles.usuarioNomeDark : {})
                         }}
                     >
                         {nomeUsuario}
@@ -201,9 +182,7 @@ export default function Sidebar() {
                     <span
                         style={{
                             ...styles.usuarioPerfil,
-                            ...(isDark
-                                ? styles.usuarioPerfilDark
-                                : {})
+                            ...(isDark ? styles.usuarioPerfilDark : {})
                         }}
                     >
                         {perfilUsuario}
@@ -213,6 +192,7 @@ export default function Sidebar() {
 
             </div>
 
+            {/* Menu — renderiza só os itens permitidos para o perfil */}
             <nav style={styles.navigation}>
 
                 {menuPermitido.map((item) => (
@@ -222,18 +202,9 @@ export default function Sidebar() {
                         to={item.rota}
                         style={({ isActive }) => ({
                             ...styles.menuItem,
-
-                            ...(isDark
-                                ? styles.menuItemDark
-                                : {}),
-
-                            ...(isActive
-                                ? styles.menuItemActive
-                                : {}),
-
-                            ...(isActive && isDark
-                                ? styles.menuItemActiveDark
-                                : {})
+                            ...(isDark ? styles.menuItemDark : {}),
+                            ...(isActive ? styles.menuItemActive : {}),
+                            ...(isActive && isDark ? styles.menuItemActiveDark : {})
                         })}
                     >
 
@@ -251,12 +222,11 @@ export default function Sidebar() {
 
             </nav>
 
+            {/* Rodapé: alternar tema + sair */}
             <div
                 style={{
                     ...styles.bottomMenu,
-                    ...(isDark
-                        ? styles.bottomMenuDark
-                        : {})
+                    ...(isDark ? styles.bottomMenuDark : {})
                 }}
             >
 
@@ -265,21 +235,15 @@ export default function Sidebar() {
                     onClick={toggleTheme}
                     style={{
                         ...styles.themeButton,
-                        ...(isDark
-                            ? styles.themeButtonDark
-                            : {})
+                        ...(isDark ? styles.themeButtonDark : {})
                     }}
                 >
 
                     <span className="material-symbols-outlined">
-                        {isDark
-                            ? "light_mode"
-                            : "dark_mode"}
+                        {isDark ? "light_mode" : "dark_mode"}
                     </span>
 
-                    {isDark
-                        ? "Modo claro"
-                        : "Modo escuro"}
+                    {isDark ? "Modo claro" : "Modo escuro"}
 
                 </button>
 
@@ -287,9 +251,7 @@ export default function Sidebar() {
                     type="button"
                     style={{
                         ...styles.bottomItem,
-                        ...(isDark
-                            ? styles.bottomItemDark
-                            : {})
+                        ...(isDark ? styles.bottomItemDark : {})
                     }}
                     onClick={sair}
                 >
@@ -322,8 +284,7 @@ const styles = {
         display: "flex",
         flexDirection: "column",
         zIndex: 100,
-        transition:
-            "background-color 0.3s ease, border-color 0.3s ease",
+        transition: "background-color 0.3s ease, border-color 0.3s ease",
         boxSizing: "border-box"
     },
 

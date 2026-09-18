@@ -11,22 +11,27 @@ export default function Login() {
 
     const navigate = useNavigate();
 
+    // Alterna entre os modos "login" e "cadastro" na mesma tela
     const [modoCadastro, setModoCadastro] = useState(false);
 
+    // Estados dos campos do formulário
     const [nome, setNome] = useState("");
     const [senha, setSenha] = useState("");
     const [confirmarSenha, setConfirmarSenha] = useState("");
     const [tipo, setTipo] = useState("VENDEDOR");
 
+    // Estados de controle da requisição e feedback ao usuário
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
+    // Limpa as mensagens de erro/sucesso
     function limparMensagens() {
         setError("");
         setSuccess("");
     }
 
+    // Alterna entre login e cadastro, limpando os campos e mensagens
     function trocarModo() {
 
         limparMensagens();
@@ -45,6 +50,7 @@ export default function Login() {
 
         limparMensagens();
 
+        // Validações básicas
         if (!nome.trim()) {
             setError("Digite seu nome.");
             return;
@@ -59,32 +65,26 @@ export default function Login() {
 
         try {
 
-            const result = await apiLogin(
-                nome.trim(),
-                senha
-            );
+            // Chama a API de login
+            const result = await apiLogin(nome.trim(), senha);
 
+            // Se a API retornar erro, exibe a mensagem
             if (result.error) {
-
                 setError(
                     result.error.message ||
                     "Nome ou senha incorretos."
                 );
-
                 return;
             }
 
             const usuarioRecebido = result.data?.usuario;
 
             if (!usuarioRecebido) {
-
-                setError(
-                    "Não foi possível identificar o usuário."
-                );
-
+                setError("Não foi possível identificar o usuário.");
                 return;
             }
 
+            // Normaliza nome e perfil, aceitando variações de caixa
             const nomeUsuario =
                 usuarioRecebido.nome ||
                 usuarioRecebido.Nome ||
@@ -105,25 +105,17 @@ export default function Login() {
                 perfil: perfilUsuario
             };
 
+            // Persiste o usuário (service + localStorage) e redireciona
             saveUser(usuario);
-
-            localStorage.setItem(
-                "usuario",
-                JSON.stringify(usuario)
-            );
+            localStorage.setItem("usuario", JSON.stringify(usuario));
 
             navigate("/painel");
 
         } catch (error) {
-
             console.error(error);
-
-            setError(
-                "Erro ao conectar ao servidor."
-            );
-
+            setError("Erro ao conectar ao servidor.");
         } finally {
-
+            // Sempre desativa o loading, independentemente do resultado
             setLoading(false);
         }
     }
@@ -134,15 +126,14 @@ export default function Login() {
 
         limparMensagens();
 
+        // Validações básicas do cadastro
         if (!nome.trim()) {
             setError("Digite seu nome.");
             return;
         }
 
         if (nome.trim().length < 3) {
-            setError(
-                "O nome deve possuir pelo menos 3 caracteres."
-            );
+            setError("O nome deve possuir pelo menos 3 caracteres.");
             return;
         }
 
@@ -152,16 +143,12 @@ export default function Login() {
         }
 
         if (senha.length < 6) {
-            setError(
-                "A senha deve possuir pelo menos 6 caracteres."
-            );
+            setError("A senha deve possuir pelo menos 6 caracteres.");
             return;
         }
 
         if (senha !== confirmarSenha) {
-            setError(
-                "As senhas não coincidem."
-            );
+            setError("As senhas não coincidem.");
             return;
         }
 
@@ -169,48 +156,35 @@ export default function Login() {
 
         try {
 
-            const result = await apiCadastro(
-                nome.trim(),
-                senha,
-                tipo
-            );
+            // Chama a API de cadastro
+            const result = await apiCadastro(nome.trim(), senha, tipo);
 
             if (result.error) {
-
                 setError(
                     result.error.message ||
                     "Não foi possível realizar o cadastro."
                 );
-
                 return;
             }
 
-            setSuccess(
-                "Cadastro realizado com sucesso! Agora faça login."
-            );
+            // Sucesso: limpa o formulário e volta para o modo login
+            setSuccess("Cadastro realizado com sucesso! Agora faça login.");
 
             setNome("");
             setSenha("");
             setConfirmarSenha("");
             setTipo("VENDEDOR");
 
+            // Aguarda 1,5s e alterna para o modo login
             setTimeout(() => {
-
                 setModoCadastro(false);
                 setSuccess("");
-
             }, 1500);
 
         } catch (error) {
-
             console.error(error);
-
-            setError(
-                "Erro ao conectar ao servidor."
-            );
-
+            setError("Erro ao conectar ao servidor.");
         } finally {
-
             setLoading(false);
         }
     }

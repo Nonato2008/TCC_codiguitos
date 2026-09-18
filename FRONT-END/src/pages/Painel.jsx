@@ -1,4 +1,4 @@
-import React, {useContext} from "react";
+import React, { useContext } from "react";
 import Sidebar from "../components/Sidebar";
 import { useProdutos } from "../hooks/useProdutos";
 import { useVendas } from "../hooks/useVendas";
@@ -6,10 +6,16 @@ import { useNavigate } from "react-router-dom";
 import { ThemeContext } from "../contexts/ThemeContext";
 
 export default function Painel() {
+
   const navigate = useNavigate();
+
   const { theme } = useContext(ThemeContext);
+  const isDark = theme === "dark";
+
+  // Hook que carrega os produtos (usado para os cards de resumo)
   const { produtos, loading, error } = useProdutos();
 
+  // Hook que carrega as vendas e o valor total (lucro)
   const {
     vendas,
     valorTotal,
@@ -17,29 +23,32 @@ export default function Painel() {
     error: errorVendas,
   } = useVendas();
 
+  // Garante que `vendas` seja sempre um array válido
   const vendasLista = Array.isArray(vendas) ? vendas : [];
+
+  // Pega as 3 últimas vendas e inverte para mostrar as mais recentes primeiro
   const ultimasVendas = [...vendasLista].slice(-3).reverse();
 
+  // Total de produtos cadastrados
   const produtosTotais = Array.isArray(produtos) ? produtos.length : 0;
 
+  // Conta produtos com status "esgotado"
   const produtosEsgotados = Array.isArray(produtos)
     ? produtos.filter((produto) => {
       const status = String(produto.Status ?? "").toLowerCase();
-
       return status === "esgotado";
     }).length
     : 0;
 
+  // Conta produtos com status "vencido"
   const produtosVencimento = Array.isArray(produtos)
     ? produtos.filter((produto) => {
       const status = String(produto.Status ?? "").toLowerCase();
-
       return status === "vencido";
     }).length
     : 0;
 
-  const isDark = theme === "dark";
-
+  // Estado de carregamento dos produtos
   if (loading) {
     return (
       <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
@@ -54,6 +63,7 @@ export default function Painel() {
     );
   }
 
+  // Estado de erro dos produtos
   if (error) {
     return (
       <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
@@ -194,6 +204,8 @@ export default function Painel() {
   );
 }
 
+// Card reutilizável do topo do painel
+// Aceita variações visuais através do `tipo` (error / warning)
 function DashboardCard({ titulo, valor, icone, tipo, dark }) {
   return (
     <div

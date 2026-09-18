@@ -1,3 +1,8 @@
+/*
+  Entry: App.jsx
+  - Define as rotas da aplicação e envolve tudo em `ThemeProvider`.
+  - Redireciona rotas desconhecidas para `/login`.
+*/
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import Home from "./pages/Home";

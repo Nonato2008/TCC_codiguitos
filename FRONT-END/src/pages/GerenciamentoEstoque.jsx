@@ -6,6 +6,8 @@ import { atualizarProduto } from "../services/produtosService";
 import { formatErrorMessage } from "../utils/formatErrorMessage";
 import { ThemeContext } from "../contexts/ThemeContext";
 
+// Monta a URL correta da imagem do produto
+// Aceita URL absoluta, caminho com/sem barra, ou retorna placeholder
 function getImagemProduto(imagem) {
   if (!imagem) {
     return "/example.jpg";
@@ -20,6 +22,8 @@ function getImagemProduto(imagem) {
   return `http://localhost:8000${caminho}`;
 }
 
+// Monta o payload de atualização do produto
+// Normaliza nomes de campos que podem vir em PascalCase ou camelCase
 function montarPayloadProduto(produto, quantidadeAtual) {
   return {
     idFornecedor: produto.IdFornecedor ?? produto.idFornecedor ?? 1,
@@ -30,6 +34,7 @@ function montarPayloadProduto(produto, quantidadeAtual) {
   };
 }
 
+// Verifica se o produto está vencido com base na data de vencimento
 function getStatusValidade(produto) {
   const dataVencimento = produto?.DataVenc ?? produto?.dataVenc ?? produto?.data_venc;
 
@@ -51,12 +56,18 @@ function getStatusValidade(produto) {
 }
 
 export default function GerenciamentoEstoque() {
+
+  // Hooks que carregam produtos e fornecedores da API
   const { produtos, loading, error } = useProdutos();
   const { fornecedores } = useFornecedores();
+
   const { theme } = useContext(ThemeContext);
   const isDark = theme === "dark";
+
+  // Lista local de produtos (permite ajustes otimistas sem refetch)
   const [listaProdutos, setListaProdutos] = useState([]);
 
+  // Descobre o nome do fornecedor a partir do id do produto
   const getFornecedorNome = (produto) => {
     const idFornecedor = Number(produto.IdFornecedor ?? produto.idFornecedor ?? 0);
     const fornecedor = (fornecedores || []).find(
@@ -66,6 +77,8 @@ export default function GerenciamentoEstoque() {
     return fornecedor?.Nome ?? fornecedor?.nome ?? "Fornecedor não informado";
   };
 
+  // Normaliza os produtos vindos do hook para o formato usado na tela
+  // Adiciona campos auxiliares como quantidadeAjuste, ativoParaVenda e imagem
   useEffect(() => {
     setListaProdutos(
       (produtos || []).map((produto, index) => {
@@ -92,6 +105,8 @@ export default function GerenciamentoEstoque() {
     );
   }, [produtos]);
 
+  // Atualiza o input de ajuste de quantidade do produto
+  // Aceita string vazia temporariamente para permitir apagar o valor
   function atualizarQuantidadeEntrada(event, idProduto) {
     const valorDigitado = event.target.value;
 
@@ -99,10 +114,7 @@ export default function GerenciamentoEstoque() {
       setListaProdutos((atual) =>
         atual.map((produto) =>
           produto.id === idProduto
-            ? {
-                ...produto,
-                quantidadeAjuste: "",
-              }
+            ? { ...produto, quantidadeAjuste: "" }
             : produto
         )
       );
@@ -119,15 +131,13 @@ export default function GerenciamentoEstoque() {
     setListaProdutos((atual) =>
       atual.map((produto) =>
         produto.id === idProduto
-          ? {
-              ...produto,
-              quantidadeAjuste: Math.max(0, Math.floor(valor)),
-            }
+          ? { ...produto, quantidadeAjuste: Math.max(0, Math.floor(valor)) }
           : produto
       )
     );
   }
 
+  // Salva a nova quantidade do produto no banco de dados
   async function salvarProdutoNoBanco(idProduto, quantidadeAtual) {
     const produto = listaProdutos.find((p) => p.id === idProduto);
     if (!produto) return;
@@ -136,6 +146,8 @@ export default function GerenciamentoEstoque() {
     await atualizarProduto(idProduto, payload);
   }
 
+  // Ajusta o estoque somando ou subtraindo o valor informado
+  // Faz atualização otimista e reverte em caso de erro
   async function ajustarEstoque(tipo, idProduto) {
     const produtoAtual = listaProdutos.find((produto) => produto.id === idProduto);
     const ajuste = Number(produtoAtual?.quantidadeAjuste ?? 0);
@@ -150,6 +162,7 @@ export default function GerenciamentoEstoque() {
         ? produtoAtual.quantidade + ajuste
         : Math.max(0, produtoAtual.quantidade - ajuste);
 
+    // Atualiza a UI imediatamente (otimista)
     setListaProdutos((atual) =>
       atual.map((produto) => {
         if (produto.id !== idProduto) {
@@ -171,6 +184,8 @@ export default function GerenciamentoEstoque() {
       await salvarProdutoNoBanco(idProduto, novaQuantidade);
     } catch (err) {
       console.error(err);
+
+      // Reverte para os valores anteriores em caso de falha
       setListaProdutos((atual) =>
         atual.map((produto) =>
           produto.id === idProduto
@@ -184,6 +199,7 @@ export default function GerenciamentoEstoque() {
             : produto
         )
       );
+
       alert(
         formatErrorMessage(
           err,
@@ -193,14 +209,12 @@ export default function GerenciamentoEstoque() {
     }
   }
 
+  // Alterna o produto entre disponível/desativado para venda (apenas local)
   function alternarDisponibilidade(idProduto) {
     setListaProdutos((atual) =>
       atual.map((produto) =>
         produto.id === idProduto
-          ? {
-              ...produto,
-              ativoParaVenda: !produto.ativoParaVenda,
-            }
+          ? { ...produto, ativoParaVenda: !produto.ativoParaVenda }
           : produto
       )
     );

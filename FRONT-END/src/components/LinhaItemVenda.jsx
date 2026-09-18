@@ -1,3 +1,7 @@
+// ===== Helpers para lidar com produtos =====
+// A API pode retornar campos em PascalCase (Id) ou camelCase (id).
+// Esses helpers normalizam o acesso, evitando repetir `?? produto?.X ?? produto?.Y`.
+
 function getIdProduto(produto) {
   return produto?.Id ?? produto?.id ?? produto?.idProduto;
 }
@@ -32,6 +36,8 @@ function getEstoqueProduto(produto) {
   );
 }
 
+// ===== Componente: Total da venda =====
+// Só exibe o valor total formatado com 2 casas decimais.
 export function TotalVenda({ totalGeral, isDark }) {
   return (
     <div
@@ -60,6 +66,8 @@ export function TotalVenda({ totalGeral, isDark }) {
   );
 }
 
+// ===== Componente: Linha de item da venda =====
+// Representa UMA linha do carrinho: select de produto + quantidade + subtotal + remover.
 export function LinhaItemVenda({
   index,
   item,
@@ -70,13 +78,19 @@ export function LinhaItemVenda({
   removerItem,
   isDark,
 }) {
+
+  // Descobre o produto selecionado nesta linha e seu estoque atual
   const produtoAtual = produtos.find(
     (p) => Number(getIdProduto(p)) === Number(item.idProduto)
   );
   const estoqueAtual = produtoAtual ? getEstoqueProduto(produtoAtual) : undefined;
+
+  // Marca a linha em amarelo quando a quantidade bate no limite do estoque
   const noLimite =
     estoqueAtual !== undefined && Number(item.quantidade) >= estoqueAtual;
 
+  // Lista do select = filtrados + o produto atual (caso tenha saído do filtro)
+  // Assim o item selecionado nunca some da lista por causa de um filtro
   const produtosParaSelect = [...produtosFiltrados];
   if (
     produtoAtual &&
@@ -96,6 +110,7 @@ export function LinhaItemVenda({
       }}
     >
       <div style={styles.itemRow}>
+        {/* SELECT DE PRODUTO — desabilita itens sem estoque ou já usados em outra linha */}
         <select
           value={item.idProduto}
           onChange={(e) => atualizarItem(index, "idProduto", e.target.value)}
@@ -136,6 +151,7 @@ export function LinhaItemVenda({
           })}
         </select>
 
+        {/* QUANTIDADE — limitada ao estoque atual; borda amarela se atingiu o limite */}
         <input
           type="number"
           min="1"
@@ -162,6 +178,7 @@ export function LinhaItemVenda({
           }
         />
 
+        {/* SUBTOTAL — apenas leitura, já calculado pelo componente pai */}
         <input
           type="text"
           value={`R$ ${Number(item.valorTotal).toFixed(2)}`}
@@ -175,6 +192,7 @@ export function LinhaItemVenda({
           }}
         />
 
+        {/* BOTÃO REMOVER — só aparece se houver mais de um produto na lista */}
         {produtos.length > 1 ? (
           <button
             type="button"
