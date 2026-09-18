@@ -38,7 +38,7 @@ function getPrecoProduto(produto) {
       produto?.valor ??
       produto?.PrecoVenda ??
       produto?.precoVenda ??
-      0,
+      0
   );
 }
 
@@ -52,7 +52,7 @@ function getEstoqueProduto(produto) {
       produto?.quantidadeEstoque ??
       produto?.Qtd ??
       produto?.qtd ??
-      0,
+      0
   );
 }
 
@@ -68,8 +68,6 @@ export default function CadastroVendas() {
   const navigate = useNavigate();
   const { theme } = useContext(ThemeContext);
   const isDark = theme === "dark";
-
-  const STORAGE_KEY = "ultimaVenda";
 
   const [form, setForm] = useState(estadoInicial);
   const [itens, setItens] = useState([{ ...itemVazio }]);
@@ -145,31 +143,6 @@ export default function CadastroVendas() {
     carregarProprietarios();
   }, []);
 
-  // Restaurar últimos dados salvos (se houver)
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (parsed?.form) setForm(parsed.form);
-      if (Array.isArray(parsed?.itens) && parsed.itens.length > 0)
-        setItens(parsed.itens);
-      if (parsed?.buscaProduto) setBuscaProduto(parsed.buscaProduto);
-    } catch (err) {
-      console.warn("Erro ao restaurar última venda:", err);
-    }
-  }, []);
-
-  // Salvar automaticamente última venda no localStorage
-  useEffect(() => {
-    try {
-      const payload = { form, itens, buscaProduto };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-    } catch (err) {
-      console.warn("Erro ao salvar última venda:", err);
-    }
-  }, [form, itens, buscaProduto]);
-
   // ---------- Campos do formulário ----------
   function atualizarCampo(event) {
     const { name, value } = event.target;
@@ -181,7 +154,8 @@ export default function CadastroVendas() {
     // Verifica duplicidade ao trocar o produto
     if (campo === "idProduto" && valor) {
       const jaExiste = itens.some(
-        (item, i) => i !== index && Number(item.idProduto) === Number(valor),
+        (item, i) =>
+          i !== index && Number(item.idProduto) === Number(valor)
       );
 
       if (jaExiste) {
@@ -199,7 +173,7 @@ export default function CadastroVendas() {
 
       if (campo === "idProduto" || campo === "quantidade") {
         const produto = produtos.find(
-          (p) => Number(getIdProduto(p)) === Number(item.idProduto),
+          (p) => Number(getIdProduto(p)) === Number(item.idProduto)
         );
 
         if (produto) {
@@ -238,7 +212,7 @@ export default function CadastroVendas() {
   // ---------- Total geral ----------
   const totalGeral = itens.reduce(
     (acc, item) => acc + (Number(item.valorTotal) || 0),
-    0,
+    0
   );
 
   // ---------- Produtos filtrados pela busca ----------
@@ -265,7 +239,7 @@ export default function CadastroVendas() {
     }
 
     const itensValidos = itens.filter(
-      (i) => i.idProduto && Number(i.quantidade) > 0,
+      (i) => i.idProduto && Number(i.quantidade) > 0
     );
     if (itensValidos.length === 0) {
       setMensagem({
@@ -280,11 +254,13 @@ export default function CadastroVendas() {
     for (const item of itensValidos) {
       const id = Number(item.idProduto);
       if (idsUsados.has(id)) {
-        const produto = produtos.find((p) => Number(getIdProduto(p)) === id);
+        const produto = produtos.find(
+          (p) => Number(getIdProduto(p)) === id
+        );
         setMensagem({
           type: "error",
           text: `O produto "${getNomeProduto(
-            produto,
+            produto
           )}" está duplicado. Remova uma das linhas.`,
         });
         return;
@@ -295,7 +271,7 @@ export default function CadastroVendas() {
     // Valida estoque
     for (const item of itensValidos) {
       const produto = produtos.find(
-        (p) => Number(getIdProduto(p)) === Number(item.idProduto),
+        (p) => Number(getIdProduto(p)) === Number(item.idProduto)
       );
       const estoque = produto ? getEstoqueProduto(produto) : 0;
 
@@ -303,7 +279,7 @@ export default function CadastroVendas() {
         setMensagem({
           type: "error",
           text: `A quantidade do produto "${getNomeProduto(
-            produto,
+            produto
           )}" ultrapassa o estoque disponível (${estoque}).`,
         });
         return;
@@ -332,7 +308,9 @@ export default function CadastroVendas() {
       });
 
       setMensagem({ type: "success", text: "Venda registrada com sucesso!" });
-      // Mantemos os dados preenchidos (persistidos em localStorage) para reutilização
+      setForm(estadoInicial);
+      setItens([{ ...itemVazio }]);
+      setBuscaProduto("");
     } catch (error) {
       console.error(error);
       setMensagem({
@@ -353,28 +331,31 @@ export default function CadastroVendas() {
         {/* ---------- Cabeçalho ---------- */}
         <header style={styles.header}>
           <div>
-            <h1
-              style={{ ...styles.title, ...(isDark ? styles.titleDark : {}) }}
+            <h2
+              style={{
+                ...styles.title,
+                ...(isDark ? styles.titleDark : {}),
+              }}
             >
-              Cadastro de venda
-            </h1>
+              Cadastro de Vendas
+            </h2>
             <p
               style={{
                 ...styles.subtitle,
                 ...(isDark ? styles.subtitleDark : {}),
               }}
             >
-              Registre uma nova venda com produtos, vendedor e proprietário.
+              Registre novas vendas e acompanhe o faturamento.
             </p>
           </div>
 
           <button
             type="button"
-            onClick={() => navigate("/vendas")}
             style={{
-              ...styles.backButton,
-              ...(isDark ? styles.backButtonDark : {}),
+              ...styles.voltarButton,
+              ...(isDark ? styles.voltarButtonDark : {}),
             }}
+            onClick={() => navigate(-1)}
           >
             <span className="material-symbols-outlined">arrow_back</span>
             Voltar
@@ -390,18 +371,16 @@ export default function CadastroVendas() {
 
           <form onSubmit={cadastrarVenda} style={styles.form}>
             {/* ---------- Proprietário + Vendedor (linha) ---------- */}
-            <div style={styles.grid}>
-              <label
-                style={{ ...styles.field, ...(isDark ? styles.fieldDark : {}) }}
-              >
-                <span
+            <div style={styles.row}>
+              <div style={styles.field}>
+                <label
                   style={{
                     ...styles.label,
                     ...(isDark ? styles.labelDark : {}),
                   }}
                 >
                   Proprietário
-                </span>
+                </label>
                 <select
                   name="idProprietario"
                   value={form.idProprietario}
@@ -412,29 +391,33 @@ export default function CadastroVendas() {
                   }}
                   disabled={carregandoProprietarios}
                 >
-                  <option value="">Selecione</option>
-                  {proprietarios.map((proprietario) => (
-                    <option
-                      key={proprietario.Id ?? proprietario.id}
-                      value={proprietario.Id ?? proprietario.id}
-                    >
-                      {proprietario.Nome ?? proprietario.nome}
-                    </option>
-                  ))}
+                  <option value="">
+                    {carregandoProprietarios
+                      ? "Carregando proprietários..."
+                      : "Selecione um proprietário..."}
+                  </option>
+                  {proprietarios.map((proprietario) => {
+                    const id = proprietario.Id ?? proprietario.id;
+                    const nome =
+                      proprietario.Nome ?? proprietario.nome ?? "Sem nome";
+                    return (
+                      <option key={id} value={id}>
+                        {nome}
+                      </option>
+                    );
+                  })}
                 </select>
-              </label>
+              </div>
 
-              <label
-                style={{ ...styles.field, ...(isDark ? styles.fieldDark : {}) }}
-              >
-                <span
+              <div style={styles.field}>
+                <label
                   style={{
                     ...styles.label,
                     ...(isDark ? styles.labelDark : {}),
                   }}
                 >
                   Vendedor
-                </span>
+                </label>
                 <select
                   name="idVendedor"
                   value={form.idVendedor}
@@ -445,195 +428,335 @@ export default function CadastroVendas() {
                   }}
                   disabled={carregandoVendedores}
                 >
-                  <option value="">Selecione</option>
-                  {vendedores.map((vendedor) => (
-                    <option
-                      key={vendedor.Id ?? vendedor.id}
-                      value={vendedor.Id ?? vendedor.id}
-                    >
-                      {vendedor.Nome ?? vendedor.nome}
-                    </option>
-                  ))}
+                  <option value="">
+                    {carregandoVendedores
+                      ? "Carregando vendedores..."
+                      : "Selecione um vendedor..."}
+                  </option>
+                  {vendedores.map((vendedor) => {
+                    const id = vendedor.Id ?? vendedor.id;
+                    const nome =
+                      vendedor.Nome ?? vendedor.nome ?? "Sem nome";
+                    return (
+                      <option key={id} value={id}>
+                        {nome}
+                      </option>
+                    );
+                  })}
                 </select>
-              </label>
-            </div>
-
-            {/* ---------- Campo de busca ---------- */}
-            <div style={styles.searchBox}>
-              <span className="material-symbols-outlined">search</span>
-              <input
-                type="text"
-                value={buscaProduto}
-                onChange={(e) => setBuscaProduto(e.target.value)}
-                placeholder="Buscar produto por nome ou código"
-                style={{
-                  ...styles.searchInput,
-                  ...(isDark ? styles.searchInputDark : {}),
-                }}
-              />
+              </div>
             </div>
 
             {/* ---------- Lista de produtos ---------- */}
-            <div style={styles.itensHeader}>
-              <h2
-                style={{
-                  ...styles.sectionTitle,
-                  ...(isDark ? styles.sectionTitleDark : {}),
-                }}
-              >
-                Produtos da venda
-              </h2>
-              <button
-                type="button"
-                onClick={adicionarItem}
-                style={{
-                  ...styles.addButton,
-                  ...(isDark ? styles.addButtonDark : {}),
-                }}
-              >
-                <span className="material-symbols-outlined">add</span>
-                Adicionar item
-              </button>
-            </div>
-
-            {itens.map((item, index) => (
-              <div
-                key={index}
-                style={{
-                  ...styles.itemCard,
-                  ...(isDark ? styles.itemCardDark : {}),
-                }}
-              >
-                <div style={styles.grid}>
-                  <label
-                    style={{
-                      ...styles.field,
-                      ...(isDark ? styles.fieldDark : {}),
-                    }}
-                  >
-                    <span
-                      style={{
-                        ...styles.label,
-                        ...(isDark ? styles.labelDark : {}),
-                      }}
-                    >
-                      Produto
-                    </span>
-                    <select
-                      value={item.idProduto}
-                      onChange={(event) =>
-                        atualizarItem(index, "idProduto", event.target.value)
-                      }
-                      style={{
-                        ...styles.select,
-                        ...(isDark ? styles.selectDark : {}),
-                      }}
-                    >
-                      <option value="">Selecione um produto</option>
-                      {produtosFiltrados.map((produto) => {
-                        const idProduto = getIdProduto(produto);
-                        const nomeProduto = getNomeProduto(produto);
-                        const preçoProduto = Number(getPrecoProduto(produto) || 0);
-                        const estoqueProduto = Number(getEstoqueProduto(produto) || 0);
-
-                        return (
-                          <option key={idProduto} value={idProduto}>
-                            {nomeProduto} — Estoque: {estoqueProduto} — R${" "}
-                            {preçoProduto.toFixed(2).replace(".", ",")}
-                          </option>
-                        );
-                      })}
-                    </select>
-                  </label>
-
-                  <label
-                    style={{
-                      ...styles.field,
-                      ...(isDark ? styles.fieldDark : {}),
-                    }}
-                  >
-                    <span
-                      style={{
-                        ...styles.label,
-                        ...(isDark ? styles.labelDark : {}),
-                      }}
-                    >
-                      Quantidade
-                    </span>
-                    <input
-                      type="number"
-                      min="1"
-                      value={item.quantidade}
-                      onChange={(event) =>
-                        atualizarItem(index, "quantidade", event.target.value)
-                      }
-                      style={{
-                        ...styles.input,
-                        ...(isDark ? styles.inputDark : {}),
-                      }}
-                    />
-                  </label>
-                </div>
-
-                <div
+            <div style={styles.itemsSection}>
+              <div style={styles.itemsHeader}>
+                <h3
                   style={{
-                    ...styles.itemMeta,
-                    ...(isDark ? styles.itemMetaDark : {}),
+                    ...styles.itemsTitle,
+                    ...(isDark ? styles.itemsTitleDark : {}),
                   }}
                 >
-                  <span>
-                    Valor unitário: R${" "}
-                    {Number(item.valorUnitario || 0)
-                      .toFixed(2)
-                      .replace(".", ",")}
-                  </span>
-                  <span>
-                    Total: R${" "}
-                    {Number(item.valorTotal || 0)
-                      .toFixed(2)
-                      .replace(".", ",")}
-                  </span>
-                </div>
+                  Produtos da venda{" "}
+                  {carregandoProdutos && (
+                    <span
+                      style={{
+                        ...styles.loadingHint,
+                        ...(isDark ? styles.loadingHintDark : {}),
+                      }}
+                    >
+                      atualizando...
+                    </span>
+                  )}
+                </h3>
 
-                {itens.length > 1 && (
+                <div style={styles.headerButtons}>
                   <button
                     type="button"
-                    onClick={() => removerItem(index)}
                     style={{
-                      ...styles.removeButton,
-                      ...(isDark ? styles.removeButtonDark : {}),
+                      ...styles.refreshButton,
+                      ...(isDark ? styles.refreshButtonDark : {}),
                     }}
+                    onClick={carregarProdutos}
+                    disabled={carregandoProdutos}
+                    title="Atualizar lista de produtos"
                   >
-                    Remover
+                    ↻
+                  </button>
+                  <button
+                    type="button"
+                    style={{
+                      ...styles.addButton,
+                      ...(isDark ? styles.addButtonDark : {}),
+                    }}
+                    onClick={adicionarItem}
+                  >
+                    + Adicionar produto
+                  </button>
+                </div>
+              </div>
+
+              {/* ---------- Campo de busca ---------- */}
+              <div
+                style={{
+                  ...styles.searchWrapper,
+                  ...(isDark ? styles.searchWrapperDark : {}),
+                }}
+              >
+                <span
+                  className="material-symbols-outlined"
+                  style={{
+                    ...styles.searchIcon,
+                    ...(isDark ? styles.searchIconDark : {}),
+                  }}
+                >
+                  search
+                </span>
+
+                <input
+                  type="text"
+                  value={buscaProduto}
+                  onChange={(e) => setBuscaProduto(e.target.value)}
+                  placeholder="Pesquisar produto por nome ou ID..."
+                  style={{
+                    ...styles.searchInput,
+                    ...(isDark ? styles.searchInputDark : {}),
+                  }}
+                />
+
+                {buscaProduto && (
+                  <button
+                    type="button"
+                    style={{
+                      ...styles.searchClear,
+                      ...(isDark ? styles.searchClearDark : {}),
+                    }}
+                    onClick={() => setBuscaProduto("")}
+                    title="Limpar pesquisa"
+                  >
+                    ✕
                   </button>
                 )}
               </div>
-            ))}
 
-            {/* ---------- Total geral ---------- */}
-            <div
-              style={{
-                ...styles.totalBox,
-                ...(isDark ? styles.totalBoxDark : {}),
-              }}
-            >
-              <span style={{ ...(isDark ? styles.totalLabelDark : {}) }}>
-                Total da venda
-              </span>
-              <strong
+              {buscaProduto.trim() && (
+                <p
+                  style={{
+                    ...styles.searchInfo,
+                    ...(isDark ? styles.searchInfoDark : {}),
+                  }}
+                >
+                  {produtosFiltrados.length} produto(s) encontrado(s) para "
+                  {buscaProduto}"
+                </p>
+              )}
+
+              {/* ---------- Cabeçalho das colunas ---------- */}
+              <div style={styles.itemHeaderRow}>
+                <span
+                  style={{
+                    ...styles.itemHeaderLabel,
+                    ...(isDark ? styles.itemHeaderLabelDark : {}),
+                  }}
+                >
+                  Produto
+                </span>
+                <span
+                  style={{
+                    ...styles.itemHeaderLabel,
+                    ...(isDark ? styles.itemHeaderLabelDark : {}),
+                  }}
+                >
+                  Qtd
+                </span>
+                <span
+                  style={{
+                    ...styles.itemHeaderLabel,
+                    ...(isDark ? styles.itemHeaderLabelDark : {}),
+                  }}
+                >
+                  Total
+                </span>
+                <span />
+              </div>
+
+              {itens.map((item, index) => {
+                const produtoAtual = produtos.find(
+                  (p) => Number(getIdProduto(p)) === Number(item.idProduto)
+                );
+                const estoqueAtual = produtoAtual
+                  ? getEstoqueProduto(produtoAtual)
+                  : undefined;
+                const noLimite =
+                  estoqueAtual !== undefined &&
+                  Number(item.quantidade) >= estoqueAtual;
+
+                // Produtos já usados em OUTRAS linhas
+                const idsUsadosEmOutrasLinhas = itens
+                  .filter((_, i) => i !== index)
+                  .map((i) => Number(i.idProduto))
+                  .filter((v) => !Number.isNaN(v) && v > 0);
+
+                // Produtos disponíveis para ESTA linha
+                const produtosParaSelect = [...produtosFiltrados];
+
+                // Mantém o produto selecionado visível mesmo que filtrado
+                if (
+                  produtoAtual &&
+                  !produtosParaSelect.some(
+                    (p) =>
+                      Number(getIdProduto(p)) === Number(item.idProduto)
+                  )
+                ) {
+                  produtosParaSelect.unshift(produtoAtual);
+                }
+
+                return (
+                  <div
+                    key={index}
+                    style={{
+                      ...styles.itemCard,
+                      ...(isDark ? styles.itemCardDark : {}),
+                    }}
+                  >
+                    <div style={styles.itemRow}>
+                      <select
+                        value={item.idProduto}
+                        onChange={(e) =>
+                          atualizarItem(index, "idProduto", e.target.value)
+                        }
+                        style={{
+                          ...styles.select,
+                          ...(isDark ? styles.selectDark : {}),
+                        }}
+                      >
+                        <option value="">
+                          {carregandoProdutos && produtos.length === 0
+                            ? "Carregando produtos..."
+                            : produtos.length === 0
+                            ? "Nenhum produto cadastrado"
+                            : produtosParaSelect.length === 0
+                            ? "Nenhum produto encontrado"
+                            : "Selecione um produto..."}
+                        </option>
+                        {produtosParaSelect.map((produto) => {
+                          const id = getIdProduto(produto);
+                          const nome = getNomeProduto(produto);
+                          const preco = getPrecoProduto(produto);
+                          const estoque = getEstoqueProduto(produto);
+                          const semEstoque = estoque <= 0;
+                          const jaUsadoEmOutra =
+                            idsUsadosEmOutrasLinhas.includes(Number(id));
+
+                          return (
+                            <option
+                              key={id}
+                              value={id}
+                              disabled={semEstoque || jaUsadoEmOutra}
+                            >
+                              {nome} - R$ {preco.toFixed(2)}
+                              {jaUsadoEmOutra
+                                ? " (já adicionado)"
+                                : semEstoque
+                                ? " (sem estoque)"
+                                : ` • Estoque: ${estoque}`}
+                            </option>
+                          );
+                        })}
+                      </select>
+
+                      <input
+                        type="number"
+                        min="1"
+                        max={estoqueAtual ?? undefined}
+                        step="1"
+                        value={item.quantidade}
+                        onChange={(e) =>
+                          atualizarItem(index, "quantidade", e.target.value)
+                        }
+                        style={{
+                          ...styles.input,
+                          ...(isDark ? styles.inputDark : {}),
+                          width: "90px",
+                          textAlign: "center",
+                          borderColor: noLimite
+                            ? "#f59e0b"
+                            : isDark
+                            ? "#4b5563"
+                            : "#cbd5e1",
+                        }}
+                        placeholder="Qtd"
+                        title={
+                          estoqueAtual !== undefined
+                            ? `Máximo disponível: ${estoqueAtual}`
+                            : undefined
+                        }
+                      />
+
+                      <input
+                        type="text"
+                        value={`R$ ${Number(item.valorTotal).toFixed(2)}`}
+                        readOnly
+                        style={{
+                          ...styles.input,
+                          ...(isDark ? styles.inputDark : {}),
+                          width: "130px",
+                          textAlign: "right",
+                          background: isDark ? "#0b1220" : "#f1f5f9",
+                        }}
+                      />
+
+                      {itens.length > 1 ? (
+                        <button
+                          type="button"
+                          style={{
+                            ...styles.removeButton,
+                            ...(isDark ? styles.removeButtonDark : {}),
+                          }}
+                          onClick={() => removerItem(index)}
+                          title="Remover produto"
+                        >
+                          ✕
+                        </button>
+                      ) : (
+                        <span style={styles.removePlaceholder} />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              <div
                 style={{
-                  ...styles.totalValue,
-                  ...(isDark ? styles.totalValueDark : {}),
+                  ...styles.totalBox,
+                  ...(isDark ? styles.totalBoxDark : {}),
                 }}
               >
-                R$ {totalGeral.toFixed(2).replace(".", ",")}
-              </strong>
+                <span
+                  style={{
+                    ...styles.totalLabel,
+                    ...(isDark ? styles.totalLabelDark : {}),
+                  }}
+                >
+                  Total da venda
+                </span>
+                <strong
+                  style={{
+                    ...styles.totalValue,
+                    ...(isDark ? styles.totalValueDark : {}),
+                  }}
+                >
+                  R$ {totalGeral.toFixed(2)}
+                </strong>
+              </div>
             </div>
 
             {/* ---------- Observações ---------- */}
-            <div style={styles.formGroup}>
+            <div style={styles.fieldFull}>
               <label
-                style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}
+                style={{
+                  ...styles.label,
+                  ...(isDark ? styles.labelDark : {}),
+                }}
               >
                 Observações
               </label>
@@ -641,19 +764,19 @@ export default function CadastroVendas() {
                 name="observacoes"
                 value={form.observacoes}
                 onChange={atualizarCampo}
-                rows={4}
+                placeholder="Observações adicionais sobre a venda (opcional)"
                 style={{
                   ...styles.textarea,
                   ...(isDark ? styles.textareaDark : {}),
                 }}
-                placeholder="Observações adicionais da venda"
+                rows="3"
               />
             </div>
 
             {/* ---------- Ações ---------- */}
             <div style={styles.actions}>
               <PrimaryButton dark={isDark} disabled={loading} type="submit">
-                {loading ? "Cadastrando..." : "Cadastrar venda"}
+                {loading ? "Registrando..." : "Registrar venda"}
               </PrimaryButton>
             </div>
           </form>
@@ -669,7 +792,7 @@ const styles = {
   page: {
     marginLeft: "256px",
     width: "calc(100% - 256px)",
-    padding: "32px 32px 40px",
+    padding: "32px",
     boxSizing: "border-box",
     fontFamily: "Inter, sans-serif",
   },
@@ -679,12 +802,20 @@ const styles = {
     justifyContent: "space-between",
     alignItems: "flex-end",
     marginBottom: "24px",
+    gap: "16px",
   },
-  title: { margin: 0, fontSize: "32px", color: "#111c2d", fontWeight: 700 },
+  title: {
+    margin: 0,
+    fontSize: "32px",
+    color: "#111c2d",
+    fontWeight: 700,
+    fontFamily: "Montserrat, sans-serif",
+  },
   titleDark: { color: "#f9fafb" },
   subtitle: { margin: "8px 0 0", color: "#4a5568" },
   subtitleDark: { color: "#d1d5db" },
-  backButton: {
+
+  voltarButton: {
     display: "flex",
     alignItems: "center",
     gap: "8px",
@@ -696,41 +827,54 @@ const styles = {
     fontSize: "14px",
     fontWeight: "600",
     cursor: "pointer",
+    fontFamily: "Inter, sans-serif",
+    flexShrink: 0,
   },
-  backButtonDark: {
+  voltarButtonDark: {
     backgroundColor: "#1f2937",
     borderColor: "#4b5563",
     color: "#f9fafb",
   },
+
   card: {
     backgroundColor: "#ffffff",
     border: "1px solid #e2e8f0",
     borderRadius: "12px",
     padding: "24px",
     boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
-    maxWidth: "950px",
+    maxWidth: "900px",
   },
-  cardDark: { backgroundColor: "#111827", borderColor: "#374151" },
+  cardDark: {
+    backgroundColor: "#111827",
+    borderColor: "#374151",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+  },
   form: { display: "flex", flexDirection: "column", gap: "20px" },
-  grid: {
+
+  row: {
     display: "grid",
-    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-    gap: "20px",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "16px",
   },
+
   field: { display: "flex", flexDirection: "column", gap: "8px" },
-  fieldDark: { color: "#e5e7eb" },
+  fieldFull: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+  },
   label: { fontWeight: 600, color: "#303e51" },
   labelDark: { color: "#e5e7eb" },
   select: {
     width: "100%",
     boxSizing: "border-box",
-    border: "1px solid #d7dfeb",
-    borderRadius: "10px",
-    padding: "12px 14px",
+    padding: "10px 12px",
+    border: "1px solid #cbd5e1",
+    borderRadius: "8px",
     fontSize: "14px",
-    outline: "none",
     backgroundColor: "#ffffff",
-    color: "#111827",
+    color: "#111c2d",
+    fontFamily: "Inter, sans-serif",
   },
   selectDark: {
     backgroundColor: "#1f2937",
@@ -738,119 +882,30 @@ const styles = {
     color: "#f9fafb",
   },
   input: {
-    width: "100%",
     boxSizing: "border-box",
-    border: "1px solid #d7dfeb",
-    borderRadius: "10px",
-    padding: "12px 14px",
+    padding: "10px 12px",
+    border: "1px solid #cbd5e1",
+    borderRadius: "8px",
     fontSize: "14px",
-    outline: "none",
     backgroundColor: "#ffffff",
-    color: "#111827",
+    color: "#111c2d",
+    fontFamily: "Inter, sans-serif",
   },
   inputDark: {
     backgroundColor: "#1f2937",
     borderColor: "#4b5563",
     color: "#f9fafb",
   },
-  searchBox: {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    padding: "10px 12px",
-    borderRadius: "10px",
-    border: "1px solid #d7dfeb",
-    backgroundColor: "#f8fafc",
-  },
-  searchInput: {
-    width: "100%",
-    border: "none",
-    backgroundColor: "transparent",
-    outline: "none",
-    color: "#111827",
-  },
-  searchInputDark: { color: "#f9fafb" },
-  itensHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: "12px",
-  },
-  sectionTitle: { margin: 0, fontSize: "22px", color: "#111c2d" },
-  sectionTitleDark: { color: "#f9fafb" },
-  addButton: {
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-    border: "1px solid #cbd5e1",
-    backgroundColor: "#f8fafc",
-    color: "#111827",
-    borderRadius: "10px",
-    padding: "8px 12px",
-    cursor: "pointer",
-  },
-  addButtonDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#4b5563",
-    color: "#f9fafb",
-  },
-  itemCard: {
-    border: "1px solid #e2e8f0",
-    borderRadius: "10px",
-    padding: "18px",
-    backgroundColor: "#f8fafc",
-  },
-  itemCardDark: { backgroundColor: "#1f2937", borderColor: "#374151" },
-  itemMeta: {
-    display: "flex",
-    justifyContent: "space-between",
-    marginTop: "12px",
-    color: "#475569",
-    fontSize: "13px",
-  },
-  itemMetaDark: { color: "#d1d5db" },
-  removeButton: {
-    marginTop: "12px",
-    border: "1px solid #fca5a5",
-    backgroundColor: "#fff1f2",
-    color: "#991b1b",
-    borderRadius: "8px",
-    padding: "8px 12px",
-    cursor: "pointer",
-  },
-  removeButtonDark: {
-    backgroundColor: "#3f1721",
-    borderColor: "#7f1d1d",
-    color: "#fecdd3",
-  },
-  totalBox: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "16px 18px",
-    backgroundColor: "#ffffff",
-    borderRadius: "10px",
-    color: "#0f172a",
-    border: "1px solid #e2e8f0",
-  },
-  totalBoxDark: {
-    backgroundColor: "#0b1220",
-    border: "1px solid #334155",
-    color: "#f8fafc",
-  },
-  totalLabelDark: { color: "#cbd5e1" },
-  totalValue: { fontSize: "22px", color: "#0f172a" },
-  totalValueDark: { color: "#f9fafb" },
-  formGroup: { display: "flex", flexDirection: "column", gap: "8px" },
   textarea: {
     width: "100%",
     boxSizing: "border-box",
-    border: "1px solid #d7dfeb",
-    borderRadius: "10px",
-    padding: "12px 14px",
+    padding: "10px 12px",
+    border: "1px solid #cbd5e1",
+    borderRadius: "8px",
     fontSize: "14px",
     backgroundColor: "#ffffff",
-    color: "#111827",
+    color: "#111c2d",
+    fontFamily: "Inter, sans-serif",
     resize: "vertical",
   },
   textareaDark: {
@@ -859,4 +914,175 @@ const styles = {
     color: "#f9fafb",
   },
   actions: { display: "flex", justifyContent: "flex-end" },
+
+  itemsSection: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+  },
+  itemsHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  itemsTitle: { margin: 0, fontSize: "16px", color: "#111c2d" },
+  itemsTitleDark: { color: "#f9fafb" },
+  loadingHint: {
+    fontSize: "12px",
+    color: "#64748b",
+    fontWeight: 400,
+    marginLeft: "8px",
+  },
+  loadingHintDark: { color: "#94a3b8" },
+  headerButtons: {
+    display: "flex",
+    gap: "8px",
+    alignItems: "center",
+  },
+  refreshButton: {
+    border: "1px solid #cbd5e1",
+    backgroundColor: "#fff",
+    color: "#303e51",
+    padding: "8px 12px",
+    borderRadius: "8px",
+    fontWeight: 600,
+    cursor: "pointer",
+    fontSize: "14px",
+  },
+  refreshButtonDark: {
+    backgroundColor: "#1f2937",
+    borderColor: "#4b5563",
+    color: "#f9fafb",
+  },
+  addButton: {
+    border: "1px dashed #303e51",
+    backgroundColor: "#fff",
+    color: "#303e51",
+    padding: "8px 14px",
+    borderRadius: "8px",
+    fontWeight: 600,
+    cursor: "pointer",
+    fontSize: "13px",
+  },
+  addButtonDark: {
+    borderColor: "#94a3b8",
+    backgroundColor: "#1f2937",
+    color: "#f9fafb",
+  },
+
+  searchWrapper: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    padding: "0 12px",
+    border: "1px solid #cbd5e1",
+    borderRadius: "8px",
+    backgroundColor: "#ffffff",
+  },
+  searchWrapperDark: {
+    backgroundColor: "#1f2937",
+    borderColor: "#4b5563",
+  },
+  searchIcon: {
+    fontSize: "20px",
+    color: "#64748b",
+    flexShrink: 0,
+  },
+  searchIconDark: { color: "#94a3b8" },
+  searchInput: {
+    flex: 1,
+    border: "none",
+    outline: "none",
+    padding: "10px 0",
+    fontSize: "14px",
+    backgroundColor: "transparent",
+    color: "#111c2d",
+    fontFamily: "Inter, sans-serif",
+  },
+  searchInputDark: { color: "#f9fafb" },
+  searchClear: {
+    border: "none",
+    background: "transparent",
+    color: "#64748b",
+    cursor: "pointer",
+    fontSize: "14px",
+    padding: "4px 6px",
+    borderRadius: "4px",
+    flexShrink: 0,
+  },
+  searchClearDark: { color: "#cbd5e1" },
+  searchInfo: {
+    margin: 0,
+    fontSize: "12px",
+    color: "#64748b",
+    fontStyle: "italic",
+  },
+  searchInfoDark: { color: "#94a3b8" },
+
+  // ---------- Cabeçalho das colunas ----------
+  itemHeaderRow: {
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 1fr) 90px 130px 42px",
+    gap: "10px",
+    padding: "0 8px",
+    alignItems: "center",
+  },
+  itemHeaderLabel: {
+    fontSize: "11px",
+    fontWeight: 600,
+    textTransform: "uppercase",
+    letterSpacing: "0.04em",
+    color: "#64748b",
+  },
+  itemHeaderLabelDark: { color: "#94a3b8" },
+
+  itemCard: {
+    border: "1px solid #e2e8f0",
+    borderRadius: "10px",
+    padding: "8px",
+    backgroundColor: "#f8fafc",
+  },
+  itemCardDark: {
+    backgroundColor: "#1f2937",
+    borderColor: "#374151",
+  },
+  itemRow: {
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 1fr) 90px 130px 42px",
+    gap: "10px",
+    alignItems: "center",
+  },
+  removeButton: {
+    border: "1px solid #fecaca",
+    backgroundColor: "#fff",
+    color: "#b91c1c",
+    padding: "10px 12px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontWeight: 700,
+    fontSize: "14px",
+  },
+  removeButtonDark: {
+    backgroundColor: "#3f1721",
+    borderColor: "#7f1d1d",
+    color: "#fecdd3",
+  },
+  removePlaceholder: { width: "42px", height: "38px" },
+  totalBox: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "14px 16px",
+    backgroundColor: "#f1f5f9",
+    borderRadius: "10px",
+    border: "1px solid #e2e8f0",
+  },
+  totalBoxDark: {
+    backgroundColor: "#0b1220",
+    borderColor: "#334155",
+  },
+  totalLabel: { color: "#303e51", fontWeight: 600, fontSize: "14px" },
+  totalLabelDark: { color: "#cbd5e1" },
+  totalValue: { color: "#111c2d", fontSize: "20px" },
+  totalValueDark: { color: "#f9fafb" },
 };
