@@ -18,7 +18,7 @@ export default function Painel() {
   } = useVendas();
 
   const vendasLista = Array.isArray(vendas) ? vendas : [];
-  const ultimasVendas = [...vendasLista].slice(-3).reverse();
+  const ultimasVendas = [...vendasLista].slice(0,3);
 
   const produtosTotais = Array.isArray(produtos) ? produtos.length : 0;
 

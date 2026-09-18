@@ -15,9 +15,22 @@ export function useFornecedores() {
         setError(null);
 
         const dados = await buscarFornecedores();
+        const idsDesativados = (() => {
+          try {
+            const salvos = JSON.parse(localStorage.getItem("fornecedoresDesativados") || "[]");
+            return new Set((Array.isArray(salvos) ? salvos : []).map(Number).filter((id) => !Number.isNaN(id)));
+          } catch {
+            return new Set();
+          }
+        })();
+
+        const normalizados = (Array.isArray(dados) ? dados : []).map((fornecedor) => ({
+          ...fornecedor,
+          ativo: !idsDesativados.has(Number(fornecedor.Id ?? fornecedor.id)),
+        }));
 
         if (isMounted) {
-          setFornecedores(dados);
+          setFornecedores(normalizados);
         }
       } catch (error) {
         if (isMounted) {
