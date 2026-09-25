@@ -626,8 +626,14 @@ export default function CadastroVendas() {
 }
 
 const styles = {
-  layout: { display: "flex", minHeight: "100vh", backgroundColor: "#f3f5f9" },
-  layoutDark: { backgroundColor: "#0f172a" },
+  layout: {
+    display: "flex",
+    minHeight: "100vh",
+    backgroundColor: "#f3f5f9",
+  },
+  layoutDark: {
+    backgroundColor: "#0f172a",
+  },
   page: {
     marginLeft: "256px",
     width: "calc(100% - 256px)",
@@ -635,7 +641,10 @@ const styles = {
     boxSizing: "border-box",
     fontFamily: "Inter, sans-serif",
   },
-  pageDark: { backgroundColor: "#111827", color: "#f3f4f6" },
+  pageDark: {
+    backgroundColor: "#111827",
+    color: "#f3f4f6",
+  },
   header: {
     display: "flex",
     justifyContent: "space-between",
@@ -650,9 +659,16 @@ const styles = {
     fontWeight: 700,
     fontFamily: "Montserrat, sans-serif",
   },
-  titleDark: { color: "#f9fafb" },
-  subtitle: { margin: "8px 0 0", color: "#4a5568" },
-  subtitleDark: { color: "#d1d5db" },
+  titleDark: {
+    color: "#f9fafb",
+  },
+  subtitle: {
+    margin: "8px 0 0",
+    color: "#4a5568",
+  },
+  subtitleDark: {
+    color: "#d1d5db",
+  },
 
   voltarButton: {
     display: "flex",
@@ -688,7 +704,11 @@ const styles = {
     borderColor: "#374151",
     boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
   },
-  form: { display: "flex", flexDirection: "column", gap: "20px" },
+  form: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "20px",
+  },
 
   row: {
     display: "grid",
@@ -696,14 +716,23 @@ const styles = {
     gap: "16px",
   },
 
-  field: { display: "flex", flexDirection: "column", gap: "8px" },
+  field: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+  },
   fieldFull: {
     display: "flex",
     flexDirection: "column",
     gap: "8px",
   },
-  label: { fontWeight: 600, color: "#303e51" },
-  labelDark: { color: "#e5e7eb" },
+  label: {
+    fontWeight: 600,
+    color: "#303e51",
+  },
+  labelDark: {
+    color: "#e5e7eb",
+  },
   select: {
     width: "100%",
     boxSizing: "border-box",
@@ -752,7 +781,10 @@ const styles = {
     borderColor: "#4b5563",
     color: "#f9fafb",
   },
-  actions: { display: "flex", justifyContent: "flex-end" },
+  actions: {
+    display: "flex",
+    justifyContent: "flex-end",
+  },
 
   itemsSection: {
     display: "flex",
@@ -764,15 +796,23 @@ const styles = {
     justifyContent: "space-between",
     alignItems: "center",
   },
-  itemsTitle: { margin: 0, fontSize: "16px", color: "#111c2d" },
-  itemsTitleDark: { color: "#f9fafb" },
+  itemsTitle: {
+    margin: 0,
+    fontSize: "16px",
+    color: "#111c2d",
+  },
+  itemsTitleDark: {
+    color: "#f9fafb",
+  },
   loadingHint: {
     fontSize: "12px",
     color: "#64748b",
     fontWeight: 400,
     marginLeft: "8px",
   },
-  loadingHintDark: { color: "#94a3b8" },
+  loadingHintDark: {
+    color: "#94a3b8",
+  },
   headerButtons: {
     display: "flex",
     gap: "8px",
@@ -827,7 +867,9 @@ const styles = {
     color: "#64748b",
     flexShrink: 0,
   },
-  searchIconDark: { color: "#94a3b8" },
+  searchIconDark: {
+    color: "#94a3b8",
+  },
   searchInput: {
     flex: 1,
     border: "none",
@@ -838,7 +880,9 @@ const styles = {
     color: "#111c2d",
     fontFamily: "Inter, sans-serif",
   },
-  searchInputDark: { color: "#f9fafb" },
+  searchInputDark: {
+    color: "#f9fafb",
+  },
   searchClear: {
     border: "none",
     background: "transparent",
@@ -849,14 +893,18 @@ const styles = {
     borderRadius: "4px",
     flexShrink: 0,
   },
-  searchClearDark: { color: "#cbd5e1" },
+  searchClearDark: {
+    color: "#cbd5e1",
+  },
   searchInfo: {
     margin: 0,
     fontSize: "12px",
     color: "#64748b",
     fontStyle: "italic",
   },
-  searchInfoDark: { color: "#94a3b8" },
+  searchInfoDark: {
+    color: "#94a3b8",
+  },
 
   // ---------- Cabeçalho das colunas ----------
   itemHeaderRow: {
@@ -873,7 +921,9 @@ const styles = {
     letterSpacing: "0.04em",
     color: "#64748b",
   },
-  itemHeaderLabelDark: { color: "#94a3b8" },
+  itemHeaderLabelDark: {
+    color: "#94a3b8",
+  },
 
   itemCard: {
     border: "1px solid #e2e8f0",
@@ -906,7 +956,10 @@ const styles = {
     borderColor: "#7f1d1d",
     color: "#fecdd3",
   },
-  removePlaceholder: { width: "42px", height: "38px" },
+  removePlaceholder: {
+    width: "42px",
+    height: "38px",
+  },
   totalBox: {
     display: "flex",
     justifyContent: "space-between",
@@ -920,10 +973,21 @@ const styles = {
     backgroundColor: "#0b1220",
     borderColor: "#334155",
   },
-  totalLabel: { color: "#303e51", fontWeight: 600, fontSize: "14px" },
-  totalLabelDark: { color: "#cbd5e1" },
-  totalValue: { color: "#111c2d", fontSize: "20px" },
-  totalValueDark: { color: "#f9fafb" },
+  totalLabel: {
+    color: "#303e51",
+    fontWeight: 600,
+    fontSize: "14px",
+  },
+  totalLabelDark: {
+    color: "#cbd5e1",
+  },
+  totalValue: {
+    color: "#111c2d",
+    fontSize: "20px",
+  },
+  totalValueDark: {
+    color: "#f9fafb",
+  },
 };
 
 function SelectField({ label, name, value, onChange, disabled, isDark, children }) {
