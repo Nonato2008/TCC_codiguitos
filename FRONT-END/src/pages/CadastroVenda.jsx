@@ -85,6 +85,9 @@ export default function CadastroVendas() {
   const [carregandoProprietarios, setCarregandoProprietarios] = useState(false);
   const [mensagem, setMensagem] = useState({ type: "", text: "" });
 
+  // Guarda os dados do protótipo/comprovante da venda gerada
+  const [prototipoVenda, setPrototipoVenda] = useState(null);
+
   // ---------- Buscar produtos do banco ----------
   async function carregarProdutos() {
     setCarregandoProdutos(true);
@@ -229,6 +232,9 @@ export default function CadastroVendas() {
   async function cadastrarVenda(event) {
     event.preventDefault();
 
+    // Limpa o protótipo anterior antes de uma nova tentativa
+    setPrototipoVenda(null);
+
     if (!form.idProprietario) {
       setMensagem({ type: "error", text: "Selecione um proprietário." });
       return;
@@ -304,11 +310,53 @@ export default function CadastroVendas() {
         })),
       };
 
-      await codiguitos_api.post("/vendas", dados, {
+      const resposta = await codiguitos_api.post("/vendas", dados, {
         headers: { "Content-Type": "application/json" },
       });
 
-      setMensagem({ type: "success", text: "Venda registrada com sucesso!" });
+      const data = resposta?.data || {};
+
+      // Busca os nomes de proprietário/vendedor para o protótipo
+      const proprietario = proprietarios.find(
+        (p) => Number(p.Id ?? p.id) === Number(form.idProprietario)
+      );
+      const vendedor = vendedores.find(
+        (v) => Number(v.Id ?? v.id) === Number(form.idVendedor)
+      );
+
+      // Monta o protótipo/comprovante da venda
+      setPrototipoVenda({
+        numero: data.numero ?? data.idVenda ?? data.id ?? null,
+        dataEmissao: data.dataEmissao ?? new Date().toISOString(),
+        proprietarioNome:
+          proprietario?.Nome ?? proprietario?.nome ?? "—",
+        vendedorNome: vendedor?.Nome ?? vendedor?.nome ?? "—",
+        observacoes: dados.observacoes,
+        valorTotal: Number(data.valorTotal ?? dados.valorTotal),
+        itens: itensValidos.map((i) => {
+          const produto = produtos.find(
+            (p) => Number(getIdProduto(p)) === Number(i.idProduto)
+          );
+          return {
+            nome: getNomeProduto(produto),
+            quantidade: Number(i.quantidade),
+            valorUnitario: Number(i.valorUnitario),
+            valorTotal: Number(i.valorTotal),
+          };
+        }),
+      });
+
+      const mensagemBase = (
+        data?.message || "Venda registrada com sucesso!"
+      ).trim();
+
+      setMensagem({
+        type: "success",
+        text: `${mensagemBase}${
+          mensagemBase.endsWith(".") ? "" : "."
+        } Protótipo gerado.`,
+      });
+
       setForm(estadoInicial);
       setItens([{ ...itemVazio }]);
       setBuscaProduto("");
@@ -316,7 +364,8 @@ export default function CadastroVendas() {
       console.error(error);
       setMensagem({
         type: "error",
-        text: error?.response?.data?.message || "Erro ao registrar venda.",
+        text:
+          error?.response?.data?.message || "Erro ao registrar venda.",
       });
     } finally {
       setLoading(false);
@@ -619,6 +668,160 @@ export default function CadastroVendas() {
               </PrimaryButton>
             </div>
           </form>
+
+          {/* ---------- Protótipo da Venda ---------- */}
+          {prototipoVenda && (
+            <div
+              style={{
+                ...styles.prototipo,
+                ...(isDark ? styles.prototipoDark : {}),
+              }}
+            >
+              <div
+                style={{
+                  ...styles.prototipoHeader,
+                  ...(isDark ? styles.prototipoHeaderDark : {}),
+                }}
+              >
+                <div>
+                  <h3
+                    style={{
+                      ...styles.prototipoTitle,
+                      ...(isDark ? styles.prototipoTitleDark : {}),
+                    }}
+                  >
+                    Protótipo da Venda
+                  </h3>
+                  {prototipoVenda.numero && (
+                    <p
+                      style={{
+                        ...styles.prototipoNumero,
+                        ...(isDark ? styles.prototipoNumeroDark : {}),
+                      }}
+                    >
+                      Nº {prototipoVenda.numero}
+                    </p>
+                  )}
+                </div>
+
+                <span
+                  style={{
+                    ...styles.prototipoStatus,
+                    ...(isDark ? styles.prototipoStatusDark : {}),
+                  }}
+                >
+                  Registrada
+                </span>
+              </div>
+
+              <div
+                style={{
+                  ...styles.prototipoLinha,
+                  ...(isDark ? styles.prototipoLinhaDark : {}),
+                }}
+              >
+                <span>Data de emissão</span>
+                <strong>
+                  {new Date(prototipoVenda.dataEmissao).toLocaleString(
+                    "pt-BR"
+                  )}
+                </strong>
+              </div>
+
+              <div
+                style={{
+                  ...styles.prototipoLinha,
+                  ...(isDark ? styles.prototipoLinhaDark : {}),
+                }}
+              >
+                <span>Proprietário</span>
+                <strong>{prototipoVenda.proprietarioNome}</strong>
+              </div>
+
+              <div
+                style={{
+                  ...styles.prototipoLinha,
+                  ...(isDark ? styles.prototipoLinhaDark : {}),
+                }}
+              >
+                <span>Vendedor</span>
+                <strong>{prototipoVenda.vendedorNome}</strong>
+              </div>
+
+              {prototipoVenda.observacoes && (
+                <div
+                  style={{
+                    ...styles.prototipoLinha,
+                    ...(isDark ? styles.prototipoLinhaDark : {}),
+                  }}
+                >
+                  <span>Observações</span>
+                  <strong>{prototipoVenda.observacoes}</strong>
+                </div>
+              )}
+
+              <div
+                style={{
+                  ...styles.prototipoItensTitulo,
+                  ...(isDark ? styles.prototipoItensTituloDark : {}),
+                }}
+              >
+                Itens da venda
+              </div>
+
+              {prototipoVenda.itens.map((item, i) => (
+                <div
+                  key={i}
+                  style={{
+                    ...styles.prototipoItem,
+                    ...(isDark ? styles.prototipoItemDark : {}),
+                  }}
+                >
+                  <div>
+                    <strong>{item.nome}</strong>
+                    <div style={{ fontSize: 12, opacity: 0.75 }}>
+                      {item.quantidade} ×{" "}
+                      {item.valorUnitario.toLocaleString("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      })}
+                    </div>
+                  </div>
+                  <strong>
+                    {item.valorTotal.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })}
+                  </strong>
+                </div>
+              ))}
+
+              <div
+                style={{
+                  ...styles.prototipoTotal,
+                  ...(isDark ? styles.prototipoTotalDark : {}),
+                }}
+              >
+                <span>TOTAL</span>
+                <strong>
+                  {Number(prototipoVenda.valorTotal).toLocaleString(
+                    "pt-BR",
+                    { style: "currency", currency: "BRL" }
+                  )}
+                </strong>
+              </div>
+
+              <p
+                style={{
+                  ...styles.prototipoAviso,
+                  ...(isDark ? styles.prototipoAvisoDark : {}),
+                }}
+              >
+                Este é um protótipo/comprovante gerado automaticamente
+                e não substitui documentos fiscais.
+              </p>
+            </div>
+          )}
         </section>
       </main>
     </div>
@@ -924,6 +1127,117 @@ const styles = {
   totalLabelDark: { color: "#cbd5e1" },
   totalValue: { color: "#111c2d", fontSize: "20px" },
   totalValueDark: { color: "#f9fafb" },
+
+  // ---------- Protótipo da Venda ----------
+  prototipo: {
+    marginTop: "32px",
+    padding: "24px",
+    border: "2px solid #e2e8f0",
+    borderRadius: "12px",
+    backgroundColor: "#f8fafc",
+  },
+  prototipoDark: {
+    backgroundColor: "#1f2937",
+    borderColor: "#4b5563",
+  },
+  prototipoHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    borderBottom: "1px solid #e2e8f0",
+    paddingBottom: "16px",
+    marginBottom: "16px",
+  },
+  prototipoHeaderDark: {
+    borderBottomColor: "#4b5563",
+  },
+  prototipoTitle: {
+    margin: 0,
+    fontSize: "24px",
+    color: "#111c2d",
+  },
+  prototipoTitleDark: { color: "#f9fafb" },
+  prototipoNumero: {
+    margin: "6px 0 0",
+    color: "#64748b",
+    fontSize: "14px",
+  },
+  prototipoNumeroDark: { color: "#cbd5e1" },
+  prototipoStatus: {
+    padding: "6px 12px",
+    borderRadius: "20px",
+    backgroundColor: "#dcfce7",
+    color: "#166534",
+    fontSize: "13px",
+    fontWeight: 600,
+  },
+  prototipoStatusDark: {
+    backgroundColor: "#064e3b",
+    color: "#d1fae5",
+  },
+  prototipoLinha: {
+    display: "flex",
+    justifyContent: "space-between",
+    padding: "12px 0",
+    borderBottom: "1px solid #e2e8f0",
+    color: "#475569",
+  },
+  prototipoLinhaDark: {
+    borderBottomColor: "#4b5563",
+    color: "#e5e7eb",
+  },
+  prototipoItensTitulo: {
+    marginTop: "18px",
+    marginBottom: "8px",
+    fontSize: "13px",
+    fontWeight: 700,
+    textTransform: "uppercase",
+    letterSpacing: "0.04em",
+    color: "#64748b",
+  },
+  prototipoItensTituloDark: { color: "#94a3b8" },
+  prototipoItem: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "10px 12px",
+    border: "1px solid #e2e8f0",
+    borderRadius: "8px",
+    backgroundColor: "#ffffff",
+    marginBottom: "8px",
+    color: "#111c2d",
+  },
+  prototipoItemDark: {
+    backgroundColor: "#0b1220",
+    borderColor: "#334155",
+    color: "#f9fafb",
+  },
+  prototipoTotal: {
+    display: "flex",
+    justifyContent: "space-between",
+    marginTop: "18px",
+    paddingTop: "18px",
+    borderTop: "2px solid #e2e8f0",
+    fontSize: "20px",
+    color: "#111c2d",
+  },
+  prototipoTotalDark: {
+    borderTopColor: "#4b5563",
+    color: "#f9fafb",
+  },
+  prototipoAviso: {
+    margin: "20px 0 0",
+    padding: "12px",
+    borderRadius: "8px",
+    backgroundColor: "#fff7ed",
+    color: "#9a3412",
+    fontSize: "13px",
+    textAlign: "center",
+  },
+  prototipoAvisoDark: {
+    backgroundColor: "#3f2715",
+    color: "#fed7aa",
+  },
 };
 
 function SelectField({ label, name, value, onChange, disabled, isDark, children }) {
@@ -952,17 +1266,3 @@ function SelectField({ label, name, value, onChange, disabled, isDark, children 
     </div>
   );
 }
-// ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣤⣄⣾
-// ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⣿⣿⢿⣿⣿
-// ⠀⠀⠀⠀⠀⠀⢰⣦⠀⠀⠀⣽⢿⣵⣿⡟
-// ⠀⠀⠀⠀⠀⣀⣀⣽⣷⣖⡤⣵⣿⣧⣭⠁
-// ⢀⡤⢦⣄⡈⠛⠈⠛⠋⠉⠋⠻⣿⣿⡿⣧⣀⠀⠀⠀⠀⠀
-// ⣾⠁⠀⠘⣷⣄⠀⠀⠀⠀⠀⠀⠙⣿⣿⡄⠉⠻⣦⠀⠀⠀
-// ⢹⡄⠀⠀⠘⣿⣦⡀⠀⠀⠀⣠⣾⣿⢯⣯⣤⡀⠈⣷⣄⠀
-// ⠈⢷⡄⠀⠀⠸⣿⣿⣦⣤⣼⣿⣿⣿⢾⣿⣿⣷⠈⠇⡹⡦
-// ⠀⠈⢿⣷⣄⡀⠘⢿⣿⡇⣿⣿⣿⣿⣿⣿⣿⡿
-// ⠀⠀⠀⠹⣿⣿⡄⠀⠙⢣⣿⠿⠿⠟⠛⣿⠟⠁⠀
-// ⠀⠀⠀⠀⠀⠉⠀⠀⣠⡿⠃⠀⠀⠀⢠⣿⠀
-// ⠀⠀⠀⠀⠀⠀⠀⢠⣿⡃⠀⠀⠀⠀⠶⠻⣷⣄⣀⢀⠀⠀
-// ⠀⠀⠀⠀⠀⠀⣰⣿⡿⣿⠀⠀⠀⠀⠀⠀⠈⠉⠉⠀
-//⠀⠀⠀⠀⠀ ⠀⠉
