@@ -2,6 +2,9 @@ import { statusPed } from "../enums/statusVenda.js";
 import { ItensVendas } from "../models/ItensVendas.js";
 import { Vendas } from "../models/Vendas.js";
 import vendasRepository from "../repositories/vendasRepository.js";
+import {formaPagamento} from "../enums/formaPagamento.js"
+
+const formasValidas = Object.values(formaPagamento).map((forma) => forma.toLowerCase());
 
 const vendaController = {
 
@@ -10,8 +13,10 @@ const vendaController = {
 
         try {
 
-            const { idProprietario, idVendedor, itens } = req.body;
-
+            const { idProprietario, idVendedor, itens, formaPagamento } = req.body;
+            const formaPagamentoNormalizada = String(formaPagamento ?? "").trim();
+            
+            
             // Valida o id do proprietário
             if (!idProprietario || Number(idProprietario) <= 0) {
                
@@ -19,6 +24,14 @@ const vendaController = {
                
                     message: "Id do proprietário inválido."
                 });
+            }
+
+
+            if (!formaPagamentoNormalizada || !formasValidas.includes(formaPagamentoNormalizada.toLowerCase())){
+
+                return res.status(400).json({
+                    message: "Forma de Pagamento inválida"
+                }) 
             }
 
             // Valida o id do vendedor
@@ -62,7 +75,8 @@ const vendaController = {
             const venda = {
                
                 idProprietario: Number(idProprietario),
-                idVendedor: Number(idVendedor)
+                idVendedor: Number(idVendedor),
+                formaPagamento: formaPagamentoNormalizada
             };
 
             const resultado = await vendasRepository.criar(venda, itensVenda);
