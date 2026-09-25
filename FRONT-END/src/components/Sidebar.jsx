@@ -23,9 +23,9 @@ const menu = [
         acesso: ["PROPRIETARIO", "VENDEDOR"]
     },
     {
-        nome: "Cadastro de Produtos",
+        nome: "Produtos",
         icone: "inventory_2",
-        rota: "/cadastroProdutos",
+        rota: "/produtos",
         acesso: ["PROPRIETARIO"]
     },
     {

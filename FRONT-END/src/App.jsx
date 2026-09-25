@@ -10,12 +10,14 @@ import Login from "./pages/Login.jsx";
 import Cadastro from "./pages/Cadastro.jsx";
 import Painel from "./pages/Painel";
 import Vendas from "./pages/Vendas";
+import Produtos from "./pages/Produtos";
 import CadastroVendas from "./pages/CadastroVenda";
 import CadastroProdutos from "./pages/CadastroProduto";
 import Fornecedores from "./pages/Fornecedor";
 import CadastrarFornecedor from "./pages/CadastroFornecedor";
 import GerenciamentoEstoque from "./pages/GerenciamentoEstoque";
 import ProfileVenda from "./pages/ProfileVenda";
+import ProfileProduto from "./pages/ProfileProduto";
 import { ThemeProvider } from "./contexts/ThemeContext"
 
 
@@ -37,6 +39,10 @@ export default function App() {
 
           <Route path="/vendas/cadastrar" element={<CadastroVendas />} />
           <Route path="/vendas/:id" element={<ProfileVenda />} />
+
+          <Route path="/produtos" element={<Produtos />} />
+          <Route path="/produtos/cadastrar" element={<CadastroProdutos />} />
+          <Route path="/produtos/:id" element={<ProfileProduto />} />
 
           <Route path="/fornecedores" element={<Fornecedores />} />
           <Route path="/cadastroProdutos" element={<CadastroProdutos />} />
