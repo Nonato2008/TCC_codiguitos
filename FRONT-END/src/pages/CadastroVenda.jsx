@@ -19,8 +19,16 @@ const itemVazio = {
 const estadoInicial = {
   idProprietario: "",
   idVendedor: "",
+  formaPagamento: "",
   observacoes: "",
 };
+
+const opcoesFormaPagamento = [
+  "Crédito",
+  "Débito",
+  "Pix",
+  "Dinheiro",
+];
 
 // ---------- Helpers para lidar com PascalCase / camelCase da API ----------
 function getIdProduto(produto) {
@@ -239,6 +247,14 @@ export default function CadastroVendas() {
       return;
     }
 
+    if (!form.formaPagamento) {
+      setMensagem({
+        type: "error",
+        text: "Selecione uma forma de pagamento.",
+      });
+      return;
+    }
+
     const itensValidos = itens.filter(
       (i) => i.idProduto && Number(i.quantidade) > 0
     );
@@ -294,6 +310,7 @@ export default function CadastroVendas() {
       const dados = {
         idProprietario: Number(form.idProprietario),
         idVendedor: Number(form.idVendedor),
+        formaPagamento: String(form.formaPagamento),
         observacoes: form.observacoes?.trim() || "",
         valorTotal: Number(totalGeral.toFixed(2)),
         itens: itensValidos.map((i) => ({
@@ -421,6 +438,21 @@ export default function CadastroVendas() {
                   );
                 })}
               </SelectField>
+
+              <SelectField
+                  label="Forma de Pagamento"
+                  name="formaPagamento"
+                  value={form.formaPagamento}
+                  onChange={atualizarCampo}
+                  isDark={isDark}
+                >
+                  <option value="">Selecione a Forma de Pagamento</option>
+                  {opcoesFormaPagamento.map((forma) => (
+                    <option key={forma} value={forma}>
+                      {forma}
+                    </option>
+                  ))}
+                </SelectField>
             </div>
 
             {/* ---------- Lista de produtos ---------- */}
@@ -692,7 +724,7 @@ const styles = {
 
   row: {
     display: "grid",
-    gridTemplateColumns: "1fr 1fr",
+    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
     gap: "16px",
   },
 

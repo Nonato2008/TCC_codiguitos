@@ -4,18 +4,21 @@ export class Vendas {
     #idVendedor;
     #valorTotal;
     #dataCad;
+    #formaPagamento
 
     // Construtor
     constructor(
         pIdProprietario,
         pIdVendedor,
         pValorTotal,
+        formaPagamento,
         pId = null,
         pDataCad = null
     ) {
         this.idProprietario = pIdProprietario;
         this.idVendedor = pIdVendedor;
         this.valorTotal = pValorTotal;
+        this.formaPagamento = formaPagamento;
         this.id = pId;
         this.dataCad = pDataCad;
     }
@@ -35,6 +38,10 @@ export class Vendas {
 
     get valorTotal() {
         return this.#valorTotal;
+    }
+
+    get formaPagamento(){
+        return this.#formaPagamento
     }
 
     get dataCad() {
@@ -64,6 +71,11 @@ export class Vendas {
         this.#valorTotal = Number(value);
     }
 
+    set formaPagamento(value) {
+        this.#validarFormaPagamento(value);
+        this.#formaPagamento = String(value).trim();
+    }
+
     set dataCad(value) {
         this.#dataCad = value;
     }
@@ -87,6 +99,15 @@ export class Vendas {
         }
     }
 
+    #validarFormaPagamento(value) {
+        const valoresValidos = ["Crédito", "Débito", "Pix", "Dinheiro"];
+        const valor = String(value ?? "").trim();
+
+        if (!valor || !valoresValidos.includes(valor)) {
+            throw new Error("Verifique a forma de pagamento");
+        }
+    }
+
     #validarValorTotal(value) {
         if (value == null || Number(value) < 0) {
             throw new Error("O valor total não pode ser negativo.");
@@ -99,6 +120,7 @@ export class Vendas {
             dados.idProprietario,
             dados.idVendedor,
             dados.valorTotal ?? 0,
+            dados.formaPagamento,
             null,
             null
         );
@@ -109,6 +131,7 @@ export class Vendas {
             dados.idProprietario,
             dados.idVendedor,
             dados.valorTotal ?? 0,
+            dados.formaPagamento,
             id,
             null
         );

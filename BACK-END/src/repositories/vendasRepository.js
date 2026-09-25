@@ -26,7 +26,7 @@ const vendasRepository = {
 
                 // Bloqueia a linha do produto para leitura/atualização (evita race condition)
                 const [produtoRows] = await conn.execute(
-                    `SELECT Id, Preco, Quantidade, Status, DataVenc
+                    `SELECT Id, Preco, Quantidade, Status, DataVenc, 
                      FROM Produtos
                      WHERE Id = ?
                      FOR UPDATE`,
@@ -92,11 +92,12 @@ const vendasRepository = {
             // Insere a venda com o valor total calculado
             const [vendaRows] = await conn.execute(
                 `INSERT INTO Vendas
-                    (IdProprietario, IdVendedor, ValorTotal)
-                 VALUES (?, ?, ?)`,
+                    (IdProprietario, IdVendedor, formaPagamento, ValorTotal )
+                 VALUES (?, ?, ?, ?)`,
                 [
                     venda.idProprietario,
                     venda.idVendedor,
+                    venda.formaPagamento,
                     valorTotal
                 ]
             );

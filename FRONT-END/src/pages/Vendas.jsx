@@ -18,7 +18,11 @@ export default function Vendas() {
     const [vendedores, setVendedores] = useState([]);
 
     // Filtro de data (input do tipo date)
-    const [dataFiltro, setDataFiltro] = useState("");
+    const [dataInicio, setDataInicio] = useState("");
+    const [dataFim, setDataFim] = useState("");
+    const [formaPagamentoFiltro, setFormaPagamentoFiltro] = useState("");
+
+    const opcoesFormaPagamento = ["Crédito", "Débito", "Pix", "Dinheiro"];
 
     // Busca os vendedores uma única vez ao montar o componente
     useEffect(() => {
@@ -57,15 +61,43 @@ export default function Vendas() {
         return localDate.toISOString().slice(0, 10);
     };
 
+    const normalizarFormaPagamento = (valor) => {
+        return String(valor ?? "").trim().toLowerCase();
+    };
+
     // Filtra as vendas pela data selecionada (se houver filtro)
     const vendasFiltradas = vendasComVendedor.filter((venda) => {
-        if (!dataFiltro) return true;
-
         const dataVenda = venda.DataCad ?? venda.dataCad ?? venda.Data;
         const dataVendaFormatada = formatarDataLocal(dataVenda);
 
-        return dataVendaFormatada === dataFiltro;
+        if (dataInicio && dataVendaFormatada && dataVendaFormatada < dataInicio) return false;
+        if (dataFim && dataVendaFormatada && dataVendaFormatada > dataFim) return false;
+
+        if (formaPagamentoFiltro) {
+            const pagamentoVenda =
+                venda.formaPagamento ??
+                venda.FormaPagamento ??
+                venda.forma_pagamento ??
+                venda.formaDePagamento ??
+                "";
+
+            if (normalizarFormaPagamento(pagamentoVenda) !== normalizarFormaPagamento(formaPagamentoFiltro)) {
+                return false;
+            }
+        }
+
+        return true;
     });
+
+    const faturamentoPeriodo = vendasFiltradas.reduce((total, venda) => {
+        return total + Number(venda.ValorTotal || 0);
+    }, 0);
+
+    const limparFiltros = () => {
+        setDataInicio("");
+        setDataFim("");
+        setFormaPagamentoFiltro("");
+    };
 
     // Estado de carregamento
     if (loading) {
@@ -137,29 +169,54 @@ export default function Vendas() {
                     </div>
 
                     <div style={styles.headerRight}>
-                        {/* Contador dinâmico (muda conforme o filtro) */}
                         <div style={{ ...styles.total, ...(isDark ? styles.totalDark : {}) }}>
                             {vendasFiltradas.length} {" "}
                             {vendasFiltradas.length === 1 ? "venda" : "vendas"}
                         </div>
 
-                        {/* Filtro por data */}
                         <input
                             type="date"
-                            value={dataFiltro}
-                            onChange={(event) => setDataFiltro(event.target.value)}
+                            value={dataInicio}
+                            onChange={(event) => setDataInicio(event.target.value)}
                             style={{
                                 ...styles.dateInput,
                                 ...(isDark ? styles.dateInputDark : {}),
                             }}
-                            aria-label="Filtrar vendas por data"
+                            aria-label="Data inicial do filtro"
                         />
 
-                        {/* Botão "Limpar" só aparece se houver filtro ativo */}
-                        {dataFiltro && (
+                        <input
+                            type="date"
+                            value={dataFim}
+                            onChange={(event) => setDataFim(event.target.value)}
+                            style={{
+                                ...styles.dateInput,
+                                ...(isDark ? styles.dateInputDark : {}),
+                            }}
+                            aria-label="Data final do filtro"
+                        />
+
+                        <select
+                            value={formaPagamentoFiltro}
+                            onChange={(event) => setFormaPagamentoFiltro(event.target.value)}
+                            style={{
+                                ...styles.selectInput,
+                                ...(isDark ? styles.selectInputDark : {}),
+                            }}
+                            aria-label="Filtrar vendas por forma de pagamento"
+                        >
+                            <option value="">Todas as formas</option>
+                            {opcoesFormaPagamento.map((forma) => (
+                                <option key={forma} value={forma}>
+                                    {forma}
+                                </option>
+                            ))}
+                        </select>
+
+                        {(dataInicio || dataFim || formaPagamentoFiltro) && (
                             <button
                                 type="button"
-                                onClick={() => setDataFiltro("")}
+                                onClick={limparFiltros}
                                 style={{
                                     ...styles.clearFilterButton,
                                     ...(isDark ? styles.clearFilterButtonDark : {}),
@@ -175,12 +232,25 @@ export default function Vendas() {
                     </div>
                 </header>
 
+                <section style={styles.summaryBar}>
+                    <div style={{ ...styles.summaryBox, ...(isDark ? styles.summaryBoxDark : {}) }}>
+                        <span style={{ ...styles.summaryLabel, ...(isDark ? styles.summaryLabelDark : {}) }}>
+                            Faturamento do período
+                        </span>
+                        <strong style={{ ...styles.summaryValue, ...(isDark ? styles.summaryValueDark : {}) }}>
+                            R$ {faturamentoPeriodo.toFixed(2).replace(".", ",")}
+                        </strong>
+                    </div>
+                </section>
+
                 <section style={styles.content}>
                     {vendasFiltradas.length === 0 ? (
                         <div style={{ ...styles.empty, ...(isDark ? styles.emptyDark : {}) }}>
                             <span className="material-symbols-outlined">point_of_sale</span>
                             <p style={{ ...(isDark ? styles.textDark : {}) }}>
-                                {dataFiltro ? "Nenhuma venda encontrada para a data selecionada." : "Nenhuma venda encontrada."}
+                                {dataInicio || dataFim || formaPagamentoFiltro
+                                    ? "Nenhuma venda encontrada para os filtros selecionados."
+                                    : "Nenhuma venda encontrada."}
                             </p>
                         </div>
                     ) : (
@@ -220,6 +290,7 @@ const styles = {
         display: "flex",
         alignItems: "center",
         gap: 12,
+        flexWrap: "wrap",
     },
     title: {
         margin: 0,
@@ -315,6 +386,21 @@ const styles = {
         borderColor: "#4b5563",
         color: "#f9fafb",
     },
+    selectInput: {
+        border: "1px solid #cbd5e1",
+        borderRadius: "8px",
+        padding: "9px 10px",
+        backgroundColor: "#ffffff",
+        color: "#243447",
+        fontSize: "14px",
+        fontFamily: "Inter, sans-serif",
+        outline: "none",
+    },
+    selectInputDark: {
+        backgroundColor: "#1f2937",
+        borderColor: "#4b5563",
+        color: "#f9fafb",
+    },
     clearFilterButton: {
         border: "1px solid #cbd5e1",
         borderRadius: "8px",
@@ -328,6 +414,41 @@ const styles = {
     clearFilterButtonDark: {
         backgroundColor: "#1f2937",
         borderColor: "#4b5563",
+        color: "#f9fafb",
+    },
+    summaryBar: {
+        maxWidth: "1150px",
+        margin: "0 0 20px 0",
+    },
+    summaryBox: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: "12px",
+        backgroundColor: "#ffffff",
+        border: "1px solid #e2e8f0",
+        borderRadius: "12px",
+        padding: "18px 20px",
+        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+    },
+    summaryBoxDark: {
+        backgroundColor: "#1f2937",
+        borderColor: "#4b5563",
+    },
+    summaryLabel: {
+        color: "#64748b",
+        fontSize: "14px",
+        fontWeight: 600,
+    },
+    summaryLabelDark: {
+        color: "#d1d5db",
+    },
+    summaryValue: {
+        color: "#111827",
+        fontSize: "22px",
+        fontWeight: 700,
+    },
+    summaryValueDark: {
         color: "#f9fafb",
     },
 };
