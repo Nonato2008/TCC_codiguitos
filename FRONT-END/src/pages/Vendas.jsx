@@ -174,6 +174,7 @@ export default function Vendas() {
                             {vendasFiltradas.length === 1 ? "venda" : "vendas"}
                         </div>
 
+                        <span>Data Início:</span>
                         <input
                             type="date"
                             value={dataInicio}
@@ -185,6 +186,7 @@ export default function Vendas() {
                             aria-label="Data inicial do filtro"
                         />
 
+                        <span>Data Fim:</span>
                         <input
                             type="date"
                             value={dataFim}
@@ -196,6 +198,7 @@ export default function Vendas() {
                             aria-label="Data final do filtro"
                         />
 
+                        <span>Forma de Pagamento:</span>
                         <select
                             value={formaPagamentoFiltro}
                             onChange={(event) => setFormaPagamentoFiltro(event.target.value)}
@@ -225,6 +228,7 @@ export default function Vendas() {
                                 Limpar
                             </button>
                         )}
+
 
                         <Link to="/vendas/cadastrar" style={{ textDecoration: "none" }}>
                             <button style={{ ...styles.primaryButton, ...(isDark ? styles.primaryButtonDark : {}) }}>+ Nova venda</button>

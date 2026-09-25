@@ -26,7 +26,7 @@ const vendasRepository = {
 
                 // Bloqueia a linha do produto para leitura/atualização (evita race condition)
                 const [produtoRows] = await conn.execute(
-                    `SELECT Id, Preco, Quantidade, Status, DataVenc, 
+                    `SELECT Id, Preco, Quantidade, Status, DataVenc 
                      FROM Produtos
                      WHERE Id = ?
                      FOR UPDATE`,
@@ -506,7 +506,8 @@ const vendasRepository = {
                 v.IdProprietario,
                 v.IdVendedor,
                 v.ValorTotal,
-                v.DataCad
+                v.DataCad,
+                v.formaPagamento
             FROM Vendas v
             ORDER BY v.Id DESC
         `);

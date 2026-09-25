@@ -30,7 +30,7 @@ export default function VendasCard({ venda }) {
 
                         <span>
                             <strong>Pagamento:</strong>{" "}
-                            {venda.formaPagamento ?? venda.FormaPagamento ?? "Não informado"}
+                            {venda.formaPagamento ?? venda.FormaPagamento ?? 'Não Informado'}
                         </span>
 
                         {/* Formata a data em pt-BR (dd/mm/aaaa); "-" se não houver */}
