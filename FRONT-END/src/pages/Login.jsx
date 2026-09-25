@@ -1,405 +1,83 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-
-import {
-    login as apiLogin,
-    cadastro as apiCadastro,
-    saveUser
-} from "../services/authService.js";
+import { useState, useContext } from "react";
+import { ThemeContext } from "../contexts/ThemeContext";
+import LoginForm from "../components/LoginForm.jsx";
+import CadastroForm from "../components/CadastroForm.jsx";
 
 export default function Login() {
-
-    const navigate = useNavigate();
-
-    // Alterna entre os modos "login" e "cadastro" na mesma tela
+    const { theme } = useContext(ThemeContext);
+    const isDark = theme === "dark";
     const [modoCadastro, setModoCadastro] = useState(false);
 
-    // Estados dos campos do formulário
-    const [nome, setNome] = useState("");
-    const [senha, setSenha] = useState("");
-    const [confirmarSenha, setConfirmarSenha] = useState("");
-    const [tipo, setTipo] = useState("VENDEDOR");
-
-    // Estados de controle da requisição e feedback ao usuário
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
-
-    // Limpa as mensagens de erro/sucesso
-    function limparMensagens() {
-        setError("");
-        setSuccess("");
-    }
-
-    // Alterna entre login e cadastro, limpando os campos e mensagens
     function trocarModo() {
-
-        limparMensagens();
-
-        setNome("");
-        setSenha("");
-        setConfirmarSenha("");
-        setTipo("VENDEDOR");
-
         setModoCadastro(!modoCadastro);
     }
 
-    async function entrar(event) {
-
-        event.preventDefault();
-
-        limparMensagens();
-
-        // Validações básicas
-        if (!nome.trim()) {
-            setError("Digite seu nome.");
-            return;
-        }
-
-        if (!senha) {
-            setError("Digite sua senha.");
-            return;
-        }
-
-        setLoading(true);
-
-        try {
-
-            // Chama a API de login
-            const result = await apiLogin(nome.trim(), senha);
-
-            // Se a API retornar erro, exibe a mensagem
-            if (result.error) {
-                setError(
-                    result.error.message ||
-                    "Nome ou senha incorretos."
-                );
-                return;
-            }
-
-            const usuarioRecebido = result.data?.usuario;
-
-            if (!usuarioRecebido) {
-                setError("Não foi possível identificar o usuário.");
-                return;
-            }
-
-            // Normaliza nome e perfil, aceitando variações de caixa
-            const nomeUsuario =
-                usuarioRecebido.nome ||
-                usuarioRecebido.Nome ||
-                nome.trim();
-
-            const perfilUsuario =
-                usuarioRecebido.perfil ||
-                usuarioRecebido.Perfil ||
-                usuarioRecebido.tipo ||
-                usuarioRecebido.Tipo ||
-                usuarioRecebido.role ||
-                usuarioRecebido.Role ||
-                "Vendedor";
-
-            const usuario = {
-                ...usuarioRecebido,
-                nome: nomeUsuario,
-                perfil: perfilUsuario
-            };
-
-            // Persiste o usuário (service + localStorage) e redireciona
-            saveUser(usuario);
-            localStorage.setItem("usuario", JSON.stringify(usuario));
-
-            navigate("/painel");
-
-        } catch (error) {
-            console.error(error);
-            setError("Erro ao conectar ao servidor.");
-        } finally {
-            // Sempre desativa o loading, independentemente do resultado
-            setLoading(false);
-        }
-    }
-
-    async function cadastrar(event) {
-
-        event.preventDefault();
-
-        limparMensagens();
-
-        // Validações básicas do cadastro
-        if (!nome.trim()) {
-            setError("Digite seu nome.");
-            return;
-        }
-
-        if (nome.trim().length < 3) {
-            setError("O nome deve possuir pelo menos 3 caracteres.");
-            return;
-        }
-
-        if (!senha) {
-            setError("Digite uma senha.");
-            return;
-        }
-
-        if (senha.length < 6) {
-            setError("A senha deve possuir pelo menos 6 caracteres.");
-            return;
-        }
-
-        if (senha !== confirmarSenha) {
-            setError("As senhas não coincidem.");
-            return;
-        }
-
-        setLoading(true);
-
-        try {
-
-            // Chama a API de cadastro
-            const result = await apiCadastro(nome.trim(), senha, tipo);
-
-            if (result.error) {
-                setError(
-                    result.error.message ||
-                    "Não foi possível realizar o cadastro."
-                );
-                return;
-            }
-
-            // Sucesso: limpa o formulário e volta para o modo login
-            setSuccess("Cadastro realizado com sucesso! Agora faça login.");
-
-            setNome("");
-            setSenha("");
-            setConfirmarSenha("");
-            setTipo("VENDEDOR");
-
-            // Aguarda 1,5s e alterna para o modo login
-            setTimeout(() => {
-                setModoCadastro(false);
-                setSuccess("");
-            }, 1500);
-
-        } catch (error) {
-            console.error(error);
-            setError("Erro ao conectar ao servidor.");
-        } finally {
-            setLoading(false);
-        }
-    }
-
     return (
-        <div style={styles.container}>
+        <div style={{
+            ...styles.container,
+            ...(isDark ? styles.containerDark : {})
+        }}>
 
-            <div style={styles.card}>
+            <div style={{
+                ...styles.card,
+                ...(isDark ? styles.cardDark : {})
+            }}>
 
                 <div style={styles.logoContainer}>
-
-                    <div style={styles.logo}>
+                    <div style={{
+                        ...styles.logo,
+                        ...(isDark ? styles.logoDark : {})
+                    }}>
 
                         <img
                             src="/logo.png"
                             alt="Adega do Nelson"
                             style={styles.logoImage}
                         />
-
                     </div>
-
                 </div>
 
-                <h1 style={styles.title}>
+                <h1 style={{
+                    ...styles.title,
+                    ...(isDark ? styles.titleDark : {})
+                }}>
                     Adega do Nelson
                 </h1>
 
-                <p style={styles.subtitle}>
+                <p style={{
+                    ...styles.subtitle,
+                    ...(isDark ? styles.subtitleDark : {})
+                }}>
                     {modoCadastro
                         ? "Crie sua conta para acessar o sistema."
                         : "Entre na sua conta para acessar o sistema."
                     }
                 </p>
 
-                <h2 style={styles.formTitle}>
-                    {modoCadastro
-                        ? "Criar Cadastro"
-                        : "Login"
-                    }
-                </h2>
-
-                {error && (
-                    <div style={styles.alertError}>
-                        {error}
-                    </div>
+                {modoCadastro ? (
+                    <CadastroForm
+                        onTrocarModo={trocarModo}
+                        isDark={isDark}
+                    />
+                ) : (
+                    <LoginForm
+                        onTrocarModo={trocarModo}
+                        isDark={isDark}
+                    />
                 )}
 
-                {success && (
-                    <div style={styles.alertSuccess}>
-                        {success}
-                    </div>
-                )}
-
-                <form
-                    style={styles.form}
-                    onSubmit={
-                        modoCadastro
-                            ? cadastrar
-                            : entrar
-                    }
-                >
-
-                    <div style={styles.inputGroup}>
-
-                        <label style={styles.label}>
-                            Nome
-                        </label>
-
-                        <input
-                            type="text"
-                            placeholder="Digite seu nome"
-                            value={nome}
-                            onChange={(event) =>
-                                setNome(event.target.value)
-                            }
-                            style={styles.input}
-                            minLength={3}
-                            required
-                            disabled={loading}
-                        />
-
-                    </div>
-
-                    <div style={styles.inputGroup}>
-
-                        <label style={styles.label}>
-                            Senha
-                        </label>
-
-                        <input
-                            type="password"
-                            placeholder="Digite sua senha"
-                            value={senha}
-                            onChange={(event) =>
-                                setSenha(event.target.value)
-                            }
-                            style={styles.input}
-                            minLength={6}
-                            required
-                            disabled={loading}
-                        />
-
-                    </div>
-
-                    {modoCadastro && (
-                        <>
-
-                            <div style={styles.inputGroup}>
-
-                                <label style={styles.label}>
-                                    Confirmar Senha
-                                </label>
-
-                                <input
-                                    type="password"
-                                    placeholder="Digite a senha novamente"
-                                    value={confirmarSenha}
-                                    onChange={(event) =>
-                                        setConfirmarSenha(
-                                            event.target.value
-                                        )
-                                    }
-                                    style={styles.input}
-                                    minLength={6}
-                                    required
-                                    disabled={loading}
-                                />
-
-                            </div>
-
-                            <div style={styles.inputGroup}>
-
-                                <label style={styles.label}>
-                                    Tipo de Usuário
-                                </label>
-
-                                <select
-                                    value={tipo}
-                                    onChange={(event) =>
-                                        setTipo(event.target.value)
-                                    }
-                                    style={styles.input}
-                                    disabled={loading}
-                                >
-
-                                    <option value="VENDEDOR">
-                                        Vendedor
-                                    </option>
-
-                                    <option value="PROPRIETARIO">
-                                        Proprietário
-                                    </option>
-
-                                </select>
-
-                            </div>
-
-                        </>
-                    )}
-
-                    <button
-                        type="submit"
-                        style={{
-                            ...styles.button,
-                            ...(loading
-                                ? styles.buttonDisabled
-                                : {})
-                        }}
-                        disabled={loading}
-                    >
-                        {loading
-                            ? "Aguarde..."
-                            : modoCadastro
-                                ? "Cadastrar"
-                                : "Entrar"
-                        }
-                    </button>
-
-                </form>
-
-                <div style={styles.registerText}>
-
-                    <span>
-                        {modoCadastro
-                            ? "Já possui uma conta?"
-                            : "Não possui uma conta?"
-                        }
-                    </span>
-
-                    <button
-                        type="button"
-                        onClick={trocarModo}
-                        style={styles.registerLink}
-                        disabled={loading}
-                    >
-                        {modoCadastro
-                            ? "Fazer login"
-                            : "Criar conta"
-                        }
-                    </button>
-
-                </div>
-
-                <p style={styles.footer}>
+                <p style={{
+                    ...styles.footer,
+                    ...(isDark ? styles.footerDark : {})
+                }}>
                     Sistema de gerenciamento da Adega do Nelson
                 </p>
-
             </div>
-
         </div>
     );
 }
 
 const styles = {
-
     container: {
         minHeight: "100vh",
         width: "100%",
@@ -409,7 +87,12 @@ const styles = {
         justifyContent: "center",
         fontFamily: "Inter, sans-serif",
         padding: "24px",
-        boxSizing: "border-box"
+        boxSizing: "border-box",
+        transition: "background-color 0.3s ease"
+    },
+
+    containerDark: {
+        backgroundColor: "#0f172a"
     },
 
     card: {
@@ -420,7 +103,14 @@ const styles = {
         borderRadius: "16px",
         padding: "40px",
         boxShadow: "0 10px 30px rgba(0, 0, 0, 0.06)",
-        boxSizing: "border-box"
+        boxSizing: "border-box",
+        transition: "background-color 0.3s ease, border-color 0.3s ease"
+    },
+
+    cardDark: {
+        backgroundColor: "#111827",
+        borderColor: "#374151",
+        boxShadow: "0 10px 30px rgba(0, 0, 0, 0.35)"
     },
 
     logoContainer: {
@@ -435,6 +125,10 @@ const styles = {
         borderRadius: "14px",
         overflow: "hidden",
         border: "1px solid #e2e8f0"
+    },
+
+    logoDark: {
+        borderColor: "#4b5563"
     },
 
     logoImage: {
@@ -452,6 +146,10 @@ const styles = {
         margin: 0
     },
 
+    titleDark: {
+        color: "#f9fafb"
+    },
+
     subtitle: {
         textAlign: "center",
         color: "#44474c",
@@ -461,104 +159,8 @@ const styles = {
         marginBottom: "28px"
     },
 
-    formTitle: {
-        textAlign: "center",
-        fontSize: "20px",
-        fontWeight: "700",
-        color: "#303e51",
-        marginTop: 0,
-        marginBottom: "24px"
-    },
-
-    form: {
-        display: "flex",
-        flexDirection: "column",
-        gap: "20px"
-    },
-
-    inputGroup: {
-        display: "flex",
-        flexDirection: "column",
-        gap: "8px"
-    },
-
-    label: {
-        fontSize: "14px",
-        fontWeight: "600",
-        color: "#303e51"
-    },
-
-    input: {
-        width: "100%",
-        boxSizing: "border-box",
-        padding: "13px 14px",
-        border: "1px solid #cbd5e1",
-        borderRadius: "8px",
-        outline: "none",
-        fontSize: "14px",
-        fontFamily: "Inter, sans-serif",
-        backgroundColor: "#ffffff",
-        color: "#303e51"
-    },
-
-    button: {
-        width: "100%",
-        boxSizing: "border-box",
-        padding: "14px",
-        marginTop: "4px",
-        border: "none",
-        backgroundColor: "#303e51",
-        color: "#ffffff",
-        borderRadius: "8px",
-        fontSize: "15px",
-        fontWeight: "600",
-        cursor: "pointer"
-    },
-
-    buttonDisabled: {
-        opacity: 0.6,
-        cursor: "not-allowed"
-    },
-
-    registerText: {
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        gap: "6px",
-        marginTop: "22px",
-        color: "#44474c",
-        fontSize: "14px"
-    },
-
-    registerLink: {
-        color: "#303e51",
-        fontWeight: "700",
-        textDecoration: "none",
-        border: "none",
-        backgroundColor: "transparent",
-        cursor: "pointer",
-        fontSize: "14px",
-        padding: 0
-    },
-
-    alertError: {
-        backgroundColor: "#fef2f2",
-        border: "1px solid #fecaca",
-        color: "#b91c1c",
-        borderRadius: "8px",
-        padding: "12px",
-        fontSize: "14px",
-        marginBottom: "20px"
-    },
-
-    alertSuccess: {
-        backgroundColor: "#f0fdf4",
-        border: "1px solid #bbf7d0",
-        color: "#15803d",
-        borderRadius: "8px",
-        padding: "12px",
-        fontSize: "14px",
-        marginBottom: "20px"
+    subtitleDark: {
+        color: "#d1d5db"
     },
 
     footer: {
@@ -567,5 +169,9 @@ const styles = {
         fontSize: "12px",
         marginTop: "28px",
         marginBottom: 0
+    },
+
+    footerDark: {
+        color: "#9ca3af"
     }
 };
