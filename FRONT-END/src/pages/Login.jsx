@@ -399,7 +399,6 @@ export default function Login() {
 }
 
 const styles = {
-
     container: {
         minHeight: "100vh",
         width: "100%",
@@ -409,7 +408,7 @@ const styles = {
         justifyContent: "center",
         fontFamily: "Inter, sans-serif",
         padding: "24px",
-        boxSizing: "border-box"
+        boxSizing: "border-box",
     },
 
     card: {
@@ -420,13 +419,13 @@ const styles = {
         borderRadius: "16px",
         padding: "40px",
         boxShadow: "0 10px 30px rgba(0, 0, 0, 0.06)",
-        boxSizing: "border-box"
+        boxSizing: "border-box",
     },
 
     logoContainer: {
         display: "flex",
         justifyContent: "center",
-        marginBottom: "20px"
+        marginBottom: "20px",
     },
 
     logo: {
@@ -434,13 +433,13 @@ const styles = {
         height: "80px",
         borderRadius: "14px",
         overflow: "hidden",
-        border: "1px solid #e2e8f0"
+        border: "1px solid #e2e8f0",
     },
 
     logoImage: {
         width: "100%",
         height: "100%",
-        objectFit: "cover"
+        objectFit: "cover",
     },
 
     title: {
@@ -449,7 +448,7 @@ const styles = {
         fontSize: "28px",
         fontWeight: "700",
         color: "#303e51",
-        margin: 0
+        margin: 0,
     },
 
     subtitle: {
@@ -458,7 +457,7 @@ const styles = {
         fontSize: "14px",
         lineHeight: "1.5",
         marginTop: "8px",
-        marginBottom: "28px"
+        marginBottom: "28px",
     },
 
     formTitle: {
@@ -467,25 +466,25 @@ const styles = {
         fontWeight: "700",
         color: "#303e51",
         marginTop: 0,
-        marginBottom: "24px"
+        marginBottom: "24px",
     },
 
     form: {
         display: "flex",
         flexDirection: "column",
-        gap: "20px"
+        gap: "20px",
     },
 
     inputGroup: {
         display: "flex",
         flexDirection: "column",
-        gap: "8px"
+        gap: "8px",
     },
 
     label: {
         fontSize: "14px",
         fontWeight: "600",
-        color: "#303e51"
+        color: "#303e51",
     },
 
     input: {
@@ -498,7 +497,7 @@ const styles = {
         fontSize: "14px",
         fontFamily: "Inter, sans-serif",
         backgroundColor: "#ffffff",
-        color: "#303e51"
+        color: "#303e51",
     },
 
     button: {
@@ -512,12 +511,12 @@ const styles = {
         borderRadius: "8px",
         fontSize: "15px",
         fontWeight: "600",
-        cursor: "pointer"
+        cursor: "pointer",
     },
 
     buttonDisabled: {
         opacity: 0.6,
-        cursor: "not-allowed"
+        cursor: "not-allowed",
     },
 
     registerText: {
@@ -527,7 +526,7 @@ const styles = {
         gap: "6px",
         marginTop: "22px",
         color: "#44474c",
-        fontSize: "14px"
+        fontSize: "14px",
     },
 
     registerLink: {
@@ -538,7 +537,7 @@ const styles = {
         backgroundColor: "transparent",
         cursor: "pointer",
         fontSize: "14px",
-        padding: 0
+        padding: 0,
     },
 
     alertError: {
@@ -548,7 +547,7 @@ const styles = {
         borderRadius: "8px",
         padding: "12px",
         fontSize: "14px",
-        marginBottom: "20px"
+        marginBottom: "20px",
     },
 
     alertSuccess: {
@@ -558,7 +557,7 @@ const styles = {
         borderRadius: "8px",
         padding: "12px",
         fontSize: "14px",
-        marginBottom: "20px"
+        marginBottom: "20px",
     },
 
     footer: {
@@ -566,6 +565,6 @@ const styles = {
         color: "#777b82",
         fontSize: "12px",
         marginTop: "28px",
-        marginBottom: 0
-    }
+        marginBottom: 0,
+    },
 };

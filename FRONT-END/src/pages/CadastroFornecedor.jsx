@@ -6,241 +6,444 @@ import { formatErrorMessage } from "../utils/formatErrorMessage";
 import { ThemeContext } from "../contexts/ThemeContext";
 
 export default function CadastrarFornecedor() {
-    const navigate = useNavigate();
-    const { theme } = useContext(ThemeContext);
-    const isDark = theme === "dark";
+  const navigate = useNavigate();
+  const { theme } = useContext(ThemeContext);
+  const isDark = theme === "dark";
 
-    // Estados do formulário
-    const [nome, setNome] = useState("");
-    const [imagem, setImagem] = useState(null);
+  // Estados do formulário
+  const [nome, setNome] = useState("");
+  const [imagem, setImagem] = useState(null);
 
-    // Estados de controle da requisição e feedback ao usuário
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
+  // Estados de controle da requisição e feedback ao usuário
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-        setError("");
-        setSuccess("");
+    setError("");
+    setSuccess("");
 
-        // Validação: nome obrigatório
-        if (!nome.trim()) {
-            setError("Informe o nome do fornecedor.");
-            return;
-        }
+    // Validação: nome obrigatório
+    if (!nome.trim()) {
+      setError("Informe o nome do fornecedor.");
+      return;
+    }
 
-        try {
-            setLoading(true);
+    try {
+      setLoading(true);
 
-            // Usa FormData porque há upload de arquivo (imagem)
-            const formData = new FormData();
+      // Usa FormData porque há upload de arquivo (imagem)
+      const formData = new FormData();
 
-            formData.append("nome", nome);
+      formData.append("nome", nome);
 
-            // Só anexa a imagem se o usuário tiver selecionado uma
-            if (imagem) {
-                formData.append("imagem", imagem);
-            }
+      // Só anexa a imagem se o usuário tiver selecionado uma
+      if (imagem) {
+        formData.append("imagem", imagem);
+      }
 
-            // Chama a API para criar o fornecedor
-            await criarFornecedor(formData);
+      // Chama a API para criar o fornecedor
+      await criarFornecedor(formData);
 
-            // Sucesso: limpa o formulário
-            setSuccess("Fornecedor cadastrado com sucesso!");
-            setNome("");
-            setImagem(null);
+      // Sucesso: limpa o formulário
+      setSuccess("Fornecedor cadastrado com sucesso!");
+      setNome("");
+      setImagem(null);
 
-            // Reseta manualmente o input de arquivo (não é controlado por state)
-            const fileInput = document.getElementById("imagem");
-            if (fileInput) {
-                fileInput.value = "";
-            }
+      // Reseta manualmente o input de arquivo (não é controlado por state)
+      const fileInput = document.getElementById("imagem");
+      if (fileInput) {
+        fileInput.value = "";
+      }
+    } catch (error) {
+      // Trata erros retornados pela API ou de conexão
+      console.error("Erro ao cadastrar fornecedor:", error);
 
-        } catch (error) {
-            // Trata erros retornados pela API ou de conexão
-            console.error("Erro ao cadastrar fornecedor:", error);
+      setError(
+        formatErrorMessage(
+          error,
+          "Não foi possível cadastrar o fornecedor. Verifique os dados e tente novamente.",
+        ),
+      );
+    } finally {
+      // Sempre desativa o loading, independentemente do resultado
+      setLoading(false);
+    }
+  };
 
-            setError(
-                formatErrorMessage(
-                    error,
-                    "Não foi possível cadastrar o fornecedor. Verifique os dados e tente novamente."
-                )
-            );
-        } finally {
-            // Sempre desativa o loading, independentemente do resultado
-            setLoading(false);
-        }
-    };
+  return (
+    <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
+      <Sidebar />
 
-    return (
-        <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
-            <Sidebar />
+      <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
+        <header style={styles.header}>
+          <div>
+            <h2
+              style={{ ...styles.title, ...(isDark ? styles.titleDark : {}) }}
+            >
+              Cadastrar fornecedor
+            </h2>
 
-            <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
-                <header style={styles.header}>
-                    <div>
-                        <h2 style={{ ...styles.title, ...(isDark ? styles.titleDark : {}) }}>
-                            Cadastrar fornecedor
-                        </h2>
+            <p
+              style={{
+                ...styles.subtitle,
+                ...(isDark ? styles.subtitleDark : {}),
+              }}
+            >
+              Cadastre um novo fornecedor para a loja.
+            </p>
+          </div>
 
-                        <p style={{ ...styles.subtitle, ...(isDark ? styles.subtitleDark : {}) }}>
-                            Cadastre um novo fornecedor para a loja.
-                        </p>
-                    </div>
+          <button
+            type="button"
+            style={{
+              ...styles.voltarButton,
+              ...(isDark ? styles.voltarButtonDark : {}),
+            }}
+            onClick={() => navigate("/fornecedores")}
+          >
+            <span className="material-symbols-outlined">arrow_back</span>
+            Voltar
+          </button>
+        </header>
 
-                    <button
-                        type="button"
-                        style={{ ...styles.voltarButton, ...(isDark ? styles.voltarButtonDark : {}) }}
-                        onClick={() => navigate("/fornecedores")}
-                    >
-                        <span className="material-symbols-outlined">
-                            arrow_back
-                        </span>
+        <section
+          style={{ ...styles.formCard, ...(isDark ? styles.formCardDark : {}) }}
+        >
+          <form onSubmit={handleSubmit}>
+            <div style={styles.formGroup}>
+              <label
+                style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}
+              >
+                Nome do fornecedor
+              </label>
 
-                        Voltar
-                    </button>
-                </header>
+              <input
+                type="text"
+                value={nome}
+                onChange={(e) => {
+                  setNome(e.target.value);
+                  setError("");
+                  setSuccess("");
+                }}
+                placeholder="Digite o nome do fornecedor"
+                style={{ ...styles.input, ...(isDark ? styles.inputDark : {}) }}
+              />
+            </div>
 
-                <section style={{ ...styles.formCard, ...(isDark ? styles.formCardDark : {}) }}>
-                    <form onSubmit={handleSubmit}>
-                        <div style={styles.formGroup}>
-                            <label style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>
-                                Nome do fornecedor
-                            </label>
+            <div style={styles.formGroup}>
+              <label
+                style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}
+              >
+                Imagem do fornecedor
+              </label>
 
-                            <input
-                                type="text"
-                                value={nome}
-                                onChange={(e) => {
-                                    setNome(e.target.value);
-                                    setError("");
-                                    setSuccess("");
-                                }}
-                                placeholder="Digite o nome do fornecedor"
-                                style={{ ...styles.input, ...(isDark ? styles.inputDark : {}) }}
-                            />
-                        </div>
+              <input
+                id="imagem"
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  setImagem(e.target.files[0]);
+                  setError("");
+                  setSuccess("");
+                }}
+                style={{
+                  ...styles.fileInput,
+                  ...(isDark ? styles.fileInputDark : {}),
+                }}
+              />
 
-                        <div style={styles.formGroup}>
-                            <label style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>
-                                Imagem do fornecedor
-                            </label>
+              {imagem && (
+                <div
+                  style={{
+                    ...styles.fileInfo,
+                    ...(isDark ? styles.fileInfoDark : {}),
+                  }}
+                >
+                  <span className="material-symbols-outlined">image</span>
 
-                            <input
-                                id="imagem"
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => {
-                                    setImagem(e.target.files[0]);
-                                    setError("");
-                                    setSuccess("");
-                                }}
-                                style={{ ...styles.fileInput, ...(isDark ? styles.fileInputDark : {}) }}
-                            />
+                  <span>{imagem.name}</span>
+                </div>
+              )}
+            </div>
 
-                            {imagem && (
-                                <div style={{ ...styles.fileInfo, ...(isDark ? styles.fileInfoDark : {}) }}>
-                                    <span className="material-symbols-outlined">
-                                        image
-                                    </span>
+            {error && (
+              <div
+                style={{
+                  ...styles.errorBox,
+                  ...(isDark ? styles.errorBoxDark : {}),
+                }}
+              >
+                <span className="material-symbols-outlined">error</span>
 
-                                    <span>
-                                        {imagem.name}
-                                    </span>
-                                </div>
-                            )}
-                        </div>
+                <span>{error}</span>
+              </div>
+            )}
 
-                        {error && (
-                            <div style={{ ...styles.errorBox, ...(isDark ? styles.errorBoxDark : {}) }}>
-                                <span className="material-symbols-outlined">
-                                    error
-                                </span>
+            {success && (
+              <div
+                style={{
+                  ...styles.successBox,
+                  ...(isDark ? styles.successBoxDark : {}),
+                }}
+              >
+                <span className="material-symbols-outlined">check_circle</span>
 
-                                <span>
-                                    {error}
-                                </span>
-                            </div>
-                        )}
+                <span>{success}</span>
+              </div>
+            )}
 
-                        {success && (
-                            <div style={{ ...styles.successBox, ...(isDark ? styles.successBoxDark : {}) }}>
-                                <span className="material-symbols-outlined">
-                                    check_circle
-                                </span>
+            <div style={styles.actions}>
+              <button
+                type="button"
+                style={{
+                  ...styles.cancelButton,
+                  ...(isDark ? styles.cancelButtonDark : {}),
+                }}
+                onClick={() => navigate("/fornecedores")}
+                disabled={loading}
+              >
+                Cancelar
+              </button>
 
-                                <span>
-                                    {success}
-                                </span>
-                            </div>
-                        )}
+              <button
+                type="submit"
+                style={{
+                  ...styles.saveButton,
+                  ...(loading ? styles.disabledButton : {}),
+                  ...(isDark ? styles.saveButtonDark : {}),
+                }}
+                disabled={loading}
+              >
+                <span className="material-symbols-outlined">
+                  {loading ? "progress_activity" : "save"}
+                </span>
 
-                        <div style={styles.actions}>
-                            <button
-                                type="button"
-                                style={{ ...styles.cancelButton, ...(isDark ? styles.cancelButtonDark : {}) }}
-                                onClick={() => navigate("/fornecedores")}
-                                disabled={loading}
-                            >
-                                Cancelar
-                            </button>
-
-                            <button
-                                type="submit"
-                                style={{
-                                    ...styles.saveButton,
-                                    ...(loading ? styles.disabledButton : {}),
-                                    ...(isDark ? styles.saveButtonDark : {})
-                                }}
-                                disabled={loading}
-                            >
-                                <span className="material-symbols-outlined">
-                                    {loading ? "progress_activity" : "save"}
-                                </span>
-
-                                {loading ? "Cadastrando..." : "Cadastrar fornecedor"}
-                            </button>
-                        </div>
-                    </form>
-                </section>
-            </main>
-        </div>
-    );
+                {loading ? "Cadastrando..." : "Cadastrar fornecedor"}
+              </button>
+            </div>
+          </form>
+        </section>
+      </main>
+    </div>
+  );
 }
 
 const styles = {
-    layout: { display: "flex", minHeight: "100vh", backgroundColor: "#f3f5f9" },
-    layoutDark: { backgroundColor: "#0f172a" },
-    page: { marginLeft: "256px", width: "calc(100% - 256px)", padding: "32px 32px 40px", boxSizing: "border-box", fontFamily: "Inter, sans-serif" },
-    pageDark: { backgroundColor: "#111827", color: "#f3f4f6" },
-    header: { display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "40px" },
-    title: { fontFamily: "Montserrat, sans-serif", fontSize: "32px", fontWeight: "700", margin: 0, color: "#111c2d" },
-    titleDark: { color: "#f9fafb" },
-    subtitle: { color: "#44474c", marginTop: "5px", marginBottom: 0 },
-    subtitleDark: { color: "#d1d5db" },
-    voltarButton: { display: "flex", alignItems: "center", gap: "8px", padding: "10px 16px", border: "1px solid #e2e8f0", borderRadius: "8px", backgroundColor: "#f9f9ff", color: "#303e51", fontSize: "14px", fontWeight: "600", cursor: "pointer", fontFamily: "Inter, sans-serif" },
-    voltarButtonDark: { backgroundColor: "#1f2937", borderColor: "#4b5563", color: "#f9fafb" },
-    formCard: { maxWidth: "700px", backgroundColor: "#f9f9ff", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "30px", boxShadow: "0 1px 2px rgba(0,0,0,0.03)" },
-    formCardDark: { backgroundColor: "#1f2937", borderColor: "#374151" },
-    formGroup: { display: "flex", flexDirection: "column", gap: "8px", marginBottom: "24px" },
-    label: { fontSize: "14px", fontWeight: "600", color: "#303e51" },
-    labelDark: { color: "#e5e7eb" },
-    input: { width: "100%", boxSizing: "border-box", padding: "13px 14px", border: "1px solid #cfd5df", borderRadius: "8px", backgroundColor: "#ffffff", color: "#111c2d", fontSize: "14px", outline: "none", fontFamily: "Inter, sans-serif" },
-    inputDark: { backgroundColor: "#111827", borderColor: "#4b5563", color: "#f9fafb" },
-    fileInput: { width: "100%", boxSizing: "border-box", padding: "12px", border: "1px dashed #b8c0cc", borderRadius: "8px", backgroundColor: "#ffffff", cursor: "pointer", fontFamily: "Inter, sans-serif" },
-    fileInputDark: { backgroundColor: "#111827", borderColor: "#4b5563", color: "#f9fafb" },
-    fileInfo: { display: "flex", alignItems: "center", gap: "8px", color: "#44474c", fontSize: "13px", padding: "10px", backgroundColor: "#eef2f7", borderRadius: "6px" },
-    fileInfoDark: { backgroundColor: "#111827", color: "#d1d5db" },
-    errorBox: { display: "flex", alignItems: "center", gap: "8px", padding: "12px", marginBottom: "20px", backgroundColor: "#fff1f2", border: "1px solid #fecdd3", borderRadius: "8px", color: "#9f1239", fontSize: "14px", fontWeight: "600" },
-    errorBoxDark: { backgroundColor: "#3f1721", borderColor: "#7f1d1d", color: "#fecdd3" },
-    successBox: { display: "flex", alignItems: "center", gap: "8px", padding: "12px", marginBottom: "20px", backgroundColor: "#ecfdf5", border: "1px solid #a7f3d0", borderRadius: "8px", color: "#047857", fontSize: "14px", fontWeight: "600" },
-    successBoxDark: { backgroundColor: "#052e16", borderColor: "#14532d", color: "#bbf7d0" },
-    actions: { display: "flex", justifyContent: "flex-end", gap: "12px", paddingTop: "10px", borderTop: "1px solid #e2e8f0" },
-    cancelButton: { padding: "11px 18px", border: "1px solid #d1d5db", borderRadius: "8px", backgroundColor: "#ffffff", color: "#44474c", fontSize: "14px", fontWeight: "600", cursor: "pointer", fontFamily: "Inter, sans-serif" },
-    cancelButtonDark: { backgroundColor: "#1f2937", borderColor: "#4b5563", color: "#f9fafb" },
-    saveButton: { display: "flex", alignItems: "center", gap: "8px", padding: "11px 18px", border: "none", borderRadius: "8px", backgroundColor: "#303e51", color: "#ffffff", fontSize: "14px", fontWeight: "600", cursor: "pointer", fontFamily: "Inter, sans-serif" },
-    saveButtonDark: { backgroundColor: "#2563eb" },
-    disabledButton: { opacity: 0.6, cursor: "not-allowed" },
+  layout: {
+    display: "flex",
+    minHeight: "100vh",
+    backgroundColor: "#f3f5f9",
+  },
+  layoutDark: {
+    backgroundColor: "#0f172a",
+  },
+  page: {
+    marginLeft: "256px",
+    width: "calc(100% - 256px)",
+    padding: "32px 32px 40px",
+    boxSizing: "border-box",
+    fontFamily: "Inter, sans-serif",
+  },
+  pageDark: {
+    backgroundColor: "#111827",
+    color: "#f3f4f6",
+  },
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    marginBottom: "40px",
+  },
+  title: {
+    fontFamily: "Montserrat, sans-serif",
+    fontSize: "32px",
+    fontWeight: "700",
+    margin: 0,
+    color: "#111c2d",
+  },
+  titleDark: {
+    color: "#f9fafb",
+  },
+  subtitle: {
+    color: "#44474c",
+    marginTop: "5px",
+    marginBottom: 0,
+  },
+  subtitleDark: {
+    color: "#d1d5db",
+  },
+  voltarButton: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    padding: "10px 16px",
+    border: "1px solid #e2e8f0",
+    borderRadius: "8px",
+    backgroundColor: "#f9f9ff",
+    color: "#303e51",
+    fontSize: "14px",
+    fontWeight: "600",
+    cursor: "pointer",
+    fontFamily: "Inter, sans-serif",
+  },
+  voltarButtonDark: {
+    backgroundColor: "#1f2937",
+    borderColor: "#4b5563",
+    color: "#f9fafb",
+  },
+  formCard: {
+    maxWidth: "700px",
+    backgroundColor: "#f9f9ff",
+    border: "1px solid #e2e8f0",
+    borderRadius: "10px",
+    padding: "30px",
+    boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
+  },
+  formCardDark: {
+    backgroundColor: "#1f2937",
+    borderColor: "#374151",
+  },
+  formGroup: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+    marginBottom: "24px",
+  },
+  label: {
+    fontSize: "14px",
+    fontWeight: "600",
+    color: "#303e51",
+  },
+  labelDark: {
+    color: "#e5e7eb",
+  },
+  input: {
+    width: "100%",
+    boxSizing: "border-box",
+    padding: "13px 14px",
+    border: "1px solid #cfd5df",
+    borderRadius: "8px",
+    backgroundColor: "#ffffff",
+    color: "#111c2d",
+    fontSize: "14px",
+    outline: "none",
+    fontFamily: "Inter, sans-serif",
+  },
+  inputDark: {
+    backgroundColor: "#111827",
+    borderColor: "#4b5563",
+    color: "#f9fafb",
+  },
+  fileInput: {
+    width: "100%",
+    boxSizing: "border-box",
+    padding: "12px",
+    border: "1px dashed #b8c0cc",
+    borderRadius: "8px",
+    backgroundColor: "#ffffff",
+    cursor: "pointer",
+    fontFamily: "Inter, sans-serif",
+  },
+  fileInputDark: {
+    backgroundColor: "#111827",
+    borderColor: "#4b5563",
+    color: "#f9fafb",
+  },
+  fileInfo: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    color: "#44474c",
+    fontSize: "13px",
+    padding: "10px",
+    backgroundColor: "#eef2f7",
+    borderRadius: "6px",
+  },
+  fileInfoDark: {
+    backgroundColor: "#111827",
+    color: "#d1d5db",
+  },
+  errorBox: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    padding: "12px",
+    marginBottom: "20px",
+    backgroundColor: "#fff1f2",
+    border: "1px solid #fecdd3",
+    borderRadius: "8px",
+    color: "#9f1239",
+    fontSize: "14px",
+    fontWeight: "600",
+  },
+  errorBoxDark: {
+    backgroundColor: "#3f1721",
+    borderColor: "#7f1d1d",
+    color: "#fecdd3",
+  },
+  successBox: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    padding: "12px",
+    marginBottom: "20px",
+    backgroundColor: "#ecfdf5",
+    border: "1px solid #a7f3d0",
+    borderRadius: "8px",
+    color: "#047857",
+    fontSize: "14px",
+    fontWeight: "600",
+  },
+  successBoxDark: {
+    backgroundColor: "#052e16",
+    borderColor: "#14532d",
+    color: "#bbf7d0",
+  },
+  actions: {
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: "12px",
+    paddingTop: "10px",
+    borderTop: "1px solid #e2e8f0",
+  },
+  cancelButton: {
+    padding: "11px 18px",
+    border: "1px solid #d1d5db",
+    borderRadius: "8px",
+    backgroundColor: "#ffffff",
+    color: "#44474c",
+    fontSize: "14px",
+    fontWeight: "600",
+    cursor: "pointer",
+    fontFamily: "Inter, sans-serif",
+  },
+  cancelButtonDark: {
+    backgroundColor: "#1f2937",
+    borderColor: "#4b5563",
+    color: "#f9fafb",
+  },
+  saveButton: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    padding: "11px 18px",
+    border: "none",
+    borderRadius: "8px",
+    backgroundColor: "#303e51",
+    color: "#ffffff",
+    fontSize: "14px",
+    fontWeight: "600",
+    cursor: "pointer",
+    fontFamily: "Inter, sans-serif",
+  },
+  saveButtonDark: {
+    backgroundColor: "#2563eb",
+  },
+  disabledButton: {
+    opacity: 0.6,
+    cursor: "not-allowed",
+  },
 };
