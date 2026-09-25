@@ -22,9 +22,10 @@ export default function CadastroProdutos() {
 
     const { theme } = useContext(ThemeContext);
     const isDark = theme === "dark";
+    const { fornecedores, loading: carregandoFornecedores } = useFornecedores();
 
     // Hook customizado que carrega a lista de fornecedores para o select
-    const { fornecedores, loading: carregandoFornecedores } = useFornecedores();
+   
 
     // Estados do formulário
     const [form, setForm] = useState(estadoInicial);
@@ -111,6 +112,16 @@ export default function CadastroProdutos() {
 
         if (!form.idFornecedor) {
             setMensagem({ type: "error", text: "Selecione um fornecedor existente." });
+            return;
+        }
+
+        if (!form.idFornecedor) {
+
+            setMensagem({
+                type: "error",
+                text: "Selecione um fornecedor existente."
+            });
+
             return;
         }
 
