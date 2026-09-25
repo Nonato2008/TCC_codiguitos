@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { cadastro as apiCadastro } from "../services/authService.js";
 import { formatErrorMessage } from "../utils/formatErrorMessage";
-import { ThemeContext } from "../contexts/ThemeContext";
+import { ThemeContext } from "../contexts/ThemeContext.jsx";
 
 export default function Cadastro() {
   const navigate = useNavigate();
