@@ -1,4 +1,105 @@
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  font-family: "Inter", sans-serif;
+  color: #292526;
+  background: #ffffff;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  --font-body: "Inter", sans-serif;
+  --font-display: "Inter", sans-serif;
+  --color-ink: #292526;
+  --color-muted: #686365;
+  --color-brand: #a41623;
+  --color-brand-deep: #7f111b;
+  --color-action: #a41623;
+  --color-action-hover: #7f111b;
+  --color-page: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-soft: #ffffff;
+  --color-secondary: #e5e5e5;
+  --color-border: #e5e5e5;
+  --shadow-soft: 0 12px 32px rgba(44, 24, 27, 0.07);
+  --scene-stroke: rgba(164, 22, 35, 0.34);
+  --scene-detail: rgba(115, 108, 109, 0.28);
+  --scene-wash: rgba(164, 22, 35, 0.04);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--color-page);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+body.dark {
+  color-scheme: dark;
+  --color-ink: #f4f1f1;
+  --color-muted: #c1b9bb;
+  --color-brand: #e56b75;
+  --color-brand-deep: #f0a1a7;
+  --color-action: #a41623;
+  --color-action-hover: #bd2634;
+  --color-page: #201d1e;
+  --color-surface: #292526;
+  --color-surface-soft: #302b2c;
+  --color-secondary: #494344;
+  --color-border: #494344;
+  --shadow-soft: 0 14px 34px rgba(0, 0, 0, 0.2);
+  --scene-stroke: rgba(229, 107, 117, 0.38);
+  --scene-detail: rgba(235, 226, 227, 0.3);
+  --scene-wash: rgba(164, 22, 35, 0.075);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  transition: filter 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+button:not(:disabled):hover {
+  filter: brightness(1.04);
+}
+
+button:not(:disabled):active {
+  transform: translateY(1px);
+}
+
+a {
+  color: var(--color-brand);
+}
+
+::selection {
+  background: #f4dadd;
+  color: #451018;
+}
+
+*:focus-visible {
+  outline: 3px solid rgba(164, 22, 35, 0.38);
+  outline-offset: 2px;
+}
 
 .material-symbols-outlined {
   font-family: "Material Symbols Outlined";
@@ -16,36 +117,175 @@
   font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
 }
 
-body {
-  transition: background-color 0.3s ease, color 0.3s ease;
+.application-root {
+  position: relative;
+  min-height: 100vh;
+  isolation: isolate;
+  background: var(--color-page);
 }
 
-body.light {
-  background-color: #f8f9fa;
-  color: #212529;
+.application-content {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
 }
 
-body.dark {
-  background-color: #121212;
-  color: #ffffff;
+.ambient-background {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background-color: var(--color-page);
+  transition: background-color 400ms ease;
 }
 
-body.dark .card {
-  background-color: #1e1e1e;
-  color: #ffffff;
-  border: 1px solid #333;
+.ambient-background__waves {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  opacity: 1;
 }
 
-body.dark .form-control {
-  background-color: #2a2a2a;
-  color: #fff;
-  border: 1px solid #444;
+.ambient-background__wave {
+  fill: none;
+  stroke: var(--scene-stroke);
+  stroke-width: 2.15;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
 }
 
-body.dark .form-control::-webkit-input-placeholder {
-  color: #fff;
+.ambient-background__wave--2 { stroke: var(--scene-detail); stroke-width: 1.8; }
+.ambient-background__wave--3 { stroke-width: 1.55; }
+.ambient-background__wave--4 { stroke: var(--scene-detail); stroke-width: 1.35; }
+
+.ambient-background__scene-art {
+  position: absolute;
+  top: var(--scene-art-top, 42%);
+  right: 1%;
+  width: min(50vw, 640px);
+  height: min(52vh, 520px);
+  overflow: visible;
+  color: var(--color-brand);
 }
 
-body.dark .btn {
-  border: none;
+.ambient-background__artwork {
+  fill: none;
+  stroke: var(--scene-stroke);
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.9;
+  vector-effect: non-scaling-stroke;
+}
+
+.ambient-background--access {
+  --scene-art-top: 16%;
+  background-image: radial-gradient(ellipse at 82% 20%, var(--scene-wash), transparent 46%);
+}
+
+.ambient-background--signup {
+  --scene-art-top: 20%;
+  --scene-wash: rgba(164, 22, 35, 0.055);
+  background-image:
+    radial-gradient(ellipse at 80% 25%, var(--scene-wash), transparent 45%),
+    linear-gradient(90deg, transparent 68%, rgba(229, 229, 229, 0.17));
+}
+
+.ambient-background--welcome {
+  --scene-art-top: 24%;
+  background-image: radial-gradient(ellipse at 80% 32%, var(--scene-wash), transparent 48%);
+}
+
+.ambient-background--dashboard {
+  --scene-art-top: 38%;
+  background-image:
+    radial-gradient(ellipse at 90% 16%, var(--scene-wash), transparent 42%),
+    linear-gradient(180deg, transparent 52%, rgba(229, 229, 229, 0.12));
+}
+
+.ambient-background--sales,
+.ambient-background--saleDetail {
+  --scene-art-top: 45%;
+  background-image: radial-gradient(ellipse at 90% 78%, var(--scene-wash), transparent 43%);
+}
+
+.ambient-background--saleForm {
+  --scene-art-top: 38%;
+  background-image:
+    radial-gradient(ellipse at 82% 16%, var(--scene-wash), transparent 42%),
+    linear-gradient(180deg, rgba(229, 229, 229, 0.1), transparent 46%);
+}
+
+.ambient-background--products,
+.ambient-background--productDetail {
+  --scene-art-top: 40%;
+  background-image: radial-gradient(ellipse at 88% 30%, var(--scene-wash), transparent 44%);
+}
+
+.ambient-background--productForm {
+  --scene-art-top: 38%;
+  background-image:
+    radial-gradient(ellipse at 88% 76%, var(--scene-wash), transparent 43%),
+    linear-gradient(180deg, transparent 45%, rgba(229, 229, 229, 0.12));
+}
+
+.ambient-background--stock {
+  --scene-art-top: 36%;
+  background-image: repeating-linear-gradient(0deg, transparent 0 95px, rgba(164, 22, 35, 0.025) 96px 97px);
+}
+
+.ambient-background--suppliers,
+.ambient-background--supplierForm {
+  --scene-art-top: 36%;
+  background-image: radial-gradient(ellipse at 84% 24%, var(--scene-wash), transparent 46%);
+}
+
+@media (max-width: 600px) {
+  main [style*="minmax(360px, 1fr)"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .ambient-background__scene-art {
+    --scene-art-top: 56%;
+    right: 0;
+    width: min(72vw, 360px);
+    height: 38vh;
+  }
+
+  .ambient-background__wave { stroke-width: 1.9; }
+
+  .ambient-background--access,
+  .ambient-background--signup,
+  .ambient-background--welcome { --scene-art-top: 30%; }
+  .ambient-background--dashboard { --scene-art-top: 48%; }
+  .ambient-background--products,
+  .ambient-background--productDetail { --scene-art-top: 52%; }
+  .ambient-background--stock { --scene-art-top: 50%; }
+  .ambient-background--suppliers { --scene-art-top: 48%; }
+}
+
+body.dark .form-control,
+body.dark .form-select {
+  border-color: var(--color-border);
+  background-color: var(--color-surface-soft);
+  color: var(--color-ink);
+}
+
+body.dark .form-control::placeholder {
+  color: var(--color-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -21,3 +21,13 @@ export const buscarVendaId = async (id) => {
         throw error;
     }
 };
+
+export const cancelarVenda = async (id) => {
+    try {
+        const response = await codiguitos_api.delete(`/vendas/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error("Erro ao cancelar venda:", error);
+        throw error;
+    }
+};

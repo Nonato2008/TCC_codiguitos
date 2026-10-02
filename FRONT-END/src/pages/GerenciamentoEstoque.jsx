@@ -1,4 +1,16 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useMemo, useState, useContext } from "react";
+import {
+  ArrowDownUp,
+  ImagePlus,
+  Minus,
+  PackageX,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Save,
+  Search,
+  X,
+} from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import { useProdutos } from "../hooks/useProdutos";
 import { useFornecedores } from "../hooks/useFornecedores";
@@ -42,7 +54,11 @@ function getStatusValidade(produto) {
     return { texto: "Na validade", tipo: "valid" };
   }
 
-  const data = new Date(dataVencimento);
+  const dataTexto = String(dataVencimento);
+  const partes = dataTexto.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const data = partes
+    ? new Date(Number(partes[1]), Number(partes[2]) - 1, Number(partes[3]))
+    : new Date(dataVencimento);
   if (Number.isNaN(data.getTime())) {
     return { texto: "Na validade", tipo: "valid" };
   }
@@ -50,9 +66,37 @@ function getStatusValidade(produto) {
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
 
-  return data < hoje
-    ? { texto: "Vencido", tipo: "expired" }
-    : { texto: "Na validade", tipo: "valid" };
+  if (data < hoje) return { texto: "Vencido", tipo: "expired" };
+
+  const diasAteVencer = Math.ceil((data - hoje) / 86400000);
+  if (diasAteVencer <= 30) {
+    return { texto: `Vence em ${diasAteVencer} ${diasAteVencer === 1 ? "dia" : "dias"}`, tipo: "soon" };
+  }
+
+  return { texto: "Na validade", tipo: "valid" };
+}
+
+function normalizarLista(lista) {
+  if (Array.isArray(lista)) return lista;
+  if (Array.isArray(lista?.result)) return lista.result;
+  if (Array.isArray(lista?.data)) return lista.data;
+  return [];
+}
+
+function formatarDataInput(valor) {
+  if (!valor) return "";
+  const datePart = String(valor).match(/^(\d{4}-\d{2}-\d{2})/);
+  if (datePart) return datePart[1];
+  const data = new Date(valor);
+  if (Number.isNaN(data.getTime())) return "";
+  return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, "0")}-${String(data.getDate()).padStart(2, "0")}`;
+}
+
+function formatarDataExibicao(valor) {
+  const data = formatarDataInput(valor);
+  if (!data) return "—";
+  const [ano, mes, dia] = data.split("-").map(Number);
+  return new Date(ano, mes - 1, dia).toLocaleDateString("pt-BR");
 }
 
 export default function GerenciamentoEstoque() {
@@ -66,6 +110,14 @@ export default function GerenciamentoEstoque() {
 
   // Lista local de produtos (permite ajustes otimistas sem refetch)
   const [listaProdutos, setListaProdutos] = useState([]);
+  const [busca, setBusca] = useState("");
+  const [filtro, setFiltro] = useState("todos");
+  const [ordenacao, setOrdenacao] = useState("nome");
+  const [salvandoId, setSalvandoId] = useState(null);
+  const [mensagemEstoque, setMensagemEstoque] = useState("");
+  const [produtoEmEdicao, setProdutoEmEdicao] = useState(null);
+  const [edicao, setEdicao] = useState({ nome: "", preco: "", dataVenc: "", imagem: null });
+  const [salvandoEdicao, setSalvandoEdicao] = useState(false);
 
   // Descobre o nome do fornecedor a partir do id do produto
   const getFornecedorNome = (produto) => {
@@ -84,6 +136,8 @@ export default function GerenciamentoEstoque() {
       (produtos || []).map((produto, index) => {
         const imagemOriginal = getImagemProduto(produto.Imagem ?? produto.imagem ?? "/example.jpg");
         const quantidadeAtual = Number(produto.Quantidade ?? produto.quantidade ?? 0);
+        const statusProduto = String(produto.Status ?? produto.status ?? "").toLowerCase();
+        const statusDisponivel = !["esgotado", "vencido", "indisponível", "indisponivel"].includes(statusProduto);
 
         return {
           ...produto,
@@ -97,7 +151,7 @@ export default function GerenciamentoEstoque() {
           quantidade: quantidadeAtual,
           quantidadeAjuste: 0,
           ativoParaVenda:
-            produto.ativoParaVenda ?? (produto.Status ? produto.Status !== "Esgotado" : true),
+            produto.ativoParaVenda ?? (quantidadeAtual > 0 && statusDisponivel),
           imagemOriginal,
           imagem: quantidadeAtual === 0 ? "esgotado.jpg" : imagemOriginal,
         };
@@ -105,36 +159,87 @@ export default function GerenciamentoEstoque() {
     );
   }, [produtos]);
 
-  // Atualiza o input de ajuste de quantidade do produto
-  // Aceita string vazia temporariamente para permitir apagar o valor
-  function atualizarQuantidadeEntrada(event, idProduto) {
-    const valorDigitado = event.target.value;
+  const produtosVisiveis = useMemo(() => {
+    const termo = busca.trim().toLocaleLowerCase("pt-BR");
+    const filtrados = listaProdutos.filter((produto) => {
+      const validade = getStatusValidade(produto);
+      const correspondeBusca = !termo || [
+        produto.nome,
+        produto.id,
+        getFornecedorNome(produto),
+      ].some((valor) => String(valor ?? "").toLocaleLowerCase("pt-BR").includes(termo));
 
-    if (valorDigitado === "") {
-      setListaProdutos((atual) =>
-        atual.map((produto) =>
-          produto.id === idProduto
-            ? { ...produto, quantidadeAjuste: "" }
-            : produto
-        )
+      if (!correspondeBusca) return false;
+      if (filtro === "semEstoque") return produto.quantidade <= 0;
+      if (filtro === "proximos") return validade.tipo === "soon";
+      if (filtro === "vencidos") return validade.tipo === "expired";
+      if (filtro === "disponiveis") return produto.ativoParaVenda && produto.quantidade > 0 && validade.tipo !== "expired";
+      if (filtro === "indisponiveis") return !produto.ativoParaVenda || produto.quantidade <= 0 || validade.tipo === "expired";
+      return true;
+    });
+
+    return filtrados.sort((a, b) => {
+      if (ordenacao === "estoque") return a.quantidade - b.quantidade;
+      if (ordenacao === "validade") {
+        const dataA = new Date(a.DataVenc ?? a.dataVenc ?? "9999-12-31").getTime();
+        const dataB = new Date(b.DataVenc ?? b.dataVenc ?? "9999-12-31").getTime();
+        return dataA - dataB;
+      }
+      return String(a.nome).localeCompare(String(b.nome), "pt-BR");
+    });
+  }, [listaProdutos, busca, filtro, ordenacao, fornecedores]);
+
+  const totaisEstoque = useMemo(() => ({
+    todos: listaProdutos.length,
+    semEstoque: listaProdutos.filter((produto) => produto.quantidade <= 0).length,
+    proximos: listaProdutos.filter((produto) => getStatusValidade(produto).tipo === "soon").length,
+    disponiveis: listaProdutos.filter((produto) => produto.ativoParaVenda && produto.quantidade > 0).length,
+    indisponiveis: listaProdutos.filter((produto) => !produto.ativoParaVenda || produto.quantidade <= 0).length,
+  }), [listaProdutos]);
+
+  function abrirEdicao(produto) {
+    setProdutoEmEdicao(produto);
+    setEdicao({
+      nome: produto.Nome ?? produto.nome ?? "",
+      preco: String(produto.Preco ?? produto.preco ?? ""),
+      dataVenc: formatarDataInput(produto.DataVenc ?? produto.dataVenc),
+      imagem: null,
+    });
+  }
+
+  async function salvarEdicao(event) {
+    event.preventDefault();
+    if (!produtoEmEdicao || !edicao.nome.trim() || Number(edicao.preco) <= 0 || !edicao.dataVenc) return;
+
+    setSalvandoEdicao(true);
+    try {
+      await atualizarProduto(produtoEmEdicao.id, {
+        idFornecedor: produtoEmEdicao.IdFornecedor ?? produtoEmEdicao.idFornecedor ?? 1,
+        nome: edicao.nome.trim(),
+        preco: Number(edicao.preco),
+        quantidade: produtoEmEdicao.quantidade,
+        dataVenc: edicao.dataVenc,
+        imagem: edicao.imagem,
+      });
+
+      const produtosAtualizados = await buscarProdutos();
+      const produtoAtualizado = normalizarLista(produtosAtualizados).find(
+        (produto) => String(produto.Id ?? produto.id) === String(produtoEmEdicao.id)
       );
 
-      return;
+      if (produtoAtualizado) {
+        setListaProdutos((atual) => atual.map((produto) => produto.id === produtoEmEdicao.id
+          ? { ...produto, ...produtoAtualizado, nome: produtoAtualizado.Nome ?? produtoAtualizado.nome, quantidade: Number(produtoAtualizado.Quantidade ?? produtoAtualizado.quantidade ?? produto.quantidade), quantidadeAjuste: 0, imagemOriginal: getImagemProduto(produtoAtualizado.Imagem ?? produtoAtualizado.imagem), imagem: getImagemProduto(produtoAtualizado.Imagem ?? produtoAtualizado.imagem) }
+          : produto));
+      }
+
+      setMensagemEstoque(`${edicao.nome.trim()} atualizado com sucesso.`);
+      setProdutoEmEdicao(null);
+    } catch (err) {
+      setMensagemEstoque(formatErrorMessage(err, "Não foi possível editar o produto."));
+    } finally {
+      setSalvandoEdicao(false);
     }
-
-    const valor = Number(valorDigitado);
-
-    if (Number.isNaN(valor)) {
-      return;
-    }
-
-    setListaProdutos((atual) =>
-      atual.map((produto) =>
-        produto.id === idProduto
-          ? { ...produto, quantidadeAjuste: Math.max(0, Math.floor(valor)) }
-          : produto
-      )
-    );
   }
 
   // Salva a nova quantidade do produto no banco de dados
@@ -148,64 +253,52 @@ export default function GerenciamentoEstoque() {
 
   // Ajusta o estoque somando ou subtraindo o valor informado
   // Faz atualização otimista e reverte em caso de erro
-  async function ajustarEstoque(tipo, idProduto) {
+  function alterarAjuste(idProduto, diferenca) {
+    setMensagemEstoque("");
+    setListaProdutos((atual) => atual.map((produto) => {
+      if (produto.id !== idProduto) return produto;
+      const ajusteAtual = Number(produto.quantidadeAjuste ?? 0);
+      const proximoAjuste = ajusteAtual + diferenca;
+      const limiteInferior = -produto.quantidade;
+      const limiteSuperior = 999999 - produto.quantidade;
+      return {
+        ...produto,
+        quantidadeAjuste: Math.max(limiteInferior, Math.min(limiteSuperior, proximoAjuste)),
+      };
+    }));
+  }
+
+  async function confirmarAjuste(idProduto) {
     const produtoAtual = listaProdutos.find((produto) => produto.id === idProduto);
     const ajuste = Number(produtoAtual?.quantidadeAjuste ?? 0);
-
-    if (!produtoAtual || !Number.isFinite(ajuste) || ajuste <= 0) {
-      return;
-    }
+    if (!produtoAtual || !Number.isInteger(ajuste) || ajuste === 0) return;
 
     const quantidadeAnterior = produtoAtual.quantidade;
-    const novaQuantidade =
-      tipo === "mais"
-        ? produtoAtual.quantidade + ajuste
-        : Math.max(0, produtoAtual.quantidade - ajuste);
+    const novaQuantidade = quantidadeAnterior + ajuste;
+    if (novaQuantidade < 0) return;
 
-    // Atualiza a UI imediatamente (otimista)
-    setListaProdutos((atual) =>
-      atual.map((produto) => {
-        if (produto.id !== idProduto) {
-          return produto;
-        }
-
-        const imagemAtual = produto.imagemOriginal ?? produto.imagem ?? "/example.jpg";
-
+    setSalvandoId(idProduto);
+    setMensagemEstoque("");
+    try {
+      await salvarProdutoNoBanco(idProduto, novaQuantidade);
+      setListaProdutos((atual) => atual.map((produto) => {
+        if (produto.id !== idProduto) return produto;
+        const imagemOriginal = produto.imagemOriginal ?? produto.imagem ?? "/example.jpg";
         return {
           ...produto,
           quantidade: novaQuantidade,
           quantidadeAjuste: 0,
-          imagem: novaQuantidade === 0 ? "esgotado.jpg" : imagemAtual,
+          Status: novaQuantidade <= 0 ? "Esgotado" : getStatusValidade(produto).tipo === "expired" ? "Vencido" : "Em Estoque",
+          ativoParaVenda: novaQuantidade > 0 && produto.ativoParaVenda,
+          imagem: novaQuantidade === 0 ? "esgotado.jpg" : imagemOriginal,
         };
-      })
-    );
-
-    try {
-      await salvarProdutoNoBanco(idProduto, novaQuantidade);
+      }));
+      setMensagemEstoque(`Estoque de ${produtoAtual.nome} atualizado para ${novaQuantidade} ${novaQuantidade === 1 ? "unidade" : "unidades"}.`);
     } catch (err) {
       console.error(err);
-
-      // Reverte para os valores anteriores em caso de falha
-      setListaProdutos((atual) =>
-        atual.map((produto) =>
-          produto.id === idProduto
-            ? {
-                ...produto,
-                quantidade: quantidadeAnterior,
-                quantidadeAjuste: ajuste,
-                imagem:
-                  quantidadeAnterior === 0 ? "esgotado.jpg" : produto.imagemOriginal ?? produto.imagem,
-              }
-            : produto
-        )
-      );
-
-      alert(
-        formatErrorMessage(
-          err,
-          "Falha ao atualizar o estoque no banco de dados."
-        )
-      );
+      setMensagemEstoque(formatErrorMessage(err, "Falha ao atualizar o estoque no banco de dados."));
+    } finally {
+      setSalvandoId(null);
     }
   }
 
@@ -224,40 +317,76 @@ export default function GerenciamentoEstoque() {
     <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
       <Sidebar />
 
-      <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
-        <header style={styles.header}>
+      <main className="inventory-page" style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
+        <header className="inventory-header" style={styles.header}>
           <div>
-            <h2 style={{ ...styles.title, ...(isDark ? styles.titleDark : {}) }}>Gerenciamento de Estoque</h2>
-            <p style={{ ...styles.subtitle, ...(isDark ? styles.subtitleDark : {}) }}>
-              Ajuste o estoque dos produtos cadastrados e controle a disponibilidade para venda.
-            </p>
+            <span className="inventory-eyebrow">Operação da loja</span>
+            <h1>Gerenciamento de estoque</h1>
+            <p>Encontre produtos e ajuste quantidades com segurança.</p>
           </div>
+          <span className="inventory-total-pill">{listaProdutos.length} produtos</span>
         </header>
+
+        <section className="inventory-toolbar" aria-label="Buscar e filtrar estoque">
+          <label className="inventory-search">
+            <Search size={18} aria-hidden="true" />
+            <input value={busca} onChange={(event) => setBusca(event.target.value)} placeholder="Buscar por produto, código ou fornecedor" aria-label="Buscar produtos" />
+            {busca && <button type="button" aria-label="Limpar busca" onClick={() => setBusca("")}><X size={15} /></button>}
+          </label>
+          <div className="inventory-filter-chips" role="group" aria-label="Filtros rápidos">
+            {[
+              ["todos", "Todos", totaisEstoque.todos],
+              ["semEstoque", "Sem estoque", totaisEstoque.semEstoque],
+              ["proximos", "Próximos do vencimento", totaisEstoque.proximos],
+              ["disponiveis", "Disponíveis", totaisEstoque.disponiveis],
+              ["indisponiveis", "Indisponíveis", totaisEstoque.indisponiveis],
+            ].map(([valor, rotulo, total]) => (
+              <button key={valor} type="button" className={filtro === valor ? "is-active" : ""} aria-pressed={filtro === valor} onClick={() => setFiltro(valor)}>
+                {rotulo}<span>{total}</span>
+              </button>
+            ))}
+          </div>
+          <label className="inventory-sort">
+            <ArrowDownUp size={16} aria-hidden="true" />
+            <span>Ordenar</span>
+            <select value={ordenacao} onChange={(event) => setOrdenacao(event.target.value)} aria-label="Ordenar produtos">
+              <option value="nome">Nome</option>
+              <option value="estoque">Estoque</option>
+              <option value="validade">Validade</option>
+            </select>
+          </label>
+        </section>
+
+        {mensagemEstoque && <p className="inventory-feedback" role="status">{mensagemEstoque}</p>}
 
         {loading && <div style={{ ...styles.emptyState, ...(isDark ? styles.emptyStateDark : {}) }}>Carregando produtos...</div>}
 
         {!loading && error && <div style={{ ...styles.emptyStateError, ...(isDark ? styles.emptyStateErrorDark : {}) }}>{error}</div>}
 
         {!loading && !error && listaProdutos.length === 0 && (
-          <div style={{ ...styles.emptyState, ...(isDark ? styles.emptyStateDark : {}) }}>Nenhum produto cadastrado.</div>
+          <div className="inventory-empty" style={{ ...styles.emptyState, ...(isDark ? styles.emptyStateDark : {}) }}>Nenhum produto cadastrado.</div>
         )}
 
-        {!loading && !error && listaProdutos.length > 0 && (
-          <div style={styles.listContainer}>
-            {listaProdutos.map((produto) => {
+        {!loading && !error && listaProdutos.length > 0 && produtosVisiveis.length === 0 && (
+          <div className="inventory-empty"><PackageX size={27} aria-hidden="true" /><strong>Nenhum produto encontrado</strong><span>Altere os filtros ou a busca.</span></div>
+        )}
+
+        {!loading && !error && produtosVisiveis.length > 0 && (
+          <div className="inventory-list" style={styles.listContainer}>
+            {produtosVisiveis.map((produto) => {
               const validade = getStatusValidade(produto);
 
               return (
-                <section key={String(produto.id)} style={{ ...styles.card, ...(isDark ? styles.cardDark : {}) }}>
+                <section key={String(produto.id)} className="inventory-card" style={{ ...styles.card, ...(isDark ? styles.cardDark : {}) }}>
                   <div style={styles.productContent}>
                     <div style={styles.imageBox}>
-                      <img src={produto.imagem} alt={produto.nome} style={styles.productImage} />
+                      <img src={produto.imagem} alt={produto.nome} style={styles.productImage} onError={(event) => { event.currentTarget.style.display = "none"; }} />
                     </div>
 
                     <div style={styles.infoArea}>
                       <div style={styles.badgeRow}>
                         <span style={{ ...styles.badge, ...(isDark ? styles.badgeDark : {}) }}>{produto.categoria || "Produto"}</span>
-                        <span
+                        <span className={`inventory-status-badge${produto.ativoParaVenda ? " is-available" : " is-unavailable"}`}
                           style={{
                             ...styles.statusBadge,
                             ...(produto.ativoParaVenda ? styles.statusAtivo : styles.statusInativo),
@@ -266,7 +395,7 @@ export default function GerenciamentoEstoque() {
                         >
                           {produto.ativoParaVenda ? "Disponível para venda" : "Desativado para venda"}
                         </span>
-                        <span
+                        <span className={`inventory-expiry-badge inventory-expiry-badge--${validade.tipo}`}
                           style={{
                             ...styles.validadeBadge,
                             ...(validade.tipo === "expired" ? styles.validadeBadgeVencido : styles.validadeBadgeValido),
@@ -277,73 +406,102 @@ export default function GerenciamentoEstoque() {
                         </span>
                       </div>
 
-                      <h3 style={{ ...styles.productName, ...(isDark ? styles.productNameDark : {}) }}>{produto.nome}</h3>
+                      <div className="inventory-product-title-row">
+                        <h3 style={{ ...styles.productName, ...(isDark ? styles.productNameDark : {}) }}>{produto.nome}</h3>
+                        <button type="button" className="inventory-edit-button" onClick={() => abrirEdicao(produto)} aria-label={`Editar ${produto.nome}`}>
+                          <Pencil size={15} aria-hidden="true" /><span>Editar produto</span>
+                        </button>
+                      </div>
                       <div style={{ ...styles.fornecedorName, ...(isDark ? styles.fornecedorNameDark : {}) }}>{getFornecedorNome(produto)}</div>
 
-                      <div style={styles.stockSummary}>
-                        <span style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>Estoque atual</span>
-                        <strong style={{ ...styles.stockValue, ...(isDark ? styles.stockValueDark : {}) }}>{produto.quantidade} unidades</strong>
+                      <div className="inventory-facts">
+                        <div className="inventory-stock-current">
+                          <span>Estoque atual</span>
+                          <strong>{produto.quantidade}<small>{produto.quantidade === 1 ? "unidade" : "unidades"}</small></strong>
+                        </div>
+                        <div><span>Preço unitário</span><strong>{Number(produto.Preco ?? produto.preco ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong></div>
+                        <div><span>Validade</span><strong>{formatarDataExibicao(produto.DataVenc ?? produto.dataVenc)}</strong></div>
+                        <div><span>Entrada</span><strong>{formatarDataExibicao(produto.DataCad ?? produto.dataCad)}</strong></div>
                       </div>
 
-                      <div style={styles.priceSummary}>
-                        <span style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>Preço unitário</span>
-                        <strong style={{ ...styles.priceValue, ...(isDark ? styles.priceValueDark : {}) }}>
-                          {Number(produto.Preco ?? produto.preco ?? 0).toLocaleString("pt-BR", {
-                            style: "currency",
-                            currency: "BRL",
-                          })}
-                        </strong>
-                      </div>
-
-                      <div style={styles.vencimentoSummary}>
-                        <span style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>Data de vencimento</span>
-                        <strong style={{ ...styles.vencimentoValue, ...(isDark ? styles.vencimentoValueDark : {}) }}>
-                          {produto.DataVenc || produto.dataVenc
-                            ? new Date(produto.DataVenc ?? produto.dataVenc).toLocaleDateString("pt-BR")
-                            : "-"}
-                        </strong>
-                      </div>
-
-                      <div style={styles.controlBox}>
+                      <div className="inventory-adjustment">
+                        <div className="inventory-adjustment-copy">
+                          <strong>Ajuste de estoque</strong>
+                          <span>Defina a variação e confirme para salvar.</span>
+                        </div>
+                        <div className="inventory-adjustment-stepper" aria-label={`Ajustar estoque de ${produto.nome}`}>
                         <button
                           type="button"
-                          style={{ ...styles.circleButton, ...(isDark ? styles.circleButtonDark : {}) }}
-                          onClick={() => ajustarEstoque("menos", produto.id)}
-                          aria-label={`Diminuir estoque de ${produto.nome}`}
+                          className="inventory-step-button"
+                          disabled={Number(produto.quantidadeAjuste) <= -produto.quantidade}
+                          onClick={() => alterarAjuste(produto.id, -1)}
+                          aria-label={`Planejar retirada de uma unidade de ${produto.nome}`}
                         >
-                          −
+                          <Minus size={15} aria-hidden="true" />
                         </button>
-
-                        <input
-                          type="number"
-                          min="0"
-                          value={produto.quantidadeAjuste}
-                          onChange={(event) => atualizarQuantidadeEntrada(event, produto.id)}
-                          style={{ ...styles.input, ...(isDark ? styles.inputDark : {}) }}
-                        />
-
+                        <output aria-live="polite" className={produto.quantidadeAjuste > 0 ? "is-positive" : produto.quantidadeAjuste < 0 ? "is-negative" : ""}>
+                          {produto.quantidadeAjuste > 0 ? "+" : ""}{produto.quantidadeAjuste}
+                        </output>
                         <button
                           type="button"
-                          style={{ ...styles.circleButton, ...(isDark ? styles.circleButtonDark : {}) }}
-                          onClick={() => ajustarEstoque("mais", produto.id)}
-                          aria-label={`Aumentar estoque de ${produto.nome}`}
+                          className="inventory-step-button"
+                          disabled={produto.quantidade + Number(produto.quantidadeAjuste) >= 999999}
+                          onClick={() => alterarAjuste(produto.id, 1)}
+                          aria-label={`Planejar entrada de uma unidade de ${produto.nome}`}
                         >
-                          +
+                          <Plus size={15} aria-hidden="true" />
                         </button>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => alternarDisponibilidade(produto.id)}
-                        style={{ ...styles.toggleButton, ...(isDark ? styles.toggleButtonDark : {}) }}
-                      >
-                        {produto.ativoParaVenda ? "Desativar para venda" : "Ativar para venda"}
-                      </button>
+                        <div className="inventory-adjustment-result">
+                          <span>Novo estoque</span>
+                          <strong>{produto.quantidade + Number(produto.quantidadeAjuste)} {produto.quantidade + Number(produto.quantidadeAjuste) === 1 ? "unidade" : "unidades"}</strong>
+                        </div>
+
+                        <button type="button" className="inventory-save-adjustment" disabled={Number(produto.quantidadeAjuste) === 0 || salvandoId === produto.id} onClick={() => confirmarAjuste(produto.id)}>
+                          {salvandoId === produto.id ? <RefreshCw className="is-spinning" size={16} aria-hidden="true" /> : <Save size={16} aria-hidden="true" />}
+                          {salvandoId === produto.id ? "Salvando..." : "Confirmar ajuste"}
+                        </button>
+                      </div>
+
+                      <div className="inventory-card-actions">
+                        <button type="button" className="inventory-availability-toggle" aria-pressed={!produto.ativoParaVenda} onClick={() => alternarDisponibilidade(produto.id)}>
+                          {produto.ativoParaVenda ? "Marcar indisponível" : "Liberar para venda"}
+                        </button>
+                        <span className="inventory-local-note">Disponibilidade local</span>
+                      </div>
                     </div>
                   </div>
                 </section>
               );
             })}
+          </div>
+        )}
+
+        {produtoEmEdicao && (
+          <div className="inventory-modal-overlay" onMouseDown={(event) => { if (event.target === event.currentTarget && !salvandoEdicao) setProdutoEmEdicao(null); }}>
+            <section className="inventory-edit-dialog" role="dialog" aria-modal="true" aria-labelledby="inventory-edit-title">
+              <header>
+                <div><span>Cadastro do produto</span><h2 id="inventory-edit-title">Editar produto</h2></div>
+                <button type="button" aria-label="Fechar edição" disabled={salvandoEdicao} onClick={() => setProdutoEmEdicao(null)}><X size={19} /></button>
+              </header>
+              <form onSubmit={salvarEdicao}>
+                <label><span>Nome</span><input required minLength="3" maxLength="45" value={edicao.nome} onChange={(event) => setEdicao((atual) => ({ ...atual, nome: event.target.value }))} /></label>
+                <div className="inventory-edit-grid">
+                  <label><span>Preço unitário</span><input required type="number" min="0.01" step="0.01" value={edicao.preco} onChange={(event) => setEdicao((atual) => ({ ...atual, preco: event.target.value }))} /></label>
+                  <label><span>Validade</span><input required type="date" value={edicao.dataVenc} onChange={(event) => setEdicao((atual) => ({ ...atual, dataVenc: event.target.value }))} /></label>
+                </div>
+                <label className="inventory-edit-image"><span>Imagem do produto <small>(opcional)</small></span><input type="file" accept="image/*" onChange={(event) => setEdicao((atual) => ({ ...atual, imagem: event.target.files?.[0] ?? null }))} /><ImagePlus size={18} aria-hidden="true" /></label>
+                {edicao.imagem && <span className="inventory-selected-file">{edicao.imagem.name}</span>}
+                <div className="inventory-edit-actions">
+                  <button type="button" className="inventory-edit-cancel" disabled={salvandoEdicao} onClick={() => setProdutoEmEdicao(null)}>Cancelar</button>
+                  <button type="submit" className="inventory-edit-save" disabled={salvandoEdicao || !edicao.nome.trim() || Number(edicao.preco) <= 0 || !edicao.dataVenc}>
+                    {salvandoEdicao ? <RefreshCw className="is-spinning" size={16} /> : <Save size={16} />}
+                    {salvandoEdicao ? "Salvando..." : "Salvar alterações"}
+                  </button>
+                </div>
+              </form>
+            </section>
           </div>
         )}
       </main>

@@ -1,6 +1,17 @@
 import React, { useContext } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { ThemeContext } from "../contexts/ThemeContext";
+import {
+    Boxes,
+    Building2,
+    LayoutDashboard,
+    LogOut,
+    Moon,
+    Package,
+    ShoppingCart,
+    Sun,
+    UserRound,
+} from "lucide-react";
 
 // Estrutura do menu: cada item tem nome, ícone, rota e quais perfis podem acessar
 const menu = [
@@ -35,6 +46,14 @@ const menu = [
         acesso: ["PROPRIETARIO"]
     }
 ];
+
+const menuIcons = {
+    dashboard: LayoutDashboard,
+    point_of_sale: ShoppingCart,
+    inventory: Boxes,
+    inventory_2: Package,
+    business: Building2,
+};
 
 export default function Sidebar() {
 
@@ -100,6 +119,7 @@ export default function Sidebar() {
     return (
 
         <aside
+            className="app-sidebar"
             style={{
                 ...styles.sidebar,
                 ...(isDark ? styles.sidebarDark : {})
@@ -162,9 +182,7 @@ export default function Sidebar() {
                     }}
                 >
 
-                    <span className="material-symbols-outlined">
-                        person
-                    </span>
+                    <UserRound size={18} aria-hidden="true" />
 
                 </div>
 
@@ -195,30 +213,29 @@ export default function Sidebar() {
             {/* Menu — renderiza só os itens permitidos para o perfil */}
             <nav style={styles.navigation}>
 
-                {menuPermitido.map((item) => (
+                {menuPermitido.map((item) => {
+                    const Icon = menuIcons[item.icone];
 
-                    <NavLink
-                        key={item.rota}
-                        to={item.rota}
-                        style={({ isActive }) => ({
-                            ...styles.menuItem,
-                            ...(isDark ? styles.menuItemDark : {}),
-                            ...(isActive ? styles.menuItemActive : {}),
-                            ...(isActive && isDark ? styles.menuItemActiveDark : {})
-                        })}
-                    >
+                    return (
+                        <NavLink
+                            key={item.rota}
+                            to={item.rota}
+                            style={({ isActive }) => ({
+                                ...styles.menuItem,
+                                ...(isDark ? styles.menuItemDark : {}),
+                                ...(isActive ? styles.menuItemActive : {}),
+                                ...(isActive && isDark ? styles.menuItemActiveDark : {})
+                            })}
+                        >
 
-                        <span className="material-symbols-outlined">
-                            {item.icone}
-                        </span>
+                            {Icon && <Icon size={18} strokeWidth={1.8} aria-hidden="true" />}
 
-                        <span>
-                            {item.nome}
-                        </span>
+                            <span>{item.nome}</span>
 
-                    </NavLink>
+                        </NavLink>
+                    );
 
-                ))}
+                })}
 
             </nav>
 
@@ -239,9 +256,7 @@ export default function Sidebar() {
                     }}
                 >
 
-                    <span className="material-symbols-outlined">
-                        {isDark ? "light_mode" : "dark_mode"}
-                    </span>
+                    {isDark ? <Sun size={17} aria-hidden="true" /> : <Moon size={17} aria-hidden="true" />}
 
                     {isDark ? "Modo claro" : "Modo escuro"}
 
@@ -256,9 +271,7 @@ export default function Sidebar() {
                     onClick={sair}
                 >
 
-                    <span className="material-symbols-outlined">
-                        logout
-                    </span>
+                    <LogOut size={17} aria-hidden="true" />
 
                     Sair
 

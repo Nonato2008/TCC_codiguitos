@@ -1,20 +1,28 @@
 import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  ArrowLeft,
+  Banknote,
+  CreditCard,
+  LoaderCircle,
+  Minus,
+  PackagePlus,
+  Plus,
+  QrCode,
+  ReceiptText,
+  RefreshCw,
+  Search,
+  Store,
+  Trash2,
+} from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import FormField from "../components/FormField";
 import AlertMessage from "../components/AlertMessage";
-import PrimaryButton from "../components/PrimaryButton";
 import { codiguitos_api } from "../services/tcc.api";
 import { buscarProdutos } from "../services/produtosService";
 import { ThemeContext } from "../contexts/ThemeContext";
 import { LinhaItemVenda, TotalVenda } from "../components/LinhaItemVenda";
-
-const itemVazio = {
-  idProduto: "",
-  quantidade: "1",
-  valorUnitario: "0.00",
-  valorTotal: "0.00",
-};
+import { getUser } from "../services/authService";
 
 const estadoInicial = {
   idProprietario: "",
@@ -24,10 +32,10 @@ const estadoInicial = {
 };
 
 const opcoesFormaPagamento = [
-  "Crédito",
-  "Débito",
-  "Pix",
-  "Dinheiro",
+  { nome: "Crédito", Icon: CreditCard },
+  { nome: "Débito", Icon: CreditCard },
+  { nome: "Pix", Icon: QrCode },
+  { nome: "Dinheiro", Icon: Banknote },
 ];
 
 // ---------- Helpers para lidar com PascalCase / camelCase da API ----------
@@ -77,9 +85,16 @@ export default function CadastroVendas() {
   const navigate = useNavigate();
   const { theme } = useContext(ThemeContext);
   const isDark = theme === "dark";
+  const usuarioAtual = getUser();
+  const perfilAtual = String(usuarioAtual?.tipo ?? usuarioAtual?.perfil ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase();
 
   const [form, setForm] = useState(estadoInicial);
-  const [itens, setItens] = useState([{ ...itemVazio }]);
+  const [itens, setItens] = useState([]);
+  const [proprietarioAutomatico, setProprietarioAutomatico] = useState(false);
+  const [vendedorAutomatico, setVendedorAutomatico] = useState(false);
 
   const [produtos, setProdutos] = useState([]);
   const [vendedores, setVendedores] = useState([]);
@@ -122,7 +137,25 @@ export default function CadastroVendas() {
       setCarregandoVendedores(true);
       try {
         const { data } = await codiguitos_api.get("/vendedores");
-        setVendedores(normalizarLista(data));
+        const listaVendedores = normalizarLista(data);
+        setVendedores(listaVendedores);
+
+        if (perfilAtual === "VENDEDOR" && usuarioAtual?.id) {
+          const vendedorSessao = listaVendedores.find(
+            (vendedor) => Number(vendedor.Id ?? vendedor.id) === Number(usuarioAtual.id)
+          );
+
+          if (vendedorSessao) {
+            const idProprietario = vendedorSessao.IdProprietario ?? vendedorSessao.idProprietario;
+            setForm((atual) => ({
+              ...atual,
+              idVendedor: String(vendedorSessao.Id ?? vendedorSessao.id),
+              idProprietario: idProprietario ? String(idProprietario) : atual.idProprietario,
+            }));
+            setVendedorAutomatico(true);
+            setProprietarioAutomatico(Boolean(idProprietario));
+          }
+        }
       } catch (error) {
         console.error("Erro ao carregar vendedores:", error);
         setMensagem({
@@ -138,7 +171,22 @@ export default function CadastroVendas() {
       setCarregandoProprietarios(true);
       try {
         const { data } = await codiguitos_api.get("/proprietarios");
-        setProprietarios(normalizarLista(data));
+        const listaProprietarios = normalizarLista(data);
+        setProprietarios(listaProprietarios);
+
+        if (perfilAtual === "PROPRIETARIO" && usuarioAtual?.id) {
+          const proprietarioSessao = listaProprietarios.find(
+            (proprietario) => Number(proprietario.Id ?? proprietario.id) === Number(usuarioAtual.id)
+          );
+
+          if (proprietarioSessao) {
+            setForm((atual) => ({
+              ...atual,
+              idProprietario: String(proprietarioSessao.Id ?? proprietarioSessao.id),
+            }));
+            setProprietarioAutomatico(true);
+          }
+        }
       } catch (error) {
         console.error("Erro ao carregar proprietários:", error);
         setMensagem({
@@ -159,61 +207,62 @@ export default function CadastroVendas() {
   function atualizarCampo(event) {
     const { name, value } = event.target;
     setForm((anterior) => ({ ...anterior, [name]: value }));
+    if (name === "idProprietario") setProprietarioAutomatico(false);
   }
 
-  // ---------- Manipulação dos itens ----------
-  function atualizarItem(index, campo, valor) {
-    // Verifica duplicidade ao trocar o produto
-    if (campo === "idProduto" && valor) {
-      const jaExiste = itens.some(
-        (item, i) =>
-          i !== index && Number(item.idProduto) === Number(valor)
-      );
+  function atualizarVendedor(event) {
+    const idVendedor = event.target.value;
+    const vendedor = vendedores.find(
+      (item) => String(item.Id ?? item.id) === String(idVendedor)
+    );
+    const idProprietario = vendedor?.IdProprietario ?? vendedor?.idProprietario;
 
-      if (jaExiste) {
-        setMensagem({
-          type: "error",
-          text: "Esse produto já foi adicionado à venda.",
-        });
-        return;
-      }
+    setForm((atual) => ({
+      ...atual,
+      idVendedor,
+      ...(idProprietario ? { idProprietario: String(idProprietario) } : {}),
+    }));
+    setVendedorAutomatico(false);
+    setProprietarioAutomatico(Boolean(idProprietario));
+  }
+
+  function adicionarProduto(produto) {
+    const idProduto = getIdProduto(produto);
+    const jaAdicionado = itens.some((item) => Number(item.idProduto) === Number(idProduto));
+    const estoque = getEstoqueProduto(produto);
+
+    if (jaAdicionado) {
+      setMensagem({ type: "error", text: "Esse produto já está na venda." });
+      return;
     }
 
-    setItens((anterior) => {
-      const novos = [...anterior];
-      const item = { ...novos[index], [campo]: valor };
+    if (estoque < 1) {
+      setMensagem({ type: "error", text: "Este produto está sem estoque." });
+      return;
+    }
 
-      if (campo === "idProduto" || campo === "quantidade") {
-        const produto = produtos.find(
-          (p) => Number(getIdProduto(p)) === Number(item.idProduto)
-        );
-
-        if (produto) {
-          const preco = getPrecoProduto(produto);
-          const estoque = getEstoqueProduto(produto);
-
-          let qtd = Number(item.quantidade) || 0;
-          if (qtd > estoque) qtd = estoque;
-          if (qtd < 1 && estoque >= 1) qtd = 1;
-
-          item.quantidade = String(qtd);
-          item.valorUnitario = preco.toFixed(2);
-          item.valorTotal = (preco * qtd).toFixed(2);
-        } else {
-          item.valorUnitario = "0.00";
-          item.valorTotal = "0.00";
-        }
-      }
-
-      novos[index] = item;
-      return novos;
-    });
+    const preco = getPrecoProduto(produto);
+    setItens((anteriores) => [...anteriores, {
+      idProduto: String(idProduto),
+      quantidade: 1,
+      valorUnitario: preco,
+      valorTotal: preco,
+    }]);
+    setBuscaProduto("");
+    setMensagem({ type: "", text: "" });
   }
 
-  // ---------- Adicionar item ----------
-  function adicionarItem() {
-    setItens((anterior) => [...anterior, { ...itemVazio }]);
-    carregarProdutos();
+  function alterarQuantidade(index, valor) {
+    const item = itens[index];
+    const produto = produtos.find((p) => Number(getIdProduto(p)) === Number(item?.idProduto));
+    const estoque = produto ? getEstoqueProduto(produto) : 0;
+    const quantidade = Math.min(estoque, Math.max(1, Number(valor) || 1));
+
+    setItens((anteriores) => anteriores.map((linha, linhaIndex) => (
+      linhaIndex === index
+        ? { ...linha, quantidade, valorTotal: linha.valorUnitario * quantidade }
+        : linha
+    )));
   }
 
   function removerItem(index) {
@@ -227,6 +276,12 @@ export default function CadastroVendas() {
     0
   );
 
+  const quantidadeTotal = itens.reduce((total, item) => total + Number(item.quantidade || 0), 0);
+
+  const proprietarioSelecionado = proprietarios.find(
+    (item) => Number(item.Id ?? item.id) === Number(form.idProprietario)
+  );
+
   // ---------- Produtos filtrados pela busca ----------
   const produtosFiltrados = produtos.filter((produto) => {
     const termo = buscaProduto.trim().toLowerCase();
@@ -235,6 +290,11 @@ export default function CadastroVendas() {
     const id = String(getIdProduto(produto));
     return nome.includes(termo) || id.includes(termo);
   });
+
+  const idsAdicionados = new Set(itens.map((item) => Number(item.idProduto)));
+  const podeRegistrar = Boolean(
+    !loading && form.idProprietario && form.idVendedor && form.formaPagamento && itens.length > 0
+  );
 
   // ---------- Submit ----------
   async function cadastrarVenda(event) {
@@ -375,7 +435,7 @@ export default function CadastroVendas() {
       });
 
       setForm(estadoInicial);
-      setItens([{ ...itemVazio }]);
+      setItens([]);
       setBuscaProduto("");
     } catch (error) {
       console.error(error);
@@ -394,9 +454,9 @@ export default function CadastroVendas() {
     <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
       <Sidebar />
 
-      <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
+      <main className="sale-entry-page" style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
         {/* ---------- Cabeçalho ---------- */}
-        <header style={styles.header}>
+        <header className="sale-entry-header" style={styles.header}>
           <div>
             <h2
               style={{
@@ -412,7 +472,7 @@ export default function CadastroVendas() {
                 ...(isDark ? styles.subtitleDark : {}),
               }}
             >
-              Registre novas vendas e acompanhe o faturamento.
+              Escolha o pagamento, adicione produtos e confira o total antes de registrar.
             </p>
           </div>
 
@@ -424,251 +484,184 @@ export default function CadastroVendas() {
             }}
             onClick={() => navigate(-1)}
           >
-            <span className="material-symbols-outlined">arrow_back</span>
+            <ArrowLeft size={17} aria-hidden="true" />
             Voltar
           </button>
         </header>
 
-        <section style={{ ...styles.card, ...(isDark ? styles.cardDark : {}) }}>
+        <section className="sale-entry-card" style={{ ...styles.card, ...(isDark ? styles.cardDark : {}) }}>
           <AlertMessage
             type={mensagem.type}
             message={mensagem.text}
             dark={isDark}
           />
 
-          <form onSubmit={cadastrarVenda} style={styles.form}>
-            {/* ---------- Proprietário + Vendedor (linha) ---------- */}
-            <div style={styles.row}>
-              <SelectField
-                label="Proprietário"
-                name="idProprietario"
-                value={form.idProprietario}
-                onChange={atualizarCampo}
-                disabled={carregandoProprietarios}
-                isDark={isDark}
-              >
-                <option value="">
-                  {carregandoProprietarios
-                    ? "Carregando proprietários..."
-                    : "Selecione um proprietário..."}
-                </option>
-                {proprietarios.map((proprietario) => {
-                  const id = proprietario.Id ?? proprietario.id;
-                  const nome =
-                    proprietario.Nome ?? proprietario.nome ?? "Sem nome";
-                  return (
-                    <option key={id} value={id}>
-                      {nome}
-                    </option>
-                  );
-                })}
-              </SelectField>
+          <form onSubmit={cadastrarVenda} className="sale-entry-form" style={styles.form}>
+            <div className="sale-entry-meta">
+              {proprietarioAutomatico ? (
+                <div className="sale-owner-context">
+                  <span className="sale-entry-label">Responsável pela loja</span>
+                  <div><Store size={17} aria-hidden="true" />{proprietarioSelecionado?.Nome ?? proprietarioSelecionado?.nome ?? (carregandoProprietarios ? "Carregando loja..." : `Proprietário #${form.idProprietario}`)}</div>
+                  <small>Responsável associado automaticamente</small>
+                </div>
+              ) : (
+                <SelectField
+                  label="Loja responsável"
+                  name="idProprietario"
+                  value={form.idProprietario}
+                  onChange={atualizarCampo}
+                  disabled={carregandoProprietarios}
+                  isDark={isDark}
+                >
+                  <option value="">{carregandoProprietarios ? "Carregando lojas..." : "Selecione a loja..."}</option>
+                  {proprietarios.map((proprietario) => {
+                    const id = proprietario.Id ?? proprietario.id;
+                    const nome = proprietario.Nome ?? proprietario.nome ?? "Sem nome";
+                    return <option key={id} value={id}>{nome}</option>;
+                  })}
+                </SelectField>
+              )}
 
               <SelectField
                 label="Vendedor"
                 name="idVendedor"
                 value={form.idVendedor}
-                onChange={atualizarCampo}
-                disabled={carregandoVendedores}
+                onChange={atualizarVendedor}
+                disabled={carregandoVendedores || vendedorAutomatico}
                 isDark={isDark}
               >
-                <option value="">
-                  {carregandoVendedores
-                    ? "Carregando vendedores..."
-                    : "Selecione um vendedor..."}
-                </option>
+                <option value="">{carregandoVendedores ? "Carregando vendedores..." : "Selecione um vendedor..."}</option>
                 {vendedores.map((vendedor) => {
                   const id = vendedor.Id ?? vendedor.id;
                   const nome = vendedor.Nome ?? vendedor.nome ?? "Sem nome";
-                  return (
-                    <option key={id} value={id}>
-                      {nome}
-                    </option>
-                  );
+                  return <option key={id} value={id}>{nome}</option>;
                 })}
               </SelectField>
 
-              <SelectField
-                  label="Forma de Pagamento"
-                  name="formaPagamento"
-                  value={form.formaPagamento}
-                  onChange={atualizarCampo}
-                  isDark={isDark}
-                >
-                  <option value="">Selecione a Forma de Pagamento</option>
-                  {opcoesFormaPagamento.map((forma) => (
-                    <option key={forma} value={forma}>
-                      {forma}
-                    </option>
+              <fieldset className="sale-payment-methods">
+                <legend>Forma de pagamento</legend>
+                <div role="radiogroup" aria-label="Forma de pagamento">
+                  {opcoesFormaPagamento.map(({ nome, Icon }) => (
+                    <button
+                      key={nome}
+                      type="button"
+                      role="radio"
+                      aria-checked={form.formaPagamento === nome}
+                      className={form.formaPagamento === nome ? "is-selected" : ""}
+                      onClick={() => setForm((atual) => ({ ...atual, formaPagamento: nome }))}
+                    >
+                      <Icon size={17} aria-hidden="true" />
+                      <span>{nome}</span>
+                    </button>
                   ))}
-                </SelectField>
+                </div>
+              </fieldset>
             </div>
 
-            {/* ---------- Lista de produtos ---------- */}
-            <div style={styles.itemsSection}>
-              <div style={styles.itemsHeader}>
-                <h3
-                  style={{
-                    ...styles.itemsTitle,
-                    ...(isDark ? styles.itemsTitleDark : {}),
-                  }}
-                >
-                  Produtos da venda{" "}
-                  {carregandoProdutos && (
-                    <span
-                      style={{
-                        ...styles.loadingHint,
-                        ...(isDark ? styles.loadingHintDark : {}),
-                      }}
-                    >
-                      atualizando...
-                    </span>
-                  )}
-                </h3>
-
-                <div style={styles.headerButtons}>
-                  <button
-                    type="button"
-                    style={{
-                      ...styles.refreshButton,
-                      ...(isDark ? styles.refreshButtonDark : {}),
-                    }}
-                    onClick={carregarProdutos}
-                    disabled={carregandoProdutos}
-                    title="Atualizar lista de produtos"
-                  >
-                    ↻
-                  </button>
-                  <button
-                    type="button"
-                    style={{
-                      ...styles.addButton,
-                      ...(isDark ? styles.addButtonDark : {}),
-                    }}
-                    onClick={adicionarItem}
-                  >
-                    + Adicionar produto
-                  </button>
+            <section className="sale-products-section" aria-labelledby="sale-products-title">
+              <div className="sale-products-heading">
+                <div>
+                  <h3 id="sale-products-title">Produtos da venda</h3>
+                  <p>{itens.length} {itens.length === 1 ? "produto" : "produtos"} · {quantidadeTotal} {quantidadeTotal === 1 ? "unidade" : "unidades"}</p>
                 </div>
+                <button type="button" className="sale-refresh-products" onClick={carregarProdutos} disabled={carregandoProdutos} title="Atualizar produtos">
+                  <RefreshCw size={16} className={carregandoProdutos ? "is-spinning" : ""} aria-hidden="true" />
+                  <span>{carregandoProdutos ? "Atualizando" : "Atualizar"}</span>
+                </button>
               </div>
 
-              {/* ---------- Campo de busca ---------- */}
-              <div
-                style={{
-                  ...styles.searchWrapper,
-                  ...(isDark ? styles.searchWrapperDark : {}),
-                }}
-              >
-                <span
-                  className="material-symbols-outlined"
-                  style={{
-                    ...styles.searchIcon,
-                    ...(isDark ? styles.searchIconDark : {}),
-                  }}
-                >
-                  search
-                </span>
+              <div className="sale-product-picker">
+                <label className="sale-search-box">
+                  <Search size={18} aria-hidden="true" />
+                  <input
+                    type="search"
+                    value={buscaProduto}
+                    onChange={(event) => setBuscaProduto(event.target.value)}
+                    placeholder="Buscar produto por nome ou código"
+                    role="combobox"
+                    aria-label="Buscar produto para adicionar à venda"
+                    aria-expanded={Boolean(buscaProduto.trim())}
+                    aria-controls="sale-product-suggestions"
+                    autoComplete="off"
+                  />
+                  {buscaProduto && <button type="button" onClick={() => setBuscaProduto("")} aria-label="Limpar busca">×</button>}
+                </label>
 
-                <input
-                  type="text"
-                  value={buscaProduto}
-                  onChange={(e) => setBuscaProduto(e.target.value)}
-                  placeholder="Pesquisar produto por nome ou ID..."
-                  style={{
-                    ...styles.searchInput,
-                    ...(isDark ? styles.searchInputDark : {}),
-                  }}
-                />
+                {buscaProduto.trim() && (
+                  <div id="sale-product-suggestions" className="sale-product-suggestions" role="listbox" aria-label="Produtos encontrados">
+                    {produtosFiltrados.length ? produtosFiltrados.slice(0, 8).map((produto) => {
+                      const produtoId = getIdProduto(produto);
+                      const nome = getNomeProduto(produto);
+                      const estoque = getEstoqueProduto(produto);
+                      const preco = getPrecoProduto(produto);
+                      const jaAdicionado = idsAdicionados.has(Number(produtoId));
+                      const indisponivel = estoque < 1 || jaAdicionado;
 
-                {buscaProduto && (
-                  <button
-                    type="button"
-                    style={{
-                      ...styles.searchClear,
-                      ...(isDark ? styles.searchClearDark : {}),
-                    }}
-                    onClick={() => setBuscaProduto("")}
-                    title="Limpar pesquisa"
-                  >
-                    ✕
-                  </button>
+                      return (
+                        <button
+                          key={produtoId}
+                          type="button"
+                          role="option"
+                          aria-selected={false}
+                          disabled={indisponivel}
+                          onClick={() => adicionarProduto(produto)}
+                        >
+                          <span className="sale-product-suggestion-main">
+                            <strong>{nome}</strong>
+                            <small>{jaAdicionado ? "Já está na venda" : `Estoque disponível: ${estoque}`}</small>
+                          </span>
+                          <strong className="sale-product-suggestion-price">{preco.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong>
+                          {!indisponivel && <Plus size={17} aria-hidden="true" />}
+                        </button>
+                      );
+                    }) : (
+                      <p className="sale-product-no-results">Nenhum produto encontrado.</p>
+                    )}
+                  </div>
                 )}
               </div>
 
-              {buscaProduto.trim() && (
-                <p
-                  style={{
-                    ...styles.searchInfo,
-                    ...(isDark ? styles.searchInfoDark : {}),
-                  }}
-                >
-                  {produtosFiltrados.length} produto(s) encontrado(s) para "
-                  {buscaProduto}"
-                </p>
-              )}
-
-              {/* ---------- Cabeçalho das colunas ---------- */}
-              <div style={styles.itemHeaderRow}>
-                <span
-                  style={{
-                    ...styles.itemHeaderLabel,
-                    ...(isDark ? styles.itemHeaderLabelDark : {}),
-                  }}
-                >
-                  Produto
-                </span>
-                <span
-                  style={{
-                    ...styles.itemHeaderLabel,
-                    ...(isDark ? styles.itemHeaderLabelDark : {}),
-                  }}
-                >
-                  Qtd
-                </span>
-                <span
-                  style={{
-                    ...styles.itemHeaderLabel,
-                    ...(isDark ? styles.itemHeaderLabelDark : {}),
-                  }}
-                >
-                  Total
-                </span>
-                <span />
+              <div className="sale-cart-table-wrap">
+                <table className="sale-cart-table">
+                  <thead>
+                    <tr>
+                      <th>Produto</th>
+                      <th>Preço unit.</th>
+                      <th>Estoque</th>
+                      <th>Quantidade</th>
+                      <th>Subtotal</th>
+                      <th><span className="visually-hidden">Ação</span></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {itens.length ? itens.map((item, index) => {
+                      const produto = produtos.find((p) => Number(getIdProduto(p)) === Number(item.idProduto));
+                      return (
+                        <LinhaItemVenda
+                          key={item.idProduto}
+                          index={index}
+                          item={item}
+                          produto={produto}
+                          alterarQuantidade={alterarQuantidade}
+                          removerItem={removerItem}
+                          isDark={isDark}
+                        />
+                      );
+                    }) : (
+                      <tr className="sale-cart-empty-row">
+                        <td colSpan="6">
+                          <PackagePlus size={23} aria-hidden="true" />
+                          <strong>Nenhum produto adicionado</strong>
+                          <span>Busque um produto acima para começar a venda.</span>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
 
-              {itens.map((item, index) => {
-                const produtoAtual = produtos.find(
-                  (p) => Number(getIdProduto(p)) === Number(item.idProduto)
-                );
-                const estoqueAtual = produtoAtual
-                  ? getEstoqueProduto(produtoAtual)
-                  : undefined;
-                const noLimite =
-                  estoqueAtual !== undefined &&
-                  Number(item.quantidade) >= estoqueAtual;
-
-                const idsUsadosEmOutrasLinhas = itens
-                  .filter((_, i) => i !== index)
-                  .map((i) => Number(i.idProduto))
-                  .filter((v) => !Number.isNaN(v) && v > 0);
-
-                return (
-                  <LinhaItemVenda
-                    key={index}
-                    index={index}
-                    item={item}
-                    produtos={produtos}
-                    produtosFiltrados={produtosFiltrados}
-                    idsUsadosEmOutrasLinhas={idsUsadosEmOutrasLinhas}
-                    atualizarItem={atualizarItem}
-                    removerItem={removerItem}
-                    isDark={isDark}
-                  />
-                );
-              })}
-
-              <TotalVenda totalGeral={totalGeral} isDark={isDark} />
-            </div>
+              <TotalVenda totalGeral={totalGeral} itemCount={quantidadeTotal} isDark={isDark} />
+            </section>
 
             {/* ---------- Observações ---------- */}
             <div style={styles.fieldFull}>
@@ -689,15 +682,17 @@ export default function CadastroVendas() {
                   ...styles.textarea,
                   ...(isDark ? styles.textareaDark : {}),
                 }}
-                rows="3"
+                rows="2"
               />
             </div>
 
             {/* ---------- Ações ---------- */}
-            <div style={styles.actions}>
-              <PrimaryButton dark={isDark} disabled={loading} type="submit">
-                {loading ? "Registrando..." : "Registrar venda"}
-              </PrimaryButton>
+            <div className="sale-entry-actions" style={styles.actions}>
+              {!podeRegistrar && !loading && <span className="sale-submit-hint">Informe loja, vendedor, pagamento e ao menos um produto válido.</span>}
+              <button className="sale-submit-button" disabled={!podeRegistrar} type="submit">
+                {loading ? <LoaderCircle className="is-spinning" size={18} aria-hidden="true" /> : <ReceiptText size={18} aria-hidden="true" />}
+                {loading ? "Registrando venda..." : "Registrar venda"}
+              </button>
             </div>
           </form>
 

@@ -1,153 +1,60 @@
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { CalendarDays, CreditCard, Eye, Package2 } from "lucide-react";
 
 export default function VendasCard({ venda }) {
-
-    const navigate = useNavigate();
-
-    // Navega para a tela de detalhes da venda usando o Id
-    function irParaProfile() {
-        navigate(`/vendas/${venda.Id}`);
-    }
+    const id = venda.Id ?? venda.id;
+    const vendedor = venda.NomeVendedor ?? venda.nomeVendedor ?? `Vendedor #${venda.IdVendedor ?? venda.idVendedor ?? "—"}`;
+    const iniciais = vendedor
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((parte) => parte[0])
+        .join("")
+        .toUpperCase();
+    const pagamento = venda.formaPagamento ?? venda.FormaPagamento ?? venda.forma_pagamento ?? venda.formaDePagamento ?? "Não informado";
+    const data = venda.DataCad ?? venda.dataCad ?? venda.Data ?? venda.data;
+    const total = Number(venda.ValorTotal ?? venda.valorTotal ?? 0);
+    const itens = Number(venda.QuantidadeItens ?? venda.quantidadeItens);
 
     return (
-        <div style={styles.card}>
+        <article className="sale-card">
+            <div className="sale-card__avatar" aria-hidden="true">{iniciais || "V"}</div>
 
-            <div style={styles.info}>
-
-                {/* Número da venda em destaque */}
-                <div style={styles.number}>
-                    {venda.Id}
+            <div className="sale-card__content">
+                <div className="sale-card__heading">
+                    <div className="sale-card__identity">
+                        <span className="sale-card__id">Venda #{id}</span>
+                        <span className="sales-status-badge">Registrada</span>
+                    </div>
+                    <strong className="sale-card__amount">{formatarMoeda(total)}</strong>
                 </div>
 
-                <div>
+                <span className="sale-card__seller">{vendedor}</span>
 
-                    <div style={styles.details}>
-
-                        <span>
-                            <strong>Vendedor:</strong>{" "}
-                            {venda.NomeVendedor}
-                        </span>
-
-                        <span>
-                            <strong>Pagamento:</strong>{" "}
-                            {venda.formaPagamento ?? venda.FormaPagamento ?? 'Não Informado'}
-                        </span>
-
-                        {/* Formata a data em pt-BR (dd/mm/aaaa); "-" se não houver */}
-                        <span>
-                            <strong>Data:</strong>{" "}
-                            {venda.DataCad
-                                ? new Date(venda.DataCad)
-                                    .toLocaleDateString("pt-BR")
-                                : "-"
-                            }
-                        </span>
-
-                    </div>
-
-                    {/* Valor total formatado com 2 casas e vírgula decimal */}
-                    <div style={styles.price}>
-                        R$ {Number(venda.ValorTotal)
-                            .toFixed(2)
-                            .replace(".", ",")}
-                    </div>
-
+                <div className="sale-card__metadata">
+                    <span><CalendarDays size={14} aria-hidden="true" />{formatarData(data)}</span>
+                    <span><CreditCard size={14} aria-hidden="true" />{pagamento}</span>
+                    <span><Package2 size={14} aria-hidden="true" />{Number.isFinite(itens) ? `${itens} ${itens === 1 ? "produto" : "produtos"}` : "Itens indisponíveis"}</span>
                 </div>
-
             </div>
 
-
-            <button
-                onClick={irParaProfile}
-                style={styles.button}
-            >
-                Detalhes
-            </button>
-
-        </div>
+            <Link className="sale-card__details" to={`/vendas/${id}`} aria-label={`Ver detalhes da venda ${id}`}>
+                <Eye size={17} aria-hidden="true" />
+                <span>Detalhes</span>
+            </Link>
+        </article>
     );
 }
 
-const styles = {
+function formatarMoeda(valor) {
+    return Number(valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
 
-    card: {
-        width: "100%",
-        boxSizing: "border-box",
-
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-
-        backgroundColor: "#ffffff",
-
-        padding: "18px 22px",
-        marginBottom: "14px",
-
-        borderRadius: "10px",
-        border: "1px solid #e2e8f0",
-
-        boxShadow: "0 2px 7px rgba(0, 0, 0, 0.04)",
-
-        transition: "0.2s",
-    },
-
-    info: {
-        display: "flex",
-        alignItems: "center",
-        gap: "18px",
-    },
-
-    number: {
-        width: "45px",
-        height: "45px",
-
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-
-        borderRadius: "9px",
-
-        backgroundColor: "#eef4ff",
-        color: "#303e51",
-
-        fontSize: "15px",
-        fontWeight: "700",
-    },
-
-    title: {
-        margin: "0 0 7px 0",
-        fontSize: "17px",
-        color: "#243447",
-    },
-
-    details: {
-        display: "flex",
-        gap: "25px",
-
-        color: "#718096",
-        fontSize: "13px",
-    },
-
-    price: {
-        marginTop: "7px",
-
-        color: "#303e51",
-        fontSize: "16px",
-        fontWeight: "700",
-    },
-
-    button: {
-        border: "none",
-        borderRadius: "7px",
-
-        padding: "10px 17px",
-
-        backgroundColor: "#303e51",
-        color: "#ffffff",
-
-        fontSize: "14px",
-        fontWeight: "600",
-
-        cursor: "pointer",
-    },
-};
+function formatarData(valor) {
+    if (!valor) return "Data indisponível";
+    const dateOnly = String(valor).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const data = dateOnly
+        ? new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]))
+        : new Date(valor);
+    return Number.isNaN(data.getTime()) ? "Data indisponível" : data.toLocaleDateString("pt-BR");
+}

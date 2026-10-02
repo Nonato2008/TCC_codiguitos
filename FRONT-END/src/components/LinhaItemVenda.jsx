@@ -1,3 +1,5 @@
+import { Minus, Package2, Plus, Trash2 } from "lucide-react";
+
 // ===== Helpers para lidar com produtos =====
 // A API pode retornar campos em PascalCase (Id) ou camelCase (id).
 // Esses helpers normalizam o acesso, evitando repetir `?? produto?.X ?? produto?.Y`.
@@ -38,15 +40,17 @@ function getEstoqueProduto(produto) {
 
 // ===== Componente: Total da venda =====
 // Só exibe o valor total formatado com 2 casas decimais.
-export function TotalVenda({ totalGeral, isDark }) {
+export function TotalVenda({ totalGeral, itemCount, isDark }) {
   return (
     <div
+      className="sale-entry-total"
       style={{
         ...styles.totalBox,
         ...(isDark ? styles.totalBoxDark : {}),
       }}
     >
-      <span
+      <div className="sale-entry-total-meta">
+        <span
         style={{
           ...styles.totalLabel,
           ...(isDark ? styles.totalLabelDark : {}),
@@ -54,13 +58,16 @@ export function TotalVenda({ totalGeral, isDark }) {
       >
         Total da venda
       </span>
+        <span className="sale-entry-total-count">{itemCount} {itemCount === 1 ? "unidade" : "unidades"}</span>
+      </div>
       <strong
+        className="sale-entry-total-value"
         style={{
           ...styles.totalValue,
           ...(isDark ? styles.totalValueDark : {}),
         }}
       >
-        R$ {totalGeral.toFixed(2)}
+        {totalGeral.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
       </strong>
     </div>
   );
@@ -71,146 +78,41 @@ export function TotalVenda({ totalGeral, isDark }) {
 export function LinhaItemVenda({
   index,
   item,
-  produtos,
-  produtosFiltrados,
-  idsUsadosEmOutrasLinhas,
-  atualizarItem,
+  produto,
+  alterarQuantidade,
   removerItem,
   isDark,
 }) {
-
-  // Descobre o produto selecionado nesta linha e seu estoque atual
-  const produtoAtual = produtos.find(
-    (p) => Number(getIdProduto(p)) === Number(item.idProduto)
-  );
-  const estoqueAtual = produtoAtual ? getEstoqueProduto(produtoAtual) : undefined;
-
-  // Marca a linha em amarelo quando a quantidade bate no limite do estoque
-  const noLimite =
-    estoqueAtual !== undefined && Number(item.quantidade) >= estoqueAtual;
-
-  // Lista do select = filtrados + o produto atual (caso tenha saído do filtro)
-  // Assim o item selecionado nunca some da lista por causa de um filtro
-  const produtosParaSelect = [...produtosFiltrados];
-  if (
-    produtoAtual &&
-    !produtosParaSelect.some(
-      (p) => Number(getIdProduto(p)) === Number(item.idProduto)
-    )
-  ) {
-    produtosParaSelect.unshift(produtoAtual);
-  }
+  const estoque = produto ? getEstoqueProduto(produto) : 0;
+  const quantidade = Number(item.quantidade) || 1;
+  const preco = Number(item.valorUnitario) || (produto ? getPrecoProduto(produto) : 0);
+  const subtotal = preco * quantidade;
 
   return (
-    <div
-      key={index}
-      style={{
-        ...styles.itemCard,
-        ...(isDark ? styles.itemCardDark : {}),
-      }}
-    >
-      <div style={styles.itemRow}>
-        {/* SELECT DE PRODUTO — desabilita itens sem estoque ou já usados em outra linha */}
-        <select
-          value={item.idProduto}
-          onChange={(e) => atualizarItem(index, "idProduto", e.target.value)}
-          style={{
-            ...styles.select,
-            ...(isDark ? styles.selectDark : {}),
-          }}
-        >
-          <option value="">
-            {produtos.length === 0
-              ? "Nenhum produto cadastrado"
-              : produtosParaSelect.length === 0
-              ? "Nenhum produto encontrado"
-              : "Selecione um produto..."}
-          </option>
-          {produtosParaSelect.map((produto) => {
-            const id = getIdProduto(produto);
-            const nome = getNomeProduto(produto);
-            const preco = getPrecoProduto(produto);
-            const estoque = getEstoqueProduto(produto);
-            const semEstoque = estoque <= 0;
-            const jaUsadoEmOutra = idsUsadosEmOutrasLinhas.includes(Number(id));
-
-            return (
-              <option
-                key={id}
-                value={id}
-                disabled={semEstoque || jaUsadoEmOutra}
-              >
-                {nome} - R$ {preco.toFixed(2)}
-                {jaUsadoEmOutra
-                  ? " (já adicionado)"
-                  : semEstoque
-                  ? " (sem estoque)"
-                  : ` • Estoque: ${estoque}`}
-              </option>
-            );
-          })}
-        </select>
-
-        {/* QUANTIDADE — limitada ao estoque atual; borda amarela se atingiu o limite */}
-        <input
-          type="number"
-          min="1"
-          max={estoqueAtual ?? undefined}
-          step="1"
-          value={item.quantidade}
-          onChange={(e) => atualizarItem(index, "quantidade", e.target.value)}
-          style={{
-            ...styles.input,
-            ...(isDark ? styles.inputDark : {}),
-            width: "90px",
-            textAlign: "center",
-            borderColor: noLimite
-              ? "#f59e0b"
-              : isDark
-              ? "#4b5563"
-              : "#cbd5e1",
-          }}
-          placeholder="Qtd"
-          title={
-            estoqueAtual !== undefined
-              ? `Máximo disponível: ${estoqueAtual}`
-              : undefined
-          }
-        />
-
-        {/* SUBTOTAL — apenas leitura, já calculado pelo componente pai */}
-        <input
-          type="text"
-          value={`R$ ${Number(item.valorTotal).toFixed(2)}`}
-          readOnly
-          style={{
-            ...styles.input,
-            ...(isDark ? styles.inputDark : {}),
-            width: "130px",
-            textAlign: "right",
-            background: isDark ? "#0b1220" : "#f1f5f9",
-          }}
-        />
-
-        {/* BOTÃO REMOVER — só aparece se houver mais de um produto na lista */}
-        {produtos.length > 1 ? (
-          <button
-            type="button"
-            style={{
-              ...styles.removeButton,
-              ...(isDark ? styles.removeButtonDark : {}),
-            }}
-            onClick={() => removerItem(index)}
-            title="Remover produto"
-          >
-            ✕
-          </button>
-        ) : (
-          <span style={styles.removePlaceholder} />
-        )}
-      </div>
-    </div>
+    <tr className={`sale-cart-row${isDark ? " is-dark" : ""}`}>
+      <td>
+        <div className="sale-cart-product">
+          <span className="sale-cart-product-icon"><Package2 size={19} aria-hidden="true" /></span>
+          <div><strong>{getNomeProduto(produto)}</strong><small>#{getIdProduto(produto)}</small></div>
+        </div>
+      </td>
+      <td className="sale-cart-unit-price">{formatarMoeda(preco)}</td>
+      <td><span className="sale-stock-pill">{estoque} disponíveis</span></td>
+      <td>
+        <div className="sale-quantity-stepper">
+          <button type="button" aria-label={`Diminuir quantidade de ${getNomeProduto(produto)}`} disabled={quantidade <= 1} onClick={() => alterarQuantidade(index, quantidade - 1)}><Minus size={14} aria-hidden="true" /></button>
+          <input type="number" min="1" max={estoque} value={quantidade} aria-label={`Quantidade de ${getNomeProduto(produto)}`} onChange={(event) => alterarQuantidade(index, event.target.value)} />
+          <button type="button" aria-label={`Aumentar quantidade de ${getNomeProduto(produto)}`} disabled={quantidade >= estoque} onClick={() => alterarQuantidade(index, quantidade + 1)}><Plus size={14} aria-hidden="true" /></button>
+        </div>
+      </td>
+      <td className="sale-cart-subtotal">{formatarMoeda(subtotal)}</td>
+      <td><button type="button" className="sale-cart-remove" aria-label={`Remover ${getNomeProduto(produto)}`} onClick={() => removerItem(index)}><Trash2 size={16} aria-hidden="true" /></button></td>
+    </tr>
   );
+}
+
+function formatarMoeda(valor) {
+  return Number(valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
 const styles = {

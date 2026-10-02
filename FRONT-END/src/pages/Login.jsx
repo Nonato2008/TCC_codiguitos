@@ -190,9 +190,9 @@ export default function Login() {
     }
 
     return (
-        <div style={styles.container}>
+        <div className="auth-shell" style={styles.container}>
 
-            <div style={styles.card}>
+            <div className="auth-card" style={styles.card}>
 
                 <div style={styles.logoContainer}>
 

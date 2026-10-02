@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import React, { useEffect, useState, useContext, useMemo } from "react";
+import { PackageCheck, PackageX, Search, TriangleAlert } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import { useProdutos } from "../hooks/useProdutos";
 import { ThemeContext } from "../contexts/ThemeContext";
@@ -17,10 +18,9 @@ export default function Produtos() {
   // Lista de fornecedores (para mostrar o nome a partir do IdVendedor)
   const [fornecedores, setFornecedores] = useState([]);
 
-  // Filtro de data (input do tipo date)
-  const [dataFiltro, setDataFiltro] = useState("");
   // Busca livre por nome / id / fornecedor
   const [busca, setBusca] = useState("");
+  const [filtroEstoque, setFiltroEstoque] = useState("todos");
 
   // Busca os fornecedores uma única vez ao montar o componente
   useEffect(() => {
@@ -48,26 +48,15 @@ export default function Produtos() {
 
   // Retorna o nome do fornecedor a partir do id (aceita Id ou id)
   const encontrarNomeFornecedor = (id) => {
-    if (id === undefined || id === null || id === "") return "";
+    if (id === undefined || id === null || id === "") return "Sem fornecedor";
     const f = fornecedoresPorId.get(String(id));
-    return f ? (f.Nome ?? f.nome ?? "") : `Fornecedor #${id}`;
+    return f ? (f.Nome ?? f.nome ?? "Sem fornecedor") : "Sem fornecedor";
   };
 
   // Retorna o objeto completo do fornecedor ou null
   const obterFornecedorPorId = (id) => {
     if (id === undefined || id === null || id === "") return null;
     return fornecedoresPorId.get(String(id)) || null;
-  };
-
-  // Converte uma data para o formato YYYY-MM-DD respeitando o fuso local
-  // (usado para comparar com o valor do input type="date")
-  const formatarDataLocal = (data) => {
-    const dataLocal = new Date(data);
-    if (Number.isNaN(dataLocal.getTime())) return "";
-
-    const offset = dataLocal.getTimezoneOffset();
-    const localDate = new Date(dataLocal.getTime() - offset * 60000);
-    return localDate.toISOString().slice(0, 10);
   };
 
   // Helpers para normalizar campos do produto (aceita variações de Pascal/camelCase)
@@ -85,13 +74,21 @@ export default function Produtos() {
     p?.dataVenc;
   const getIdFornecedorFromProduct = (p) => p?.idFornecedor;
 
-  const hoje = new Date();
-  const isExpired = (p) => {
-    const dv = getDataVenc(p);
-    if (!dv) return false;
-    const d = new Date(dv);
-    if (Number.isNaN(d.getTime())) return false;
-    return d < new Date(hoje.toDateString());
+  const validadeProduto = (dataVenc) => {
+    if (!dataVenc) return { tipo: "sem-data", rotulo: "Sem validade" };
+    const texto = String(dataVenc);
+    const partes = texto.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    const data = partes
+      ? new Date(Number(partes[1]), Number(partes[2]) - 1, Number(partes[3]))
+      : new Date(dataVenc);
+    if (Number.isNaN(data.getTime())) return { tipo: "sem-data", rotulo: "Sem validade" };
+
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const dias = Math.ceil((data - hoje) / 86400000);
+    if (dias < 0) return { tipo: "vencido", rotulo: "Vencido" };
+    if (dias < 30) return { tipo: "proximo", rotulo: dias === 0 ? "Vence hoje" : `Vence em ${dias} dias` };
+    return { tipo: "valido", rotulo: "Na validade" };
   };
 
   // Filtra os produtos pela data selecionada (data de cadastro ou vencimento) e pelo termo de busca
@@ -108,28 +105,21 @@ export default function Produtos() {
     }),
   );
 
-  const produtosFiltrados = produtosEnriquecidos.filter((item) => {
-    if (dataFiltro) {
-      const dataProduto =
-        item.produto.dataCad ??
-        item.produto.DataCad ??
-        item.produto.dataVenc ??
-        item.produto.DataVenc;
-      const dataProdutoFormatada = formatarDataLocal(dataProduto);
-      if (dataProdutoFormatada !== dataFiltro) return false;
-    }
-
-    if (!busca) return true;
-
-    const termo = String(busca).trim().toLowerCase();
-    if (!termo) return true;
-
-    return (
-      String(item.id).toLowerCase().includes(termo) ||
-      String(item.nome).toLowerCase().includes(termo) ||
-      String(item.fornecedorNome).toLowerCase().includes(termo)
-    );
+  const produtosPorEstoque = produtosEnriquecidos.filter((item) => {
+    if (filtroEstoque === "comEstoque") return item.quantidade > 0;
+    if (filtroEstoque === "semEstoque") return item.quantidade <= 0;
+    return true;
   });
+
+  const produtosFiltrados = produtosPorEstoque.filter((item) => {
+    const termo = String(busca).trim().toLocaleLowerCase("pt-BR");
+    if (!termo) return true;
+    return [item.id, item.nome, item.fornecedorNome]
+      .some((valor) => String(valor ?? "").toLocaleLowerCase("pt-BR").includes(termo));
+  });
+
+  const contagemComEstoque = produtosEnriquecidos.filter((item) => item.quantidade > 0).length;
+  const contagemSemEstoque = produtosEnriquecidos.length - contagemComEstoque;
 
   // Estado de carregamento
   if (loading) {
@@ -137,7 +127,7 @@ export default function Produtos() {
       <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
         <Sidebar />
 
-        <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
+        <main className="products-page" style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
           <header style={styles.header}>
             <div>
               <h1
@@ -190,7 +180,7 @@ export default function Produtos() {
       <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
         <Sidebar />
 
-        <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
+        <main className="products-page" style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
           <header style={styles.header}>
             <div>
               <h1
@@ -243,8 +233,8 @@ export default function Produtos() {
     <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
       <Sidebar />
 
-      <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
-        <header style={styles.header}>
+      <main className="products-page" style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
+        <header className="products-page-header" style={styles.header}>
           <div>
             <h1
               style={{ ...styles.title, ...(isDark ? styles.titleDark : {}) }}
@@ -261,198 +251,108 @@ export default function Produtos() {
             </p>
           </div>
 
-          <div style={styles.headerRight}>
-            {/* Contador dinâmico (muda conforme o filtro) */}
-            <div
-              style={{ ...styles.total, ...(isDark ? styles.totalDark : {}) }}
-            >
-              {produtosFiltrados.length}{" "}
-              {produtosFiltrados.length === 1 ? "produto" : "produtos"}
-            </div>
-
-            {/* Busca por nome / id / fornecedor */}
-            <input
-              type="text"
-              placeholder="Buscar por nome, id ou fornecedor..."
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              style={{
-                ...styles.dateInput,
-                ...(isDark ? styles.dateInputDark : {}),
-                minWidth: "260px",
-              }}
-              aria-label="Buscar produtos"
-            />
-
-            {/* Filtro por data */}
-            <input
-              type="date"
-              value={dataFiltro}
-              onChange={(event) => setDataFiltro(event.target.value)}
-              style={{
-                ...styles.dateInput,
-                ...(isDark ? styles.dateInputDark : {}),
-              }}
-              aria-label="Filtrar produtos por data"
-            />
-
-            {/* Botão "Limpar" só aparece se houver filtro ativo */}
-            {dataFiltro && (
-              <button
-                type="button"
-                onClick={() => setDataFiltro("")}
-                style={{
-                  ...styles.clearFilterButton,
-                  ...(isDark ? styles.clearFilterButtonDark : {}),
-                }}
-              >
-                Limpar
-              </button>
-            )}
+          <div className="products-header-actions">
+            <span className="products-count-pill">{produtosFiltrados.length} {produtosFiltrados.length === 1 ? "produto" : "produtos"}</span>
 
             <Link to="/produtos/cadastrar" style={{ textDecoration: "none" }}>
-              <button
-                style={{
-                  ...styles.primaryButton,
-                  ...(isDark ? styles.primaryButtonDark : {}),
-                }}
-              >
-                + Novo produto
-              </button>
+              <button className="products-new-button" type="button"><span aria-hidden="true">+</span>Novo produto</button>
             </Link>
           </div>
         </header>
 
-        <section style={styles.content}>
+        <section className="products-controls" aria-label="Buscar e filtrar produtos">
+          <label className="products-search">
+            <Search size={18} aria-hidden="true" />
+            <input
+              type="search"
+              placeholder="Buscar por nome, código ou fornecedor"
+              value={busca}
+              onChange={(event) => setBusca(event.target.value)}
+              aria-label="Buscar produtos"
+            />
+            {busca && <button type="button" onClick={() => setBusca("")} aria-label="Limpar busca"><X size={15} /></button>}
+          </label>
+
+          <div className="products-filter-chips" role="group" aria-label="Filtrar produtos por estoque">
+            <button type="button" className={filtroEstoque === "todos" ? "is-active" : ""} aria-pressed={filtroEstoque === "todos"} onClick={() => setFiltroEstoque("todos")}>Todos<span>{produtosEnriquecidos.length}</span></button>
+            <button type="button" className={filtroEstoque === "comEstoque" ? "is-active" : ""} aria-pressed={filtroEstoque === "comEstoque"} onClick={() => setFiltroEstoque("comEstoque")}><PackageCheck size={14} aria-hidden="true" />Com estoque<span>{contagemComEstoque}</span></button>
+            <button type="button" className={filtroEstoque === "semEstoque" ? "is-active" : ""} aria-pressed={filtroEstoque === "semEstoque"} onClick={() => setFiltroEstoque("semEstoque")}><PackageX size={14} aria-hidden="true" />Sem estoque<span>{contagemSemEstoque}</span></button>
+          </div>
+        </section>
+
+        <section className="products-content" style={styles.content}>
           {produtosFiltrados.length === 0 ? (
             <div
               style={{ ...styles.empty, ...(isDark ? styles.emptyDark : {}) }}
             >
               <span className="material-symbols-outlined">inventory_2</span>
               <p style={{ ...(isDark ? styles.textDark : {}) }}>
-                {dataFiltro
-                  ? "Nenhum produto encontrado para a data selecionada."
-                  : "Nenhum produto encontrado."}
+                {busca || filtroEstoque !== "todos" ? "Nenhum produto corresponde à busca ou ao filtro selecionado." : "Nenhum produto encontrado."}
               </p>
             </div>
           ) : (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-                gap: 16,
-              }}
-            >
+            <div className="products-grid">
               {produtosFiltrados.map((item) => {
                 const img =
                   item.produto.imagem ||
                   item.produto.Imagem ||
                   item.produto.imagemUrl ||
                   null;
-                const imageUrl = img ? `http://localhost:8000${img}` : null;
+                const imageUrl = img ? (/^https?:\/\//i.test(img) ? img : `http://localhost:8000${img.startsWith("/") ? img : `/${img}`}`) : null;
+                const validade = validadeProduto(item.dataVenc);
                 return (
                   <article
                     key={item.id}
                     onClick={() => navigate(`/produtos/${item.id}`)}
+                    onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(`/produtos/${item.id}`); } }}
+                    tabIndex={0}
+                    aria-label={`Ver detalhes de ${item.nome}`}
+                    className="product-list-card"
                     style={{
-                      background: isDark ? "#0b1220" : "#fff",
-                      padding: 16,
-                      borderRadius: 8,
-                      border: "1px solid #e6edf3",
-                      cursor: "pointer",
-                      transition: "all 0.2s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.boxShadow = isDark
-                        ? "0 8px 16px rgba(0, 0, 0, 0.4)"
-                        : "0 8px 16px rgba(0, 0, 0, 0.1)";
-                      e.currentTarget.style.transform = "translateY(-2px)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.boxShadow = "none";
-                      e.currentTarget.style.transform = "translateY(0)";
+                      background: isDark ? "var(--color-surface)" : "var(--color-surface)",
                     }}
                   >
-                    <div
-                      style={{
-                        height: 140,
-                        overflow: "hidden",
-                        borderRadius: 8,
-                        marginBottom: 10,
-                        background: "#f3f6fa",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
+                    <div className="product-list-card__image">
                       {imageUrl ? (
                         <img
                           src={imageUrl}
                           alt={item.nome}
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                          }}
+                          onError={(event) => { event.currentTarget.style.display = "none"; }}
                         />
                       ) : (
-                        <span
-                          className="material-symbols-outlined"
-                          style={{ fontSize: 48, color: "#9aa8b6" }}
-                        >
-                          inventory_2
-                        </span>
+                        <PackageX size={36} aria-hidden="true" />
                       )}
                     </div>
 
-                    <h3
-                      style={{
-                        margin: "6px 0",
-                        fontSize: 16,
-                        color: isDark ? "#f9fafb" : "#111c2d",
-                      }}
-                    >
-                      {item.nome}
-                    </h3>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        gap: 8,
-                        marginBottom: 8,
-                      }}
-                    >
-                      <strong style={{ color: isDark ? "#bbf7d0" : "#047857" }}>
+                    <div className="product-list-card__body">
+                      <div className="product-list-card__badges">
+                        {item.quantidade <= 0 ? (
+                          <span className="product-stock-badge is-out">Sem estoque</span>
+                        ) : (
+                          <span className="product-stock-badge is-in"><PackageCheck size={12} aria-hidden="true" />Disponível</span>
+                        )}
+                        {validade.tipo === "proximo" && <span className="product-expiry-badge is-soon"><TriangleAlert size={12} aria-hidden="true" />{validade.rotulo}</span>}
+                        {validade.tipo === "vencido" && <span className="product-expiry-badge is-expired"><TriangleAlert size={12} aria-hidden="true" />Vencido</span>}
+                      </div>
+
+                      <h3 className="product-list-card__name">{item.nome}</h3>
+                      <div className="product-list-card__primary-info">
+                        <strong className="product-list-card__price">
                         {item.preco.toLocaleString("pt-BR", {
                           style: "currency",
                           currency: "BRL",
                         })}
                       </strong>
-                      <span
-                        style={{
-                          color:
-                            item.quantidade <= 0
-                              ? "#b91c1c"
-                              : isDark
-                                ? "#d1d5db"
-                                : "#444",
-                        }}
-                      >
-                        {item.quantidade} unidades
-                      </span>
-                    </div>
+                        <span className={`product-list-card__quantity${item.quantidade <= 0 ? " is-empty" : ""}`}>
+                          {item.quantidade} {item.quantidade === 1 ? "unidade" : "unidades"}
+                        </span>
+                      </div>
 
-                    <div
-                      style={{
-                        fontSize: 13,
-                        color: isDark ? "#cbd5e1" : "#55616a",
-                      }}
-                    >
-                      <div>Fornecedor: {item.fornecedorNome || "—"}</div>
-                      <div>
-                        Vencimento:{" "}
-                        {item.dataVenc ? formatarDataLocal(item.dataVenc) : "—"}
+                      <div className="product-list-card__secondary-info">
+                        {item.fornecedorNome !== "Sem fornecedor" && <span>Fornecedor: {item.fornecedorNome}</span>}
+                        <span className={validade.tipo === "proximo" ? "is-soon" : validade.tipo === "vencido" ? "is-expired" : ""}>
+                          Vencimento: {item.dataVenc ? formatarDataLocal(item.dataVenc) : "—"}
+                        </span>
                       </div>
                     </div>
                   </article>

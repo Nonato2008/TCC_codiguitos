@@ -1,4 +1,18 @@
-import React, { useContext } from "react";
+import React, { useContext, useMemo, useState } from "react";
+import {
+  Activity,
+  ArrowDownRight,
+  ArrowRight,
+  ArrowUpRight,
+  Boxes,
+  CalendarDays,
+  Clock3,
+  PackagePlus,
+  PackageX,
+  ReceiptText,
+  ShoppingCart,
+  UsersRound,
+} from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import { useProdutos } from "../hooks/useProdutos";
 import { useVendas } from "../hooks/useVendas";
@@ -8,6 +22,7 @@ import { ThemeContext } from "../contexts/ThemeContext";
 export default function Painel() {
 
   const navigate = useNavigate();
+  const [periodo, setPeriodo] = useState("7dias");
 
   const { theme } = useContext(ThemeContext);
   const isDark = theme === "dark";
@@ -18,7 +33,6 @@ export default function Painel() {
   // Hook que carrega as vendas e o valor total (lucro)
   const {
     vendas,
-    valorTotal,
     loading: loadingVendas,
     error: errorVendas,
   } = useVendas();
@@ -26,8 +40,27 @@ export default function Painel() {
   // Garante que `vendas` seja sempre um array válido
   const vendasLista = Array.isArray(vendas) ? vendas : [];
 
-  // Pega as 3 últimas vendas e inverte para mostrar as mais recentes primeiro
-  const ultimasVendas = [...vendasLista].slice(-3).reverse();
+  const vendasPeriodo = useMemo(
+    () => filtrarVendasPorPeriodo(vendasLista, periodo),
+    [vendasLista, periodo]
+  );
+
+  const ultimasVendas = vendasPeriodo.slice(0, 3);
+  const faturamentoPeriodo = vendasPeriodo.reduce(
+    (total, venda) => total + Number(venda.ValorTotal || venda.valorTotal || 0),
+    0
+  );
+
+  let usuario = null;
+  try {
+    usuario = JSON.parse(localStorage.getItem("usuario") || "null");
+  } catch {
+    usuario = null;
+  }
+
+  const nomeUsuario = usuario?.nome || usuario?.Nome || "";
+  const horaAtual = new Date().getHours();
+  const saudacao = horaAtual < 12 ? "Bom dia" : horaAtual < 18 ? "Boa tarde" : "Boa noite";
 
   // Total de produtos cadastrados
   const produtosTotais = Array.isArray(produtos) ? produtos.length : 0;
@@ -35,7 +68,7 @@ export default function Painel() {
   // Conta produtos com status "esgotado"
   const produtosEsgotados = Array.isArray(produtos)
     ? produtos.filter((produto) => {
-      const status = String(produto.Status ?? "").toLowerCase();
+      const status = String(produto.Status ?? produto.status ?? "").toLowerCase();
       return status === "esgotado";
     }).length
     : 0;
@@ -43,7 +76,7 @@ export default function Painel() {
   // Conta produtos com status "vencido"
   const produtosVencimento = Array.isArray(produtos)
     ? produtos.filter((produto) => {
-      const status = String(produto.Status ?? "").toLowerCase();
+      const status = String(produto.Status ?? produto.status ?? "").toLowerCase();
       return status === "vencido";
     }).length
     : 0;
@@ -54,7 +87,7 @@ export default function Painel() {
       <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
         <Sidebar />
 
-        <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
+        <main className="dashboard-page" style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
           <div style={{ ...styles.loadingBox, ...(isDark ? styles.loadingBoxDark : {}) }}>
             Carregando resumo do painel...
           </div>
@@ -69,7 +102,7 @@ export default function Painel() {
       <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
         <Sidebar />
 
-        <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
+        <main className="dashboard-page" style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
           <div style={{ ...styles.errorBox, ...(isDark ? styles.errorBoxDark : {}) }}>{error}</div>
         </main>
       </div>
@@ -80,51 +113,67 @@ export default function Painel() {
     <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
       <Sidebar />
 
-      <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
+      <main className="dashboard-page" style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
         {/* CABEÇALHO */}
-        <header style={styles.header}>
-          <div style={styles.headerRow}>
+        <header className="dashboard-header" style={styles.header}>
+          <div className="dashboard-header__copy" style={styles.headerRow}>
             <div>
-              <h2 style={{ ...styles.title, ...(isDark ? styles.titleDark : {}) }}>Visão Geral</h2>
+              <p className="dashboard-greeting">{saudacao}{nomeUsuario ? `, ${nomeUsuario}` : ""}</p>
+              <h2 className="dashboard-title" style={{ ...styles.title, ...(isDark ? styles.titleDark : {}) }}>Visão Geral</h2>
               <p style={{ ...styles.subtitle, ...(isDark ? styles.subtitleDark : {}) }}>
                 Resumo operacional da loja.
               </p>
             </div>
+            <label className="dashboard-period">
+              <CalendarDays size={17} aria-hidden="true" />
+              <span className="dashboard-period__label">Período</span>
+              <select value={periodo} onChange={(event) => setPeriodo(event.target.value)}>
+                <option value="hoje">Hoje</option>
+                <option value="7dias">7 dias</option>
+                <option value="30dias">30 dias</option>
+                <option value="mes">Este mês</option>
+              </select>
+            </label>
           </div>
         </header>
 
         {/* CARDS */}
-        <section style={styles.cards}>
+        <section className="dashboard-kpis" style={styles.cards}>
           <DashboardCard
             titulo="Produtos Totais"
             valor={produtosTotais}
-            icone="inventory"
+            icone={<Boxes size={23} strokeWidth={1.8} />}
+            tendencia="up"
             dark={isDark}
           />
 
           <DashboardCard
             titulo="Sem Estoque"
             valor={produtosEsgotados}
-            icone="production_quantity_limits"
+            icone={<PackageX size={23} strokeWidth={1.8} />}
+            tendencia="down"
             tipo="error"
+            alert={produtosEsgotados > 0}
             dark={isDark}
           />
 
           <DashboardCard
             titulo="Produtos vencidos"
             valor={produtosVencimento}
-            icone="event_busy"
+            icone={<Clock3 size={23} strokeWidth={1.8} />}
+            tendencia="down"
             tipo="warning"
+            alert={produtosVencimento > 0}
             dark={isDark}
           />
         </section>
 
         {/* PARTE INFERIOR */}
-        <section style={styles.bottom}>
+        <section className="dashboard-panels" style={styles.bottom}>
           {/* VENDAS RECENTES */}
-          <div style={{ ...styles.largeCard, ...(isDark ? styles.largeCardDark : {}) }}>
+          <div className="dashboard-panel" style={{ ...styles.largeCard, ...(isDark ? styles.largeCardDark : {}) }}>
             <div style={styles.cardHeader}>
-              <h3 style={{ ...styles.cardTitle, ...(isDark ? styles.cardTitleDark : {}) }}>
+              <h3 className="dashboard-card-title" style={{ ...styles.cardTitle, ...(isDark ? styles.cardTitleDark : {}) }}>
                 Vendas Recentes
               </h3>
 
@@ -150,7 +199,7 @@ export default function Painel() {
 
                 <span>{errorVendas}</span>
               </div>
-            ) : vendasLista.length > 0 ? (
+            ) : ultimasVendas.length > 0 ? (
               <div style={styles.vendasLista}>
                 {ultimasVendas.map((venda) => (
                   <div key={venda.Id} style={{ ...styles.vendaItem, ...(isDark ? styles.vendaItemDark : {}) }}>
@@ -174,29 +223,62 @@ export default function Painel() {
                 ))}
               </div>
             ) : (
-              <div style={{ ...styles.empty, ...(isDark ? styles.emptyDark : {}) }}>
-                <span className="material-symbols-outlined">point_of_sale</span>
-
-                <span>Nenhuma venda encontrada.</span>
+              <div className="dashboard-empty" style={{ ...styles.empty, ...(isDark ? styles.emptyDark : {}) }}>
+                <div className="dashboard-empty__icon">
+                  <ReceiptText size={30} strokeWidth={1.6} aria-hidden="true" />
+                </div>
+                <strong>{vendasLista.length ? "Sem vendas neste período" : "Ainda não há vendas registradas"}</strong>
+                <span>{vendasLista.length ? "Escolha outro período ou consulte todas as vendas." : "Registre a primeira venda para começar a acompanhar o movimento da loja."}</span>
+                <button
+                  type="button"
+                  className="dashboard-action-button"
+                  onClick={() => navigate(vendasLista.length ? "/vendas" : "/vendas/cadastrar")}
+                >
+                  <ShoppingCart size={16} aria-hidden="true" />
+                  {vendasLista.length ? "Ver todas as vendas" : "Registrar primeira venda"}
+                </button>
               </div>
             )}
           </div>
 
-          {/* LUCRO TOTAL */}
-          <div style={{ ...styles.largeCard, ...(isDark ? styles.largeCardDark : {}) }}>
+          {/* FATURAMENTO TOTAL */}
+          <div className="dashboard-profit" style={{ ...styles.largeCard, ...(isDark ? styles.largeCardDark : {}) }}>
             <div style={styles.cardHeader}>
-              <h3 style={{ ...styles.cardTitle, ...(isDark ? styles.cardTitleDark : {}) }}>Lucro total</h3>
+              <div>
+                <h3 style={{ ...styles.cardTitle, ...(isDark ? styles.cardTitleDark : {}) }}>Faturamento no período</h3>
+                <span className="dashboard-profit__period">{periodoLabel(periodo)}</span>
+              </div>
 
-              <span className="material-symbols-outlined" style={isDark ? styles.iconDark : {}}>
-                local_fire_department
-              </span>
+              <div className="dashboard-profit__icon"><Activity size={19} aria-hidden="true" /></div>
             </div>
 
             <div style={styles.lucroContainer}>
-              <strong style={styles.lucro}>
-                R$ {(valorTotal || 0).toFixed(2).replace(".", ",")}💸
+              <strong className={`dashboard-profit__value${faturamentoPeriodo < 0 ? " is-negative" : ""}`}>
+                {formatarMoeda(faturamentoPeriodo)}
               </strong>
             </div>
+            <SalesMiniChart sales={vendasPeriodo} />
+            <p className="dashboard-profit__footnote">{faturamentoPeriodo < 0 ? "Saldo negativo" : "Total das vendas registradas"}; não representa lucro líquido.</p>
+          </div>
+        </section>
+
+        <section className="dashboard-quick-actions" aria-labelledby="dashboard-quick-actions-title">
+          <div className="dashboard-quick-actions__heading">
+            <div>
+              <span className="dashboard-section-kicker">Atalhos</span>
+              <h3 id="dashboard-quick-actions-title">Ações rápidas</h3>
+            </div>
+            <span>Operações frequentes</span>
+          </div>
+          <div className="dashboard-quick-actions__items">
+            <QuickAction icon={<ShoppingCart size={19} />} label="Nova venda" onClick={() => navigate("/vendas/cadastrar")} />
+            <QuickAction icon={<Boxes size={19} />} label="Ajustar estoque" onClick={() => navigate("/gerenciamentoEstoque")} />
+            {(usuario?.perfil || usuario?.Perfil || usuario?.tipo || "").toString().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === "PROPRIETARIO" && (
+              <>
+                <QuickAction icon={<PackagePlus size={19} />} label="Adicionar produto" onClick={() => navigate("/produtos/cadastrar")} />
+                <QuickAction icon={<UsersRound size={19} />} label="Cadastrar fornecedor" onClick={() => navigate("/fornecedores/cadastrar")} />
+              </>
+            )}
           </div>
         </section>
       </main>
@@ -206,46 +288,133 @@ export default function Painel() {
 
 // Card reutilizável do topo do painel
 // Aceita variações visuais através do `tipo` (error / warning)
-function DashboardCard({ titulo, valor, icone, tipo, dark }) {
+function DashboardCard({ titulo, valor, icone, tipo, tendencia, alert, dark }) {
+  const TrendIcon = tendencia === "down" ? ArrowDownRight : ArrowUpRight;
+
   return (
     <div
+      className={`dashboard-kpi dashboard-kpi--${tipo || "default"}${alert ? " dashboard-kpi--alert" : ""}`}
       style={{
         ...styles.card,
         ...(dark ? styles.cardDark : {}),
-        ...(tipo === "error" ? styles.errorCard : {}),
-        ...(tipo === "warning" ? styles.warningCard : {}),
       }}
     >
       <div style={styles.cardTop}>
         <div style={styles.cardName}>
           <div
+            className="dashboard-kpi__icon"
             style={{
               ...styles.icon,
               ...(dark ? styles.iconDark : {}),
-              ...(tipo === "error" ? styles.errorIcon : {}),
-              ...(tipo === "warning" ? styles.warningIcon : {}),
             }}
           >
-            <span className="material-symbols-outlined">{icone}</span>
+            {icone}
           </div>
 
-          <h3 style={{ ...styles.cardLabel, ...(dark ? styles.cardLabelDark : {}) }}>{titulo}</h3>
+          <h3 className="dashboard-kpi__label" style={{ ...styles.cardLabel, ...(dark ? styles.cardLabelDark : {}) }}>{titulo}</h3>
         </div>
 
-        <span className="material-symbols-outlined" style={styles.arrow}>
+        <span className="dashboard-kpi__trend" title="Indicador inicial; ainda sem histórico para comparação">
+          <TrendIcon size={15} aria-hidden="true" />
+          <span>0%</span>
         </span>
       </div>
 
       <strong
+        className="dashboard-kpi__value"
         style={{
           ...styles.value,
           ...(dark ? styles.valueDark : {}),
-          ...(tipo === "error" ? styles.errorValue : {}),
         }}
       >
         {valor}
       </strong>
     </div>
+  );
+}
+
+function filtrarVendasPorPeriodo(vendas, periodo) {
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const inicio = new Date(hoje);
+
+  if (periodo === "7dias") inicio.setDate(inicio.getDate() - 6);
+  if (periodo === "30dias") inicio.setDate(inicio.getDate() - 29);
+  if (periodo === "mes") inicio.setDate(1);
+
+  return vendas
+    .filter((venda) => {
+      const dataVenda = venda.DataCad ?? venda.dataCad ?? venda.Data ?? venda.data;
+      if (!dataVenda) return false;
+
+      const data = parseDateLocal(dataVenda);
+      if (Number.isNaN(data.getTime())) return false;
+      data.setHours(0, 0, 0, 0);
+      return data >= inicio && data <= hoje;
+    })
+    .sort((a, b) => {
+      const dataA = parseDateLocal(a.DataCad ?? a.dataCad ?? a.Data ?? a.data)?.getTime() ?? 0;
+      const dataB = parseDateLocal(b.DataCad ?? b.dataCad ?? b.Data ?? b.data)?.getTime() ?? 0;
+      return dataB - dataA;
+    });
+}
+
+function parseDateLocal(value) {
+  if (!value) return null;
+  const datePart = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const date = datePart
+    ? new Date(Number(datePart[1]), Number(datePart[2]) - 1, Number(datePart[3]))
+    : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function periodoLabel(periodo) {
+  return {
+    hoje: "Hoje",
+    "7dias": "Últimos 7 dias",
+    "30dias": "Últimos 30 dias",
+    mes: "Este mês",
+  }[periodo];
+}
+
+function formatarMoeda(valor) {
+  return Number(valor || 0).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+}
+
+function SalesMiniChart({ sales }) {
+  const values = [...sales]
+    .reverse()
+    .map((sale) => Number(sale.ValorTotal ?? sale.valorTotal ?? 0));
+  const chartValues = values.length > 1 ? values : [0, ...(values.length ? values : [0])];
+  const maxValue = Math.max(...chartValues, 1);
+  const points = chartValues
+    .map((value, index) => {
+      const x = (index / Math.max(chartValues.length - 1, 1)) * 100;
+      const y = 40 - (value / maxValue) * 32;
+      return `${x},${y}`;
+    })
+    .join(" ");
+
+  return (
+    <div className="dashboard-sparkline" aria-label="Gráfico das vendas no período">
+      <svg viewBox="0 0 100 44" preserveAspectRatio="none" role="img" aria-hidden="true">
+        <path className="dashboard-sparkline__baseline" d="M0 41H100" />
+        <polyline className="dashboard-sparkline__line" points={points} />
+      </svg>
+    </div>
+  );
+}
+
+function QuickAction({ icon, label, onClick }) {
+  return (
+    <button type="button" className="dashboard-quick-action" onClick={onClick}>
+      <span className="dashboard-quick-action__icon">{icon}</span>
+      <span>{label}</span>
+      <ArrowRight className="dashboard-quick-action__arrow" size={16} aria-hidden="true" />
+    </button>
   );
 }
 

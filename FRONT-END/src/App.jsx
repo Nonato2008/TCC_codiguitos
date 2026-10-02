@@ -18,15 +18,18 @@ import CadastrarFornecedor from "./pages/CadastroFornecedor";
 import GerenciamentoEstoque from "./pages/GerenciamentoEstoque";
 import ProfileVenda from "./pages/ProfileVenda";
 import ProfileProduto from "./pages/ProfileProduto";
-import { ThemeProvider } from "./contexts/ThemeContext"
+import { ThemeProvider } from "./contexts/ThemeContext";
+import AmbientBackground from "./components/AmbientBackground";
 
 
 export default function App() {
   return (
     <ThemeProvider>
-
-      <BrowserRouter>
-        <Routes>
+      <div className="application-root">
+        <BrowserRouter>
+          <AmbientBackground />
+          <div className="application-content">
+            <Routes>
 
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/home" element={<Home />} />
@@ -51,8 +54,10 @@ export default function App() {
 
           <Route path="*" element={<Navigate to="/login" replace />} />
 
-        </Routes>
-      </BrowserRouter>
+            </Routes>
+          </div>
+        </BrowserRouter>
+      </div>
     </ThemeProvider>
 
   );

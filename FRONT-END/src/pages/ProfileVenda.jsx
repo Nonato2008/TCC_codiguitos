@@ -1,8 +1,22 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useVendaById } from "../hooks/useVendasById";
 import Sidebar from "../components/Sidebar";
 import { ThemeContext } from "../contexts/ThemeContext";
+import {
+    ArrowLeft,
+    BadgeCheck,
+    CalendarClock,
+    CreditCard,
+    Hash,
+    Package2,
+    Printer,
+    ReceiptText,
+    Trash2,
+    UserRound,
+    Wallet,
+} from "lucide-react";
+import { cancelarVenda } from "../services/vendasService";
 
 export default function ProfileVenda() {
 
@@ -13,6 +27,7 @@ export default function ProfileVenda() {
 
     const { theme } = useContext(ThemeContext);
     const isDark = theme === "dark";
+    const [cancelando, setCancelando] = useState(false);
 
     // Hook customizado que busca a venda pelo id
     const {
@@ -20,6 +35,43 @@ export default function ProfileVenda() {
         loading,
         error
     } = useVendaById(id);
+
+    async function handleCancelarVenda() {
+        const { default: Swal } = await import("sweetalert2");
+        const confirmacao = await Swal.fire({
+            icon: "warning",
+            title: "Cancelar esta venda?",
+            text: "A venda será removida e os produtos voltarão ao estoque.",
+            showCancelButton: true,
+            confirmButtonText: "Cancelar venda e estornar estoque",
+            cancelButtonText: "Manter venda",
+            confirmButtonColor: "#a41623",
+            reverseButtons: true,
+        });
+
+        if (!confirmacao.isConfirmed) return;
+
+        try {
+            setCancelando(true);
+            await cancelarVenda(id);
+            await Swal.fire({
+                icon: "success",
+                title: "Venda cancelada",
+                text: "A venda foi removida e o estoque foi atualizado.",
+                confirmButtonColor: "#a41623",
+            });
+            navigate("/vendas", { replace: true });
+        } catch (cancelError) {
+            await Swal.fire({
+                icon: "error",
+                title: "Não foi possível cancelar",
+                text: cancelError.response?.data?.message || "Ocorreu um erro ao cancelar a venda.",
+                confirmButtonColor: "#a41623",
+            });
+        } finally {
+            setCancelando(false);
+        }
+    }
 
     // Estado de carregamento
     if (loading) {
@@ -68,6 +120,7 @@ export default function ProfileVenda() {
 
     // Lista de itens da venda (fallback para array vazio)
     const itens = venda.Itens || [];
+    const totalItens = itens.reduce((total, item) => total + Number(item.Qtd ?? item.quantidade ?? 0) * Number(item.Valor ?? item.valor ?? 0), 0);
 
     return (
         <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
@@ -76,31 +129,38 @@ export default function ProfileVenda() {
 
             <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
 
-                {/* CABEÇALHO */}
-                <div style={styles.header}>
-
-                    <div>
-                        <button
-                            onClick={() => navigate("/vendas")}
-                            style={{ ...styles.backButton, ...(isDark ? styles.backButtonDark : {}) }}
-                        >
-                            ← Voltar
+                <div className="sale-detail-toolbar">
+                    <button type="button" className="sale-back-button" onClick={() => navigate("/vendas")}>
+                        <ArrowLeft size={17} aria-hidden="true" />
+                        Voltar para vendas
+                    </button>
+                    <div className="sale-detail-actions">
+                        <button type="button" className="sale-print-button" onClick={() => window.print()}>
+                            <Printer size={17} aria-hidden="true" />
+                            Imprimir recibo
                         </button>
-
-                        <p style={{ ...styles.subtitle, ...(isDark ? styles.subtitleDark : {}) }}>
-                            Detalhes da venda
-                        </p>
+                        <button type="button" className="sale-cancel-button" onClick={handleCancelarVenda} disabled={cancelando}>
+                            <Trash2 size={16} aria-hidden="true" />
+                            {cancelando ? "Cancelando..." : "Cancelar venda"}
+                        </button>
                     </div>
-
                 </div>
+
+                <header className="sale-detail-heading">
+                    <div>
+                        <span className="sale-detail-eyebrow">RECIBO DE VENDA</span>
+                        <h1>Detalhes da venda <span className="sale-detail-status"><BadgeCheck size={15} aria-hidden="true" /> Registrada</span></h1>
+                        <p>Venda #{venda.Id}</p>
+                    </div>
+                </header>
 
 
                 {/* INFORMAÇÕES DA VENDA */}
-                <section style={{ ...styles.infoCard, ...(isDark ? styles.infoCardDark : {}) }}>
+                <section className="sale-detail-overview" style={{ ...styles.infoCard, ...(isDark ? styles.infoCardDark : {}) }}>
 
                     <div style={styles.infoItem}>
-                        <span style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>
-                            Nº da Venda
+                        <span className="sale-detail-info-label" style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>
+                            <Hash size={15} aria-hidden="true" /> Nº da Venda
                         </span>
 
                         <strong style={{ ...styles.value, ...(isDark ? styles.valueDark : {}) }}>
@@ -110,8 +170,8 @@ export default function ProfileVenda() {
 
 
                     <div style={styles.infoItem}>
-                        <span style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>
-                            Vendedor
+                        <span className="sale-detail-info-label" style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>
+                            <UserRound size={15} aria-hidden="true" /> Vendedor
                         </span>
 
                         <strong style={{ ...styles.value, ...(isDark ? styles.valueDark : {}) }}>
@@ -122,22 +182,31 @@ export default function ProfileVenda() {
 
 
                     <div style={styles.infoItem}>
-                        <span style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>
-                            Data da Venda
+                        <span className="sale-detail-info-label" style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>
+                            <CalendarClock size={15} aria-hidden="true" /> Data e hora
                         </span>
 
                         <strong style={{ ...styles.value, ...(isDark ? styles.valueDark : {}) }}>
-                            {formatarData(venda.DataCad)}
+                            {formatarDataCompleta(venda.DataCad)}
+                        </strong>
+                    </div>
+
+                    <div style={styles.infoItem}>
+                        <span className="sale-detail-info-label" style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>
+                            <CreditCard size={15} aria-hidden="true" /> Forma de pagamento
+                        </span>
+                        <strong className="sale-detail-payment" style={{ ...styles.value, ...(isDark ? styles.valueDark : {}) }}>
+                            {venda.formaPagamento ?? venda.FormaPagamento ?? "Não informada"}
                         </strong>
                     </div>
 
 
                     <div style={styles.infoItem}>
-                        <span style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>
-                            Valor Total
+                        <span className="sale-detail-info-label" style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>
+                            <Wallet size={15} aria-hidden="true" /> Valor total
                         </span>
 
-                        <strong style={{ ...styles.totalValue, ...(isDark ? styles.totalValueDark : {}) }}>
+                        <strong className="sale-detail-overview-total" style={{ ...styles.totalValue, ...(isDark ? styles.totalValueDark : {}) }}>
                             R$ {formatarMoeda(venda.ValorTotal)}
                         </strong>
                     </div>
@@ -146,7 +215,7 @@ export default function ProfileVenda() {
 
 
                 {/* PRODUTOS */}
-                <section style={{ ...styles.productsCard, ...(isDark ? styles.productsCardDark : {}) }}>
+                <section className="sale-detail-products" style={{ ...styles.productsCard, ...(isDark ? styles.productsCardDark : {}) }}>
 
                     <div style={styles.sectionHeader}>
                         <div>
@@ -176,7 +245,7 @@ export default function ProfileVenda() {
 
                         <div style={styles.tableContainer}>
 
-                            <table style={styles.table}>
+                            <table className="sale-detail-table" style={styles.table}>
 
                                 <thead>
                                     <tr>
@@ -188,11 +257,11 @@ export default function ProfileVenda() {
                                             Quantidade
                                         </th>
 
-                                        <th style={{ ...styles.th, ...(isDark ? styles.thDark : {}) }}>
+                                        <th className="sale-detail-money-heading" style={{ ...styles.th, ...(isDark ? styles.thDark : {}) }}>
                                             Valor unitário
                                         </th>
 
-                                        <th style={{ ...styles.th, ...(isDark ? styles.thDark : {}) }}>
+                                        <th className="sale-detail-money-heading" style={{ ...styles.th, ...(isDark ? styles.thDark : {}) }}>
                                             Subtotal
                                         </th>
                                     </tr>
@@ -204,11 +273,9 @@ export default function ProfileVenda() {
                                     {itens.map((item) => {
 
                                         // Cada item da venda tem quantidade e valor unitário
-                                        const quantidade =
-                                            Number(item.Qtd);
+                                        const quantidade = Number(item.Qtd ?? item.quantidade ?? 0);
 
-                                        const valor =
-                                            Number(item.Valor);
+                                        const valor = Number(item.Valor ?? item.valor ?? 0);
 
                                         // Subtotal calculado no front
                                         const subtotal =
@@ -218,10 +285,14 @@ export default function ProfileVenda() {
                                             <tr key={item.Id}>
 
                                                 <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
-                                                    <strong>
-                                                        {item.NomeProduto ||
-                                                            `Produto #${item.IdProduto}`}
-                                                    </strong>
+                                                    <div className="sale-product-cell">
+                                                        {getImagemProduto(item.ImagemProduto) ? (
+                                                            <img className="sale-product-thumbnail" src={getImagemProduto(item.ImagemProduto)} alt="" />
+                                                        ) : (
+                                                            <span className="sale-product-placeholder"><Package2 size={18} aria-hidden="true" /></span>
+                                                        )}
+                                                        <strong>{item.NomeProduto || `Produto #${item.IdProduto}`}</strong>
+                                                    </div>
                                                 </td>
 
 
@@ -230,7 +301,7 @@ export default function ProfileVenda() {
                                                 </td>
 
 
-                                                <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
+                                                <td className="sale-detail-money" style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
                                                     R$ {formatarMoeda(valor)}
                                                 </td>
 
@@ -241,6 +312,7 @@ export default function ProfileVenda() {
                                                         ...(isDark ? styles.tdDark : {}),
                                                         fontWeight: "700"
                                                     }}
+                                                    className="sale-detail-money"
                                                 >
                                                     R$ {formatarMoeda(subtotal)}
                                                 </td>
@@ -252,6 +324,13 @@ export default function ProfileVenda() {
 
                                 </tbody>
 
+                                <tfoot>
+                                    <tr>
+                                        <th colSpan="3">Total dos itens</th>
+                                        <th className="sale-detail-money">R$ {formatarMoeda(totalItens)}</th>
+                                    </tr>
+                                </tfoot>
+
                             </table>
 
                         </div>
@@ -262,19 +341,31 @@ export default function ProfileVenda() {
 
 
                 {/* RESUMO */}
-                <section style={{ ...styles.summary, ...(isDark ? styles.summaryDark : {}) }}>
-
-                    <div>
-                        <span style={{ ...styles.summaryLabel, ...(isDark ? styles.summaryLabelDark : {}) }}>
-                            Total da venda
-                        </span>
+                <section className="sale-detail-total" style={{ ...styles.summary, ...(isDark ? styles.summaryDark : {}) }}>
+                    <div className="sale-detail-total-main">
+                        <span className="sale-detail-total-label"><ReceiptText size={17} aria-hidden="true" /> Total da venda</span>
+                        <strong className="sale-detail-total-amount" style={{ ...styles.summaryValue, ...(isDark ? styles.summaryValueDark : {}) }}>
+                            R$ {formatarMoeda(venda.ValorTotal)}
+                        </strong>
                     </div>
-
-                    <strong style={{ ...styles.summaryValue, ...(isDark ? styles.summaryValueDark : {}) }}>
-                        R$ {formatarMoeda(venda.ValorTotal)}
-                    </strong>
-
+                    <div className="sale-detail-payment-meta">
+                        <div>
+                            <span>Forma de pagamento</span>
+                            <strong>{venda.formaPagamento ?? venda.FormaPagamento ?? "Não informada"}</strong>
+                        </div>
+                        <div>
+                            <span>Troco</span>
+                            <strong>{String(venda.formaPagamento ?? venda.FormaPagamento ?? "").toLowerCase() === "dinheiro" ? "Valor recebido não informado" : "Não se aplica"}</strong>
+                        </div>
+                    </div>
                 </section>
+
+                {(venda.Observacoes ?? venda.observacoes) && (
+                    <section className="sale-detail-notes">
+                        <h2>Observações</h2>
+                        <p>{venda.Observacoes ?? venda.observacoes}</p>
+                    </section>
+                )}
 
             </main>
 
@@ -283,19 +374,24 @@ export default function ProfileVenda() {
 }
 
 
-// FORMATA DATA
-function formatarData(data) {
-    if (!data) {
-        return "-";
-    }
-
-    return new Date(data).toLocaleDateString("pt-BR", {
+function formatarDataCompleta(data) {
+    if (!data) return "—";
+    const parsed = new Date(data);
+    if (Number.isNaN(parsed.getTime())) return "—";
+    return parsed.toLocaleString("pt-BR", {
         day: "2-digit",
         month: "2-digit",
-        year: "numeric"
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
     });
 }
 
+function getImagemProduto(imagem) {
+    if (!imagem) return null;
+    if (/^https?:\/\//i.test(imagem)) return imagem;
+    return `http://localhost:8000${imagem.startsWith("/") ? imagem : `/${imagem}`}`;
+}
 
 // FORMATA DINHEIRO
 function formatarMoeda(valor) {

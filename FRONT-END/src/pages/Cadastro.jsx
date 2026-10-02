@@ -1,5 +1,6 @@
 import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 import { cadastro as apiCadastro } from "../services/authService.js";
 import { formatErrorMessage } from "../utils/formatErrorMessage";
@@ -100,9 +101,20 @@ export default function Cadastro() {
 
   return (
     <div
+      className="auth-shell"
       style={{ ...styles.container, ...(isDark ? styles.containerDark : {}) }}
     >
-      <div style={{ ...styles.card, ...(isDark ? styles.cardDark : {}) }}>
+      <div className="auth-card" style={{ ...styles.card, ...(isDark ? styles.cardDark : {}) }}>
+        <button
+          className="auth-back-button"
+          type="button"
+          onClick={() => navigate("/login")}
+          disabled={loading}
+        >
+          <ArrowLeft size={17} aria-hidden="true" />
+          Voltar para login
+        </button>
+
         <div style={styles.logoContainer}>
           <div style={{ ...styles.logo, ...(isDark ? styles.logoDark : {}) }}>
             <img

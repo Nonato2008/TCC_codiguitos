@@ -507,7 +507,12 @@ const vendasRepository = {
                 v.IdVendedor,
                 v.ValorTotal,
                 v.DataCad,
-                v.formaPagamento
+                v.formaPagamento,
+                (
+                    SELECT COUNT(*)
+                    FROM Itens_vendas iv
+                    WHERE iv.IdVenda = v.Id
+                ) AS QuantidadeItens
             FROM Vendas v
             ORDER BY v.Id DESC
         `);
@@ -527,7 +532,8 @@ const vendasRepository = {
             Vendas.IdVendedor,
             Vendedores.Nome AS NomeVendedor,
             Vendas.ValorTotal,
-            Vendas.DataCad
+            Vendas.DataCad,
+            Vendas.formaPagamento
         FROM Vendas
         INNER JOIN Vendedores
             ON Vendedores.Id = Vendas.IdVendedor
@@ -549,6 +555,7 @@ const vendasRepository = {
             Itens_vendas.IdVenda,
             Itens_vendas.IdProduto,
             Produtos.Nome AS NomeProduto,
+            Produtos.Imagem AS ImagemProduto,
             Itens_vendas.Qtd,
             Itens_vendas.Valor
         FROM Itens_vendas
