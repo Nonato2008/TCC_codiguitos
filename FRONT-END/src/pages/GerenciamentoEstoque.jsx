@@ -352,57 +352,322 @@ export default function GerenciamentoEstoque() {
 }
 
 const styles = {
-  layout: { display: "flex", minHeight: "100vh", backgroundColor: "#f3f5f9" },
-  layoutDark: { backgroundColor: "#0f172a" },
-  page: { marginLeft: "256px", width: "calc(100% - 256px)", padding: "32px", boxSizing: "border-box" },
-  pageDark: { backgroundColor: "#111827", color: "#f3f4f6" },
-  header: { marginBottom: "24px" },
-  title: { margin: 0, fontSize: "32px", color: "#111c2d", fontWeight: 700 },
-  titleDark: { color: "#f9fafb" },
-  subtitle: { margin: "8px 0 0", color: "#4a5568" },
-  subtitleDark: { color: "#d1d5db" },
-  emptyState: { backgroundColor: "#ffffff", color: "#475569", borderRadius: "10px", padding: "18px", border: "1px solid #e2e8f0" },
-  emptyStateDark: { backgroundColor: "#1f2937", color: "#e5e7eb", borderColor: "#374151" },
-  emptyStateError: { backgroundColor: "#fee2e2", color: "#991b1b", borderRadius: "10px", padding: "18px", border: "1px solid #fecaca" },
-  emptyStateErrorDark: { backgroundColor: "#3f1721", color: "#fecdd3", borderColor: "#7f1d1d" },
-  listContainer: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: "20px" },
-  card: { backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "18px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" },
-  cardDark: { backgroundColor: "#111827", borderColor: "#374151" },
-  productContent: { display: "flex", gap: "16px" },
-  imageBox: { width: "120px", height: "120px", borderRadius: "10px", overflow: "hidden", backgroundColor: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  productImage: { width: "100%", height: "100%", objectFit: "contain", objectPosition: "center" },
-  infoArea: { flex: 1, display: "flex", flexDirection: "column", gap: "10px" },
-  badgeRow: { display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center" },
-  badge: { backgroundColor: "#e2e8f0", color: "#0f172a", borderRadius: "999px", padding: "4px 8px", fontSize: "12px" },
-  badgeDark: { backgroundColor: "#334155", color: "#e2e8f0" },
-  statusBadge: { borderRadius: "999px", padding: "4px 8px", fontSize: "12px", fontWeight: 600 },
-  statusBadgeDark: { opacity: 1 },
-  statusAtivo: { backgroundColor: "#dcfce7", color: "#166534" },
-  statusInativo: { backgroundColor: "#fee2e2", color: "#991b1b" },
-  validadeBadge: { borderRadius: "999px", padding: "4px 8px", fontSize: "12px", fontWeight: 600 },
-  validadeBadgeDark: { opacity: 1 },
-  validadeBadgeValido: { backgroundColor: "#e0f2fe", color: "#075985" },
-  validadeBadgeVencido: { backgroundColor: "#fef3c7", color: "#92400e" },
-  productName: { margin: 0, color: "#111c2d", fontSize: "20px" },
-  productNameDark: { color: "#f9fafb" },
-  fornecedorName: { color: "#64748b", fontSize: "13px" },
-  fornecedorNameDark: { color: "#d1d5db" },
-  stockSummary: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", padding: "8px 0" },
-  label: { color: "#475569", fontSize: "12px" },
-  labelDark: { color: "#d1d5db" },
-  stockValue: { color: "#111827", fontSize: "16px" },
-  stockValueDark: { color: "#f9fafb" },
-  priceSummary: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", padding: "0 0 8px" },
-  priceValue: { color: "#111827", fontSize: "15px" },
-  priceValueDark: { color: "#f9fafb" },
-  vencimentoSummary: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", padding: "0 0 8px" },
-  vencimentoValue: { color: "#111827", fontSize: "15px" },
-  vencimentoValueDark: { color: "#f9fafb" },
-  controlBox: { display: "flex", alignItems: "center", gap: "8px" },
-  circleButton: { width: "32px", height: "32px", borderRadius: "50%", border: "1px solid #cbd5e1", backgroundColor: "#f8fafc", color: "#111827", cursor: "pointer", fontSize: "20px" },
-  circleButtonDark: { backgroundColor: "#1f2937", borderColor: "#4b5563", color: "#f9fafb" },
-  input: { width: "90px", textAlign: "center", borderRadius: "8px", border: "1px solid #d7dfeb", padding: "8px 10px", backgroundColor: "#ffffff", color: "#111827" },
-  inputDark: { backgroundColor: "#1f2937", borderColor: "#4b5563", color: "#f9fafb" },
-  toggleButton: { border: "1px solid #d1d5db", backgroundColor: "#ffffff", color: "#111827", borderRadius: "8px", padding: "8px 12px", cursor: "pointer" },
-  toggleButtonDark: { backgroundColor: "#1f2937", borderColor: "#4b5563", color: "#f9fafb" },
+  layout: { 
+    display: "flex", 
+    minHeight: "100vh", 
+    backgroundColor: "#f3f5f9" 
+  },
+
+  layoutDark: { 
+    backgroundColor: "#0f172a" 
+  },
+
+  page: { 
+    marginLeft: "256px", 
+    width: "calc(100% - 256px)", 
+    padding: "32px", 
+    boxSizing: "border-box" 
+  },
+
+  pageDark: { 
+    backgroundColor: "#111827", 
+    color: "#f3f4f6" 
+  },
+
+  header: {
+     marginBottom: "24px" 
+    },
+
+  title: { 
+    margin: 0, 
+    fontSize: "32px", 
+    color: "#111c2d", 
+    fontWeight: 700 
+  },
+
+  titleDark: { 
+    color: "#f9fafb" 
+  },
+
+  subtitle: { 
+    margin: "8px 0 0", 
+    color: "#4a5568" 
+  },
+
+  subtitleDark: { 
+    color: "#d1d5db" 
+  },
+
+  emptyState: { 
+    backgroundColor: "#ffffff", 
+    color: "#475569", 
+    borderRadius: "10px", 
+    padding: "18px", 
+    border: "1px solid #e2e8f0" 
+  },
+
+  emptyStateDark: { 
+    backgroundColor: "#1f2937", 
+    color: "#e5e7eb", 
+    borderColor: "#374151" 
+  },
+
+  emptyStateError: { 
+    backgroundColor: "#fee2e2", 
+    color: "#991b1b", 
+    borderRadius: "10px", 
+    padding: "18px", 
+    border: "1px solid #fecaca" 
+  },
+
+  emptyStateErrorDark: { 
+    backgroundColor: "#3f1721", 
+    color: "#fecdd3", 
+    borderColor: "#7f1d1d" 
+  },
+
+  listContainer: { 
+    display: "grid", 
+    gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", 
+    gap: "20px" 
+  },
+
+  card: { 
+    backgroundColor: "#ffffff", 
+    border: "1px solid #e2e8f0", 
+    borderRadius: "12px", 
+    padding: "18px", 
+    boxShadow: "0 2px 8px rgba(0,0,0,0.04)" 
+  },
+
+  cardDark: { 
+    backgroundColor: "#111827", 
+    borderColor: "#374151" 
+  },
+
+  productContent: { 
+    display: "flex", 
+    gap: "16px" 
+  },
+
+  imageBox: { 
+    width: "120px", 
+    height: "120px", 
+    borderRadius: "10px", 
+    overflow: "hidden", 
+    backgroundColor: "#f8fafc", 
+    display: "flex", 
+    alignItems: "center", 
+    justifyContent: "center", 
+    flexShrink: 0 
+  },
+
+  productImage: { 
+    width: "100%", 
+    height: "100%", 
+    objectFit: "contain", 
+    objectPosition: "center" 
+  },
+
+  infoArea: { 
+    flex: 1, 
+    display: "flex", 
+    flexDirection: "column", 
+    gap: "10px" 
+  },
+
+  badgeRow: { 
+    display: "flex", 
+    flexWrap: "wrap", 
+    gap: "8px", 
+    alignItems: "center" 
+  },
+
+  badge: { 
+    backgroundColor: "#e2e8f0", 
+    color: "#0f172a", 
+    borderRadius: "999px", 
+    padding: "4px 8px", 
+    fontSize: "12px" 
+  },
+
+  badgeDark: { 
+    backgroundColor: "#334155", 
+    color: "#e2e8f0" 
+  },
+
+  statusBadge: { 
+    borderRadius: "999px", 
+    padding: "4px 8px", 
+    fontSize: "12px", 
+    fontWeight: 600 
+  },
+
+  statusBadgeDark: { 
+    opacity: 1 
+  },
+
+  statusAtivo: { 
+    backgroundColor: "#dcfce7", 
+    color: "#166534" 
+  },
+
+  statusInativo: { 
+    backgroundColor: "#fee2e2", 
+    color: "#991b1b" 
+  },
+
+  validadeBadge: { 
+    borderRadius: "999px", 
+    padding: "4px 8px", 
+    fontSize: "12px", 
+    fontWeight: 600 
+  },
+
+  validadeBadgeDark: { 
+    opacity: 1 
+  },
+
+  validadeBadgeValido: { 
+    backgroundColor: "#e0f2fe", 
+    color: "#075985" 
+  },
+
+  validadeBadgeVencido: { 
+    backgroundColor: "#fef3c7", 
+    color: "#92400e" 
+  },
+
+  productName: { 
+    margin: 0, 
+    color: "#111c2d", 
+    fontSize: "20px" 
+  },
+
+  productNameDark: { 
+    color: "#f9fafb" 
+  },
+
+  fornecedorName: { 
+    color: "#64748b", 
+    fontSize: "13px" 
+  },
+
+  fornecedorNameDark: { 
+    color: "#d1d5db" 
+  },
+
+  stockSummary: { 
+    display: "flex", 
+    alignItems: "center", 
+    justifyContent: "space-between", 
+    gap: "8px", 
+    padding: "8px 0" 
+  },
+
+  label: { 
+    color: "#475569", 
+    fontSize: "12px" 
+  },
+
+  labelDark: { 
+    color: "#d1d5db" 
+  },
+
+  stockValue: { 
+    color: "#111827", 
+    fontSize: "16px" 
+  },
+
+  stockValueDark: { 
+    color: "#f9fafb" 
+  },
+
+  priceSummary: { 
+    display: "flex", 
+    alignItems: "center", 
+    justifyContent: "space-between",
+    gap: "8px", 
+    padding: "0 0 8px" 
+  },
+
+  priceValue: { 
+    color: "#111827", 
+    fontSize: "15px" 
+  },
+
+  priceValueDark: { 
+    color: "#f9fafb" 
+  },
+
+  vencimentoSummary: { 
+    display: "flex", 
+    alignItems: "center", 
+    justifyContent: "space-between", 
+    gap: "8px", 
+    padding: "0 0 8px" 
+  },
+
+  vencimentoValue: { 
+    color: "#111827", 
+    fontSize: "15px" 
+  },
+
+  vencimentoValueDark: { 
+    color: "#f9fafb" 
+  },
+
+  controlBox: { 
+    display: "flex", 
+    alignItems: "center", 
+    gap: "8px" 
+  },
+
+  circleButton: { 
+    width: "32px", 
+    height: "32px", 
+    borderRadius: "50%", 
+    border: "1px solid #cbd5e1", 
+    backgroundColor: "#f8fafc", 
+    color: "#111827", 
+    cursor: "pointer", 
+    fontSize: "20px" 
+  },
+
+  circleButtonDark: { 
+    backgroundColor: "#1f2937", 
+    borderColor: "#4b5563", 
+    color: "#f9fafb" 
+  },
+
+  input: { 
+    width: "90px", 
+    textAlign: "center", 
+    borderRadius: "8px",
+     border: "1px solid #d7dfeb", 
+     padding: "8px 10px", 
+     backgroundColor: "#ffffff", 
+     color: "#111827" 
+    },
+
+  inputDark: { 
+    backgroundColor: "#1f2937", 
+    borderColor: "#4b5563", 
+    color: "#f9fafb" 
+  },
+
+  toggleButton: { 
+    border: "1px solid #d1d5db", 
+    backgroundColor: "#ffffff", 
+    color: "#111827", 
+    borderRadius: "8px", 
+    padding: "8px 12px", 
+    cursor: "pointer" 
+  },
+
+  toggleButtonDark: { 
+    backgroundColor: "#1f2937", 
+    borderColor: "#4b5563", 
+    color: "#f9fafb" 
+  },
 };

@@ -271,18 +271,22 @@ const styles = {
         minHeight: "100vh",
         backgroundColor: "#f5f6f8",
     },
+    
     layoutDark: {
         backgroundColor: "#0f172a",
     },
+
     page: {
         marginLeft: "363px",
         minHeight: "100vh",
         padding: "30px 25px",
         boxSizing: "border-box",
     },
+
     pageDark: {
         backgroundColor: "#111827",
     },
+
     header: {
         maxWidth: "1150px",
         margin: "0 0 25px 0",
@@ -290,30 +294,36 @@ const styles = {
         justifyContent: "space-between",
         alignItems: "center",
     },
+
     headerRight: {
         display: "flex",
         alignItems: "center",
         gap: 12,
         flexWrap: "wrap",
     },
+
     title: {
         margin: 0,
         fontSize: "32px",
         fontWeight: "700",
         color: "#243447",
     },
+
     titleDark: {
         color: "#f9fafb",
     },
+
     subtitle: {
         marginTop: "7px",
         marginBottom: 0,
         fontSize: "15px",
         color: "#718096",
     },
+
     subtitleDark: {
         color: "#d1d5db",
     },
+
     total: {
         backgroundColor: "#ffffff",
         padding: "10px 18px",
@@ -324,11 +334,13 @@ const styles = {
         fontSize: "15px",
         boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
     },
+
     totalDark: {
         backgroundColor: "#1f2937",
         borderColor: "#4b5563",
         color: "#f9fafb",
     },
+
     primaryButton: {
         border: "none",
         backgroundColor: "#303e51",
@@ -338,18 +350,22 @@ const styles = {
         fontWeight: 600,
         cursor: "pointer",
     },
+
     primaryButtonDark: {
         backgroundColor: "#2563eb",
     },
+
     content: {
         width: "100%",
         maxWidth: "1150px",
         margin: "0",
     },
+
     centerContent: {
         maxWidth: "1150px",
         margin: "0",
     },
+
     empty: {
         backgroundColor: "#ffffff",
         borderRadius: "12px",
@@ -358,23 +374,28 @@ const styles = {
         color: "#718096",
         boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
     },
+
     emptyDark: {
         backgroundColor: "#1f2937",
         color: "#d1d5db",
     },
+
     error: {
         backgroundColor: "#ffe5e5",
         color: "#b00020",
         padding: "20px",
         borderRadius: "10px",
     },
+
     errorDark: {
         backgroundColor: "#3f1721",
         color: "#fecdd3",
     },
+
     textDark: {
         color: "#e5e7eb",
     },
+
     dateInput: {
         border: "1px solid #cbd5e1",
         borderRadius: "8px",
@@ -385,11 +406,13 @@ const styles = {
         fontFamily: "Inter, sans-serif",
         outline: "none",
     },
+
     dateInputDark: {
         backgroundColor: "#1f2937",
         borderColor: "#4b5563",
         color: "#f9fafb",
     },
+
     selectInput: {
         border: "1px solid #cbd5e1",
         borderRadius: "8px",
@@ -400,11 +423,13 @@ const styles = {
         fontFamily: "Inter, sans-serif",
         outline: "none",
     },
+
     selectInputDark: {
         backgroundColor: "#1f2937",
         borderColor: "#4b5563",
         color: "#f9fafb",
     },
+
     clearFilterButton: {
         border: "1px solid #cbd5e1",
         borderRadius: "8px",
@@ -415,15 +440,18 @@ const styles = {
         fontSize: "13px",
         cursor: "pointer",
     },
+
     clearFilterButtonDark: {
         backgroundColor: "#1f2937",
         borderColor: "#4b5563",
         color: "#f9fafb",
     },
+
     summaryBar: {
         maxWidth: "1150px",
         margin: "0 0 20px 0",
     },
+
     summaryBox: {
         display: "flex",
         justifyContent: "space-between",
@@ -435,23 +463,28 @@ const styles = {
         padding: "18px 20px",
         boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
     },
+
     summaryBoxDark: {
         backgroundColor: "#1f2937",
         borderColor: "#4b5563",
     },
+
     summaryLabel: {
         color: "#64748b",
         fontSize: "14px",
         fontWeight: 600,
     },
+
     summaryLabelDark: {
         color: "#d1d5db",
     },
+
     summaryValue: {
         color: "#111827",
         fontSize: "22px",
         fontWeight: 700,
     },
+
     summaryValueDark: {
         color: "#f9fafb",
     },

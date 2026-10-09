@@ -488,7 +488,6 @@ export default function CadastroProdutos() {
 }
 
 const styles = {
-
     layout: {
         display: "flex",
         minHeight: "100vh",
@@ -714,7 +713,7 @@ const styles = {
         color: "#111827",
         fontSize: "16px",
     },
-
+    
     selectDark: {
         backgroundColor: "#1f2937",
         borderColor: "#374151",

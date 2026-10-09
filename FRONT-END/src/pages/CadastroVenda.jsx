@@ -888,8 +888,16 @@ function SelectField({ label, name, value, onChange, disabled, isDark, children 
 }
 
 const styles = {
-  layout: { display: "flex", minHeight: "100vh", backgroundColor: "#f3f5f9" },
-  layoutDark: { backgroundColor: "#0f172a" },
+  layout: { 
+    display: "flex", 
+    minHeight: "100vh", 
+    backgroundColor: "#f3f5f9" 
+  },
+  
+  layoutDark: { 
+    backgroundColor: "#0f172a" 
+  },
+
   page: {
     marginLeft: "256px",
     width: "calc(100% - 256px)",
@@ -898,7 +906,11 @@ const styles = {
     fontFamily: "Inter, sans-serif",
   },
 
-  pageDark: { backgroundColor: "#111827", color: "#f3f4f6" },
+  pageDark: { 
+    backgroundColor: "#111827", 
+    color: "#f3f4f6" 
+  },
+
   header: {
     display: "flex",
     justifyContent: "space-between",
@@ -915,9 +927,18 @@ const styles = {
     fontFamily: "Montserrat, sans-serif",
   },
 
-  titleDark: { color: "#f9fafb" },
-  subtitle: { margin: "8px 0 0", color: "#4a5568" },
-  subtitleDark: { color: "#d1d5db" },
+  titleDark: { 
+    color: "#f9fafb" 
+  },
+
+  subtitle: { 
+    margin: "8px 0 0", 
+    color: "#4a5568" 
+  },
+
+  subtitleDark: { 
+    color: "#d1d5db" 
+  },
 
   voltarButton: {
     display: "flex",
@@ -1060,20 +1081,33 @@ const styles = {
     alignItems: "center",
   },
 
-  itemsTitle: { margin: 0, fontSize: "16px", color: "#111c2d" },
-  itemsTitleDark: { color: "#f9fafb" },
+  itemsTitle: {
+    margin: 0, 
+    fontSize: "16px", 
+    color: "#111c2d" 
+  },
+
+  itemsTitleDark: { 
+    color: "#f9fafb" 
+  },
+
   loadingHint: {
     fontSize: "12px",
     color: "#64748b",
     fontWeight: 400,
     marginLeft: "8px",
   },
-  loadingHintDark: { color: "#94a3b8" },
+
+  loadingHintDark: { 
+    color: "#94a3b8" 
+  },
+
   headerButtons: {
     display: "flex",
     gap: "8px",
     alignItems: "center",
   },
+
   refreshButton: {
     border: "1px solid #cbd5e1",
     backgroundColor: "#fff",
@@ -1084,11 +1118,13 @@ const styles = {
     cursor: "pointer",
     fontSize: "14px",
   },
+
   refreshButtonDark: {
     backgroundColor: "#1f2937",
     borderColor: "#4b5563",
     color: "#f9fafb",
   },
+
   addButton: {
     border: "1px dashed #303e51",
     backgroundColor: "#fff",
@@ -1099,6 +1135,7 @@ const styles = {
     cursor: "pointer",
     fontSize: "13px",
   },
+
   addButtonDark: {
     borderColor: "#94a3b8",
     backgroundColor: "#1f2937",
@@ -1114,16 +1151,22 @@ const styles = {
     borderRadius: "8px",
     backgroundColor: "#ffffff",
   },
+
   searchWrapperDark: {
     backgroundColor: "#1f2937",
     borderColor: "#4b5563",
   },
+
   searchIcon: {
     fontSize: "20px",
     color: "#64748b",
     flexShrink: 0,
   },
-  searchIconDark: { color: "#94a3b8" },
+
+  searchIconDark: { 
+    color: "#94a3b8" 
+  },
+
   searchInput: {
     flex: 1,
     border: "none",
@@ -1134,7 +1177,11 @@ const styles = {
     color: "#111c2d",
     fontFamily: "Inter, sans-serif",
   },
-  searchInputDark: { color: "#f9fafb" },
+
+  searchInputDark: { 
+    color: "#f9fafb" 
+  },
+
   searchClear: {
     border: "none",
     background: "transparent",
@@ -1145,14 +1192,21 @@ const styles = {
     borderRadius: "4px",
     flexShrink: 0,
   },
-  searchClearDark: { color: "#cbd5e1" },
+
+  searchClearDark: { 
+    color: "#cbd5e1" 
+  },
+
   searchInfo: {
     margin: 0,
     fontSize: "12px",
     color: "#64748b",
     fontStyle: "italic",
   },
-  searchInfoDark: { color: "#94a3b8" },
+
+  searchInfoDark: { 
+    color: "#94a3b8" 
+  },
 
   // ---------- Cabeçalho das colunas ----------
   itemHeaderRow: {
@@ -1162,6 +1216,7 @@ const styles = {
     padding: "0 8px",
     alignItems: "center",
   },
+
   itemHeaderLabel: {
     fontSize: "11px",
     fontWeight: 600,
@@ -1169,7 +1224,10 @@ const styles = {
     letterSpacing: "0.04em",
     color: "#64748b",
   },
-  itemHeaderLabelDark: { color: "#94a3b8" },
+
+  itemHeaderLabelDark: { 
+    color: "#94a3b8" 
+  },
 
   itemCard: {
     border: "1px solid #e2e8f0",
@@ -1177,16 +1235,19 @@ const styles = {
     padding: "8px",
     backgroundColor: "#f8fafc",
   },
+
   itemCardDark: {
     backgroundColor: "#1f2937",
     borderColor: "#374151",
   },
+
   itemRow: {
     display: "grid",
     gridTemplateColumns: "minmax(0, 1fr) 90px 130px 42px",
     gap: "10px",
     alignItems: "center",
   },
+
   removeButton: {
     border: "1px solid #fecaca",
     backgroundColor: "#fff",
@@ -1197,12 +1258,18 @@ const styles = {
     fontWeight: 700,
     fontSize: "14px",
   },
+  
   removeButtonDark: {
     backgroundColor: "#3f1721",
     borderColor: "#7f1d1d",
     color: "#fecdd3",
   },
-  removePlaceholder: { width: "42px", height: "38px" },
+
+  removePlaceholder: { 
+    width: "42px", 
+    height: "38px" 
+  },
+
   totalBox: {
     display: "flex",
     justifyContent: "space-between",
@@ -1212,14 +1279,30 @@ const styles = {
     borderRadius: "10px",
     border: "1px solid #e2e8f0",
   },
+
   totalBoxDark: {
     backgroundColor: "#0b1220",
     borderColor: "#334155",
   },
-  totalLabel: { color: "#303e51", fontWeight: 600, fontSize: "14px" },
-  totalLabelDark: { color: "#cbd5e1" },
-  totalValue: { color: "#111c2d", fontSize: "20px" },
-  totalValueDark: { color: "#f9fafb" },
+
+  totalLabel: { 
+    color: "#303e51", 
+    fontWeight: 600, 
+    fontSize: "14px" 
+  },
+
+  totalLabelDark: { 
+    color: "#cbd5e1" 
+  },
+
+  totalValue: { 
+    color: "#111c2d", 
+    fontSize: "20px" 
+  },
+
+  totalValueDark: { 
+    color: "#f9fafb" 
+  },
 
   // ---------- Protótipo da Venda ----------
   prototipo: {
@@ -1229,10 +1312,12 @@ const styles = {
     borderRadius: "12px",
     backgroundColor: "#f8fafc",
   },
+
   prototipoDark: {
     backgroundColor: "#1f2937",
     borderColor: "#4b5563",
   },
+
   prototipoHeader: {
     display: "flex",
     justifyContent: "space-between",
@@ -1241,21 +1326,31 @@ const styles = {
     paddingBottom: "16px",
     marginBottom: "16px",
   },
+
   prototipoHeaderDark: {
     borderBottomColor: "#4b5563",
   },
+
   prototipoTitle: {
     margin: 0,
     fontSize: "24px",
     color: "#111c2d",
   },
-  prototipoTitleDark: { color: "#f9fafb" },
+
+  prototipoTitleDark: { 
+    color: "#f9fafb" 
+  },
+
   prototipoNumero: {
     margin: "6px 0 0",
     color: "#64748b",
     fontSize: "14px",
   },
-  prototipoNumeroDark: { color: "#cbd5e1" },
+
+  prototipoNumeroDark: { 
+    color: "#cbd5e1" 
+  },
+
   prototipoStatus: {
     padding: "6px 12px",
     borderRadius: "20px",
@@ -1264,10 +1359,12 @@ const styles = {
     fontSize: "13px",
     fontWeight: 600,
   },
+
   prototipoStatusDark: {
     backgroundColor: "#064e3b",
     color: "#d1fae5",
   },
+
   prototipoLinha: {
     display: "flex",
     justifyContent: "space-between",
@@ -1275,10 +1372,12 @@ const styles = {
     borderBottom: "1px solid #e2e8f0",
     color: "#475569",
   },
+
   prototipoLinhaDark: {
     borderBottomColor: "#4b5563",
     color: "#e5e7eb",
   },
+
   prototipoItensTitulo: {
     marginTop: "18px",
     marginBottom: "8px",
@@ -1288,7 +1387,11 @@ const styles = {
     letterSpacing: "0.04em",
     color: "#64748b",
   },
-  prototipoItensTituloDark: { color: "#94a3b8" },
+
+  prototipoItensTituloDark: { 
+    color: "#94a3b8" 
+  },
+
   prototipoItem: {
     display: "flex",
     justifyContent: "space-between",
@@ -1300,11 +1403,13 @@ const styles = {
     marginBottom: "8px",
     color: "#111c2d",
   },
+
   prototipoItemDark: {
     backgroundColor: "#0b1220",
     borderColor: "#334155",
     color: "#f9fafb",
   },
+
   prototipoTotal: {
     display: "flex",
     justifyContent: "space-between",
@@ -1314,10 +1419,12 @@ const styles = {
     fontSize: "20px",
     color: "#111c2d",
   },
+
   prototipoTotalDark: {
     borderTopColor: "#4b5563",
     color: "#f9fafb",
   },
+
   prototipoAviso: {
     margin: "20px 0 0",
     padding: "12px",
@@ -1327,6 +1434,7 @@ const styles = {
     fontSize: "13px",
     textAlign: "center",
   },
+
   prototipoAvisoDark: {
     backgroundColor: "#3f2715",
     color: "#fed7aa",

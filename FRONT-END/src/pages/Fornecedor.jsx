@@ -351,60 +351,372 @@ function FornecedorCard({ fornecedor, onExcluir, excluindo, dark }) {
 }
 
 const styles = {
-    layout: { display: "flex", minHeight: "100vh", backgroundColor: "#f3f5f9" },
-    layoutDark: { backgroundColor: "#0f172a" },
-    page: { marginLeft: "256px", width: "calc(100% - 256px)", padding: "32px 32px 40px", boxSizing: "border-box", fontFamily: "Inter, sans-serif" },
-    pageDark: { backgroundColor: "#111827", color: "#f3f4f6" },
-    header: { display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "32px" },
-    title: { fontFamily: "Montserrat, sans-serif", fontSize: "32px", fontWeight: "700", margin: 0, color: "#111c2d" },
-    titleDark: { color: "#f9fafb" },
-    subtitle: { color: "#44474c", marginTop: "5px", marginBottom: 0 },
-    subtitleDark: { color: "#d1d5db" },
-    headerActions: { display: "flex", alignItems: "center", gap: "12px" },
-    cadastrarButton: { display: "flex", alignItems: "center", justifyContent: "center", width: "42px", height: "42px", borderRadius: "10px", border: "1px solid #e2e8f0", backgroundColor: "#f9f9ff", color: "#303e51", cursor: "pointer" },
-    cadastrarButtonDark: { backgroundColor: "#1f2937", borderColor: "#4b5563", color: "#f9fafb" },
-    total: { display: "flex", alignItems: "center", gap: "8px", backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "10px 14px", color: "#243447", fontWeight: "600" },
-    totalDark: { backgroundColor: "#1f2937", borderColor: "#4b5563", color: "#f9fafb" },
-    loadingBox: { minHeight: "200px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", backgroundColor: "#f9f9ff", border: "1px solid #e2e8f0", borderRadius: "10px", color: "#44474c", fontWeight: "600" },
-    loadingBoxDark: { backgroundColor: "#1f2937", borderColor: "#374151", color: "#f9fafb" },
-    errorBox: { minHeight: "160px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", backgroundColor: "#fff1f2", border: "1px solid #fecdd3", borderRadius: "10px", color: "#9f1239", fontWeight: "600" },
-    errorBoxDark: { backgroundColor: "#3f1721", borderColor: "#7f1d1d", color: "#fecdd3" },
-    emptyCard: { backgroundColor: "#f9f9ff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "50px 24px", textAlign: "center", color: "#64748b" },
-    emptyCardDark: { backgroundColor: "#1f2937", borderColor: "#374151", color: "#d1d5db" },
-    emptyTitle: { margin: "12px 0 8px", fontSize: "20px", color: "#111c2d" },
-    emptyTitleDark: { color: "#f9fafb" },
-    emptyText: { margin: 0, color: "#64748b" },
-    emptyTextDark: { color: "#d1d5db" },
-    gridContainer: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "18px" },
-    card: { backgroundColor: "#f9f9ff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "18px", boxShadow: "0 1px 2px rgba(0,0,0,0.03)" },
-    cardDark: { backgroundColor: "#1f2937", borderColor: "#374151" },
-    cardImageContainer: { width: "100%", height: "180px", borderRadius: "10px", overflow: "hidden", backgroundColor: "#eef2f7", marginBottom: "16px" },
-    
-    imagem: { width: "100%", height: "100%", objectFit: "contain", objectPosition: "center", display: "block" },
+    layout: { 
+        display: "flex", 
+        minHeight: "100vh", 
+        backgroundColor: "#f3f5f9" 
+    },
 
-    noImage: { width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#e2e8f0", color: "#475569" },
-    noImageDark: { backgroundColor: "#334155", color: "#e2e8f0" },
-    cardHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" },
-    cardInfo: { display: "flex", alignItems: "center", gap: "12px" },
-    cardName: { margin: 0, color: "#111c2d", fontSize: "18px" },
-    cardNameDark: { color: "#f9fafb" },
-    cardMeta: { color: "#64748b", fontSize: "12px" },
-    cardMetaDark: { color: "#d1d5db" },
-    cardActions: { display: "flex", justifyContent: "flex-end" },
-    deleteButton: { display: "flex", alignItems: "center", gap: "8px", border: "1px solid #fecaca", backgroundColor: "#fff1f2", color: "#b91c1c", padding: "10px 12px", borderRadius: "8px", cursor: "pointer" },
-    deleteButtonDark: { backgroundColor: "#3f1721", borderColor: "#7f1d1d", color: "#fecdd3" },
-    overlay: { position: "fixed", inset: 0, backgroundColor: "rgba(15, 23, 42, 0.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" },
-    confirmCard: { backgroundColor: "#ffffff", borderRadius: "12px", padding: "22px", width: "100%", maxWidth: "420px", border: "1px solid #e2e8f0" },
-    confirmCardDark: { backgroundColor: "#111827", borderColor: "#374151" },
-    confirmIcon: { width: "48px", height: "48px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#fff1f2", color: "#b91c1c", marginBottom: "12px" },
-    confirmIconDark: { backgroundColor: "#3f1721", color: "#fecdd3" },
-    confirmContent: { display: "flex", flexDirection: "column", gap: "4px", marginBottom: "18px" },
-    confirmTitle: { color: "#111c2d", fontSize: "18px" },
-    confirmTitleDark: { color: "#f9fafb" },
-    confirmText: { color: "#475569" },
-    confirmTextDark: { color: "#d1d5db" },
-    confirmActions: { display: "flex", justifyContent: "flex-end", gap: "12px" },
-    cancelConfirmButton: { border: "1px solid #d1d5db", backgroundColor: "#ffffff", color: "#374151", borderRadius: "8px", padding: "10px 12px", cursor: "pointer" },
-    cancelConfirmButtonDark: { backgroundColor: "#1f2937", borderColor: "#4b5563", color: "#f9fafb" },
-    confirmDeleteButton: { display: "flex", alignItems: "center", gap: "8px", border: "none", backgroundColor: "#dc2626", color: "#ffffff", borderRadius: "8px", padding: "10px 12px", cursor: "pointer" },
+    layoutDark: { 
+        backgroundColor: "#0f172a" 
+    },
+
+    page: { 
+        marginLeft: "256px", 
+        width: "calc(100% - 256px)", 
+        padding: "32px 32px 40px", 
+        boxSizing: "border-box", 
+        fontFamily: "Inter, sans-serif" 
+    },
+
+    pageDark: { 
+        backgroundColor: "#111827", 
+        color: "#f3f4f6" 
+    },
+
+    header: { 
+        display: "flex", 
+        justifyContent: "space-between", 
+        alignItems: "flex-end", 
+        marginBottom: "32px" 
+    },
+
+    title: { 
+        fontFamily: "Montserrat, sans-serif", 
+        fontSize: "32px", 
+        fontWeight: "700", 
+        margin: 0, 
+        color: "#111c2d" 
+    },
+
+    titleDark: { 
+        color: "#f9fafb" 
+    },
+
+    subtitle: { 
+        color: "#44474c", 
+        marginTop: "5px", 
+        marginBottom: 0 
+    },
+
+    subtitleDark: { 
+        color: "#d1d5db" 
+    },
+
+    headerActions: { 
+        display: "flex", 
+        alignItems: "center", 
+        gap: "12px" 
+    },
+
+    cadastrarButton: { 
+        display: "flex", 
+        alignItems: "center", 
+        justifyContent: "center", 
+        width: "42px", 
+        height: "42px", 
+        borderRadius: "10px", 
+        border: "1px solid #e2e8f0", 
+        backgroundColor: "#f9f9ff", 
+        color: "#303e51", cursor: "pointer" },
+
+    cadastrarButtonDark: { 
+        backgroundColor: "#1f2937", 
+        borderColor: "#4b5563", 
+        color: "#f9fafb" 
+    },
+
+    total: { 
+        display: "flex", 
+        alignItems: "center", 
+        gap: "8px", 
+        backgroundColor: "#ffffff", 
+        border: "1px solid #e2e8f0", 
+        borderRadius: "10px", 
+        padding: "10px 14px", 
+        color: "#243447", 
+        fontWeight: "600" 
+    },
+
+    totalDark: { 
+        backgroundColor: "#1f2937", 
+        borderColor: "#4b5563", 
+        color: "#f9fafb" 
+    },
+
+    loadingBox: { 
+        minHeight: "200px", 
+        display: "flex", 
+        alignItems: "center", 
+        justifyContent: "center", 
+        gap: "10px", 
+        backgroundColor: "#f9f9ff", 
+        border: "1px solid #e2e8f0", 
+        borderRadius: "10px", 
+        color: "#44474c", 
+        fontWeight: "600" 
+    },
+
+    loadingBoxDark: { 
+        backgroundColor: "#1f2937", 
+        borderColor: "#374151", 
+        color: "#f9fafb" 
+    },
+
+    errorBox: { 
+        minHeight: "160px", 
+        display: "flex", 
+        alignItems: "center", 
+        justifyContent: "center", 
+        gap: "10px", 
+        backgroundColor: "#fff1f2", 
+        border: "1px solid #fecdd3", 
+        borderRadius: "10px", 
+        color: "#9f1239", 
+        fontWeight: "600" 
+    },
+
+    errorBoxDark: { 
+        backgroundColor: "#3f1721", 
+        borderColor: "#7f1d1d", 
+        color: "#fecdd3" 
+    },
+
+    emptyCard: { 
+        backgroundColor: "#f9f9ff", 
+        border: "1px solid #e2e8f0", 
+        borderRadius: "12px", 
+        padding: "50px 24px", 
+        textAlign: "center", 
+        color: "#64748b" 
+    },
+
+    emptyCardDark: { 
+        backgroundColor: "#1f2937", 
+        borderColor: "#374151", 
+        color: "#d1d5db" 
+    },
+
+    emptyTitle: { 
+        margin: "12px 0 8px", 
+        fontSize: "20px", 
+        color: "#111c2d" 
+    },
+
+    emptyTitleDark: { 
+        color: "#f9fafb" 
+    },
+
+    emptyText: { 
+        margin: 0, 
+        color: "#64748b" 
+    },
+
+    emptyTextDark: { 
+        color: "#d1d5db" 
+    },
+
+    gridContainer: { 
+        display: "grid", 
+        gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", 
+        gap: "18px" 
+    },
+
+    card: { 
+        backgroundColor: "#f9f9ff", 
+        border: "1px solid #e2e8f0", 
+        borderRadius: "12px", 
+        padding: "18px", 
+        boxShadow: "0 1px 2px rgba(0,0,0,0.03)" 
+    },
+
+    cardDark: { 
+        backgroundColor: "#1f2937", 
+        borderColor: "#374151" 
+    },
+
+    cardImageContainer: { 
+        width: "100%", 
+        height: "180px", 
+        borderRadius: "10px", 
+        overflow: "hidden", 
+        backgroundColor: "#eef2f7", 
+        marginBottom: "16px" 
+    },
+
+    imagem: { 
+        width: "100%", 
+        height: "100%", 
+        objectFit: "contain", 
+        objectPosition: "center", 
+        display: "block" 
+    },
+
+    noImage: { 
+        width: "100%", 
+        height: "100%", 
+        display: "flex", 
+        alignItems: "center", 
+        justifyContent: "center", 
+        backgroundColor: "#e2e8f0", 
+        color: "#475569" 
+    },
+
+    noImageDark: { 
+        backgroundColor: "#334155", 
+        color: "#e2e8f0" 
+    },
+
+    cardHeader: { 
+        display: "flex", 
+        justifyContent: "space-between", 
+        alignItems: "center", 
+        marginBottom: "18px" 
+    },
+
+    cardInfo: { 
+        display: "flex", 
+        alignItems: "center", 
+        gap: "12px" 
+    },
+
+    cardName: { 
+        margin: 0, 
+        color: "#111c2d", 
+        fontSize: "18px" 
+    },
+
+    cardNameDark: { 
+        color: "#f9fafb" 
+    },
+
+    cardMeta: { 
+        color: "#64748b", 
+        fontSize: "12px" 
+    },
+
+    cardMetaDark: { 
+        color: "#d1d5db" 
+    },
+
+    cardActions: { 
+        display: "flex", 
+        justifyContent: "flex-end" 
+    },
+
+    deleteButton: { 
+        display: "flex", 
+        alignItems: "center", 
+        gap: "8px", 
+        border: "1px solid #fecaca", 
+        backgroundColor: "#fff1f2", 
+        color: "#b91c1c", 
+        padding: "10px 12px", 
+        borderRadius: "8px", 
+        cursor: "pointer" 
+    },
+
+    deleteButtonDark: { 
+        backgroundColor: "#3f1721", 
+        borderColor: "#7f1d1d", 
+        color: "#fecdd3" 
+    },
+
+    overlay: { 
+        position: "fixed", 
+        inset: 0, 
+        backgroundColor: "rgba(15, 23, 42, 0.45)", 
+        display: "flex", 
+        alignItems: "center", 
+        justifyContent: "center", 
+        padding: "24px" 
+    },
+
+    confirmCard: { 
+        backgroundColor: "#ffffff", 
+        borderRadius: "12px", 
+        padding: "22px", 
+        width: "100%", 
+        maxWidth: "420px", 
+        border: "1px solid #e2e8f0" 
+    },
+
+    confirmCardDark: { 
+        backgroundColor: "#111827", 
+        borderColor: "#374151" 
+    },
+
+    confirmIcon: { 
+        width: "48px", 
+        height: "48px", 
+        borderRadius: "50%", 
+        display: "flex", 
+        alignItems: "center", 
+        justifyContent: "center", 
+        backgroundColor: "#fff1f2", 
+        color: "#b91c1c", 
+        marginBottom: "12px" 
+    },
+
+    confirmIconDark: { 
+        backgroundColor: "#3f1721", 
+        color: "#fecdd3" 
+    },
+
+    confirmContent: { 
+        display: "flex", 
+        flexDirection: "column", 
+        gap: "4px", 
+        marginBottom: "18px" 
+    },
+
+    confirmTitle: { 
+        color: "#111c2d", 
+        fontSize: "18px" 
+    },
+
+    confirmTitleDark: { 
+        color: "#f9fafb" 
+    },
+
+    confirmText: { 
+        color: "#475569" 
+    },
+
+    confirmTextDark: { 
+        color: "#d1d5db" 
+    },
+
+    confirmActions: { 
+        display: "flex", 
+        justifyContent: "flex-end", 
+        gap: "12px" 
+    },
+
+    cancelConfirmButton: { 
+        border: "1px solid #d1d5db", 
+        backgroundColor: "#ffffff", 
+        color: "#374151", 
+        borderRadius: "8px", 
+        padding: "10px 12px", 
+        cursor: "pointer" 
+    },
+
+    cancelConfirmButtonDark: { 
+        backgroundColor: "#1f2937", 
+        borderColor: "#4b5563", 
+        color: "#f9fafb" 
+    },
+
+    confirmDeleteButton: { 
+        display: "flex", 
+        alignItems: "center", 
+        gap: "8px", 
+        border: "none", 
+        backgroundColor: "#dc2626", 
+        color: "#ffffff", 
+        borderRadius: "8px", 
+        padding: "10px 12px", 
+        cursor: "pointer" 
+    },
 };
