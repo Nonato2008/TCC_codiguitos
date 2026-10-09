@@ -379,7 +379,9 @@ const styles = {
     card: { backgroundColor: "#f9f9ff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "18px", boxShadow: "0 1px 2px rgba(0,0,0,0.03)" },
     cardDark: { backgroundColor: "#1f2937", borderColor: "#374151" },
     cardImageContainer: { width: "100%", height: "180px", borderRadius: "10px", overflow: "hidden", backgroundColor: "#eef2f7", marginBottom: "16px" },
-    imagem: { width: "100%", height: "100%", objectFit: "cover", display: "block" },
+    
+    imagem: { width: "100%", height: "100%", objectFit: "contain", objectPosition: "center", display: "block" },
+
     noImage: { width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#e2e8f0", color: "#475569" },
     noImageDark: { backgroundColor: "#334155", color: "#e2e8f0" },
     cardHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" },

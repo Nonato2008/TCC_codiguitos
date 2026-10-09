@@ -860,6 +860,33 @@ export default function CadastroVendas() {
   );
 }
 
+function SelectField({ label, name, value, onChange, disabled, isDark, children }) {
+  return (
+    <div style={styles.field}>
+      <label
+        style={{
+          ...styles.label,
+          ...(isDark ? styles.labelDark : {}),
+        }}
+      >
+        {label}
+      </label>
+      <select
+        name={name}
+        value={value}
+        onChange={onChange}
+        style={{
+          ...styles.select,
+          ...(isDark ? styles.selectDark : {}),
+        }}
+        disabled={disabled}
+      >
+        {children}
+      </select>
+    </div>
+  );
+}
+
 const styles = {
   layout: { display: "flex", minHeight: "100vh", backgroundColor: "#f3f5f9" },
   layoutDark: { backgroundColor: "#0f172a" },
@@ -870,6 +897,7 @@ const styles = {
     boxSizing: "border-box",
     fontFamily: "Inter, sans-serif",
   },
+
   pageDark: { backgroundColor: "#111827", color: "#f3f4f6" },
   header: {
     display: "flex",
@@ -878,6 +906,7 @@ const styles = {
     marginBottom: "24px",
     gap: "16px",
   },
+
   title: {
     margin: 0,
     fontSize: "32px",
@@ -885,6 +914,7 @@ const styles = {
     fontWeight: 700,
     fontFamily: "Montserrat, sans-serif",
   },
+
   titleDark: { color: "#f9fafb" },
   subtitle: { margin: "8px 0 0", color: "#4a5568" },
   subtitleDark: { color: "#d1d5db" },
@@ -904,6 +934,7 @@ const styles = {
     fontFamily: "Inter, sans-serif",
     flexShrink: 0,
   },
+
   voltarButtonDark: {
     backgroundColor: "#1f2937",
     borderColor: "#4b5563",
@@ -918,12 +949,18 @@ const styles = {
     boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
     maxWidth: "900px",
   },
+
   cardDark: {
     backgroundColor: "#111827",
     borderColor: "#374151",
     boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
   },
-  form: { display: "flex", flexDirection: "column", gap: "20px" },
+
+  form: { 
+    display: "flex", 
+    flexDirection: "column", 
+    gap: "20px" 
+  },
 
   row: {
     display: "grid",
@@ -931,14 +968,27 @@ const styles = {
     gap: "16px",
   },
 
-  field: { display: "flex", flexDirection: "column", gap: "8px" },
+  field: { 
+    display: "flex", 
+    flexDirection: "column", 
+    gap: "8px" 
+  },
+
   fieldFull: {
     display: "flex",
     flexDirection: "column",
     gap: "8px",
   },
-  label: { fontWeight: 600, color: "#303e51" },
-  labelDark: { color: "#e5e7eb" },
+
+  label: { 
+    fontWeight: 600, 
+    color: "#303e51" 
+  },
+
+  labelDark: { 
+    color: "#e5e7eb" 
+  },
+
   select: {
     width: "100%",
     boxSizing: "border-box",
@@ -950,11 +1000,13 @@ const styles = {
     color: "#111c2d",
     fontFamily: "Inter, sans-serif",
   },
+
   selectDark: {
     backgroundColor: "#1f2937",
     borderColor: "#4b5563",
     color: "#f9fafb",
   },
+
   input: {
     boxSizing: "border-box",
     padding: "10px 12px",
@@ -965,11 +1017,13 @@ const styles = {
     color: "#111c2d",
     fontFamily: "Inter, sans-serif",
   },
+
   inputDark: {
     backgroundColor: "#1f2937",
     borderColor: "#4b5563",
     color: "#f9fafb",
   },
+
   textarea: {
     width: "100%",
     boxSizing: "border-box",
@@ -982,23 +1036,30 @@ const styles = {
     fontFamily: "Inter, sans-serif",
     resize: "vertical",
   },
+
   textareaDark: {
     backgroundColor: "#1f2937",
     borderColor: "#4b5563",
     color: "#f9fafb",
   },
-  actions: { display: "flex", justifyContent: "flex-end" },
+
+  actions: { 
+    display: "flex", 
+    justifyContent: "flex-end" 
+  },
 
   itemsSection: {
     display: "flex",
     flexDirection: "column",
     gap: "12px",
   },
+
   itemsHeader: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
   },
+
   itemsTitle: { margin: 0, fontSize: "16px", color: "#111c2d" },
   itemsTitleDark: { color: "#f9fafb" },
   loadingHint: {
@@ -1272,29 +1333,3 @@ const styles = {
   },
 };
 
-function SelectField({ label, name, value, onChange, disabled, isDark, children }) {
-  return (
-    <div style={styles.field}>
-      <label
-        style={{
-          ...styles.label,
-          ...(isDark ? styles.labelDark : {}),
-        }}
-      >
-        {label}
-      </label>
-      <select
-        name={name}
-        value={value}
-        onChange={onChange}
-        style={{
-          ...styles.select,
-          ...(isDark ? styles.selectDark : {}),
-        }}
-        disabled={disabled}
-      >
-        {children}
-      </select>
-    </div>
-  );
-}

@@ -370,7 +370,7 @@ const styles = {
   cardDark: { backgroundColor: "#111827", borderColor: "#374151" },
   productContent: { display: "flex", gap: "16px" },
   imageBox: { width: "120px", height: "120px", borderRadius: "10px", overflow: "hidden", backgroundColor: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  productImage: { width: "100%", height: "100%", objectFit: "cover" },
+  productImage: { width: "100%", height: "100%", objectFit: "contain", objectPosition: "center" },
   infoArea: { flex: 1, display: "flex", flexDirection: "column", gap: "10px" },
   badgeRow: { display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center" },
   badge: { backgroundColor: "#e2e8f0", color: "#0f172a", borderRadius: "999px", padding: "4px 8px", fontSize: "12px" },
