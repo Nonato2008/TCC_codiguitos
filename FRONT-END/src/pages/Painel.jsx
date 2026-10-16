@@ -32,6 +32,32 @@ export default function Painel() {
   // Total de produtos cadastrados
   const produtosTotais = Array.isArray(produtos) ? produtos.length : 0;
 
+  // Função para obter a data de vencimento de um produto
+  const getDataVencimento = (produto) =>
+    produto?.DataVenc ??
+    produto?.dataVenc ??
+    produto?.DataVencimento ??
+    produto?.dataVencimento ??
+    produto?.data_venc ??
+    null;
+
+  // Função para verificar se um produto está vencido
+  const isProdutoVencido = (produto) => {
+    const status = String(produto?.Status ?? "").trim().toLowerCase();
+    if (status === "vencido") return true;
+
+    const dataVencimento = getDataVencimento(produto);
+    if (!dataVencimento) return false;
+
+    const data = new Date(`${dataVencimento}T00:00:00`);
+    if (Number.isNaN(data.getTime())) return false;
+
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    return data < hoje;
+  };
+
   // Conta produtos com status "esgotado"
   const produtosEsgotados = Array.isArray(produtos)
     ? produtos.filter((produto) => {
@@ -40,12 +66,9 @@ export default function Painel() {
     }).length
     : 0;
 
-  // Conta produtos com status "vencido"
+  // Conta produtos vencidos pela data de vencimento ou pelo status do produto
   const produtosVencimento = Array.isArray(produtos)
-    ? produtos.filter((produto) => {
-      const status = String(produto.Status ?? "").toLowerCase();
-      return status === "vencido";
-    }).length
+    ? produtos.filter(isProdutoVencido).length
     : 0;
 
   // Estado de carregamento dos produtos
