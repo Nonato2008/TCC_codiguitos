@@ -124,8 +124,8 @@ const vendasRepository = {
                     `UPDATE Produtos
                      SET Quantidade = Quantidade - ?,
                          Status = CASE
-                             WHEN Quantidade - ? <= 0
-                                 THEN 'Esgotado'
+                             WHEN DataVenc < CURDATE() THEN 'Vencido'
+                             WHEN Quantidade - ? <= 0 THEN 'Esgotado'
                              ELSE 'Em Estoque'
                          END
                      WHERE Id = ?
@@ -309,10 +309,8 @@ const vendasRepository = {
                     `UPDATE Produtos
                      SET Quantidade = Quantidade - ?,
                          Status = CASE
-                             WHEN Quantidade - ? <= 0
-                                 THEN 'Esgotado'
-                             WHEN DataVenc < CURDATE()
-                                 THEN 'Vencido'
+                             WHEN DataVenc < CURDATE() THEN 'Vencido'
+                             WHEN Quantidade - ? <= 0 THEN 'Esgotado'
                              ELSE 'Em Estoque'
                          END
                      WHERE Id = ?
@@ -885,6 +883,6 @@ export default vendasRepository;
 // ⣿⠀⠒⠘⣠⡾⢀⡴⠋⠉⠀⠀⠀⠉⠋⠁⢀⣠⠶⠃
 // ⠈⠙⣏⣿⢧⢿⡏⠀⠀⢠⠄⠀⠀⠀⠀⠀⢻⡀⠀⠀
 // ⠀⠀⠉⠘⣟⣾⡄⠀⠀⠀⠈⠓⠘⠃⣀⠀⢈⡇⠀⠀
-// ⠀⠀⠀⠀⢿⠉⠛⠦⠀⠀⠀⠀⠀⠀⠀⣠⡞⠁⠀⠀
+// ⠀⠀⠀⠀⢿⠉⠛⠦⠀⠀⠀⠀⠀⠀⣠⡞⠁⠀⠀
 // ⠀⠀⠀⠀⠘⢧⡀⠀⠀⠀⠀⠀⠀⠘⠋⠉⢙⡆⠀⠀
 // ⠀⠀⠀⠀⠀⠀⢻⠀⠀⠀⠀⠀⠀⠀⡤⠖⠋

@@ -6,13 +6,31 @@ import {
     gerarNotaFiscalPDF
 } from "../services/notaFiscalService.js";
 
+const parseDataLocal = (valor) => {
+    if (!valor) return null;
+
+    const texto = String(valor).trim();
+    if (!texto) return null;
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(texto)) {
+        const [ano, mes, dia] = texto.split('-').map(Number);
+        return new Date(ano, mes - 1, dia);
+    }
+
+    return new Date(texto);
+};
+
 const calcularStatus = (quantidade, dataVenc) => {
 
     const hoje = new Date();
 
     hoje.setHours(0, 0, 0, 0);
 
-    const vencimento = new Date(dataVenc);
+    const vencimento = parseDataLocal(dataVenc);
+
+    if (!vencimento || Number.isNaN(vencimento.getTime())) {
+        return Number(quantidade) <= 0 ? statusPed.ESGOTADO : statusPed.ESTOQUE;
+    }
 
     vencimento.setHours(0, 0, 0, 0);
 
@@ -72,6 +90,19 @@ const produtoController = {
 
             const dataVencNormalizada =
                 normalizarDataParaBanco(dataVenc);
+
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+
+            const dataVencLocal = dataVencNormalizada
+                ? new Date(`${dataVencNormalizada}T00:00:00`)
+                : null;
+
+            if (dataVencLocal && dataVencLocal < hoje) {
+                return res.status(400).json({
+                    message: "Não é permitido cadastrar produto vencido. Informe uma data de vencimento igual ou superior a hoje."
+                });
+            }
 
             const imagem =
                 `/uploads/imagens/${req.file.filename}`;
