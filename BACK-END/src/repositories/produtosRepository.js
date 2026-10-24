@@ -2,6 +2,89 @@ import { connection } from "../config/Database.js";
 
 class ProdutosRepository {
 
+    calcularStatusProduto(produto) {
+        const quantidade = Number(produto?.Quantidade ?? produto?.quantidade ?? 0);
+        const dataVenc = produto?.DataVenc ?? produto?.dataVenc ?? produto?.data_venc;
+
+        if (!dataVenc) {
+            return quantidade <= 0 ? "Esgotado" : "Em Estoque";
+        }
+
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+
+        const dataVencimento = String(dataVenc).trim();
+        const vencimento = /^\d{4}-\d{2}-\d{2}$/.test(dataVencimento)
+            ? new Date(
+                Number(dataVencimento.slice(0, 4)),
+                Number(dataVencimento.slice(5, 7)) - 1,
+                Number(dataVencimento.slice(8, 10))
+            )
+            : new Date(dataVencimento);
+
+        if (Number.isNaN(vencimento.getTime())) {
+            return quantidade <= 0 ? "Esgotado" : "Em Estoque";
+        }
+
+        vencimento.setHours(0, 0, 0, 0);
+
+        if (vencimento < hoje) {
+            return "Vencido";
+        }
+
+        if (quantidade <= 0) {
+            return "Esgotado";
+        }
+
+        return "Em Estoque";
+    }
+
+    async sincronizarStatusPorId(idProduto, dadosExtras = {}) {
+        const [produtos] = await connection.execute(
+            `SELECT * FROM Produtos WHERE Id = ?`,
+            [idProduto]
+        );
+
+        if (!produtos.length) {
+            return null;
+        }
+
+        const produtoAtual = produtos[0];
+        const quantidade = Number(dadosExtras.quantidade ?? produtoAtual.Quantidade ?? 0);
+        const dataVenc = dadosExtras.dataVenc ?? produtoAtual.DataVenc ?? null;
+        const statusCalculado = this.calcularStatusProduto({
+            ...produtoAtual,
+            Quantidade: quantidade,
+            DataVenc: dataVenc,
+        });
+
+        if (produtoAtual.Status !== statusCalculado) {
+            await connection.execute(
+                `UPDATE Produtos SET Status = ? WHERE Id = ?`,
+                [statusCalculado, idProduto]
+            );
+        }
+
+        return statusCalculado;
+    }
+
+    async sincronizarTodosStatus() {
+        const [produtos] = await connection.execute(`SELECT * FROM Produtos`);
+
+        for (const produto of produtos) {
+            const statusCalculado = this.calcularStatusProduto(produto);
+
+            if (produto.Status !== statusCalculado) {
+                await connection.execute(
+                    `UPDATE Produtos SET Status = ? WHERE Id = ?`,
+                    [statusCalculado, produto.Id]
+                );
+            }
+        }
+
+        return true;
+    }
+
     async criar(produto) {
         const {
             idFornecedor,
@@ -13,6 +96,12 @@ class ProdutosRepository {
             dataVenc
         } = produto;
 
+        const statusFinal = this.calcularStatusProduto({
+            Quantidade: quantidade,
+            DataVenc: dataVenc,
+            Status: status,
+        });
+
         const [resultado] = await connection.execute(
             `INSERT INTO Produtos
             (IdFornecedor, Nome, Preco, Quantidade, Status, Imagem, DataVenc)
@@ -22,7 +111,7 @@ class ProdutosRepository {
                 nome,
                 preco,
                 quantidade,
-                status,
+                statusFinal,
                 imagem,
                 dataVenc
             ]
@@ -43,6 +132,12 @@ class ProdutosRepository {
             id
         } = produto;
 
+        const statusFinal = this.calcularStatusProduto({
+            Quantidade: quantidade,
+            DataVenc: dataVenc,
+            Status: status,
+        });
+
         const [resultado] = await connection.execute(
             `UPDATE Produtos
              SET IdFornecedor = ?,
@@ -58,7 +153,7 @@ class ProdutosRepository {
                 nome,
                 preco,
                 quantidade,
-                status,
+                statusFinal,
                 imagem,
                 dataVenc,
                 id
@@ -78,6 +173,8 @@ class ProdutosRepository {
     }
 
     async selecionar() {
+        await this.sincronizarTodosStatus();
+
         const [resultado] = await connection.execute(
             `SELECT * FROM Produtos ORDER BY Id DESC`
         );
@@ -86,6 +183,8 @@ class ProdutosRepository {
     }
 
     async selecionarId(id) {
+        await this.sincronizarTodosStatus();
+
         const [resultado] = await connection.execute(
             `SELECT * FROM Produtos WHERE Id = ?`,
             [id]
@@ -129,10 +228,10 @@ class ProdutosRepository {
 
                 let status = "Em Estoque";
 
-                if (novaQuantidade <= 0) {
-                    status = "Esgotado";
-                } else if (vencimento < hoje) {
+                if (vencimento < hoje) {
                     status = "Vencido";
+                } else if (novaQuantidade <= 0) {
+                    status = "Esgotado";
                 }
 
                 await connectionTransaction.execute(

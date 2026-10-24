@@ -140,6 +140,20 @@ export default function CadastroProdutos() {
             return;
         }
 
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+
+        const dataVencSelecionada = new Date(`${form.dataVenc}T00:00:00`);
+        dataVencSelecionada.setHours(0, 0, 0, 0);
+
+        if (dataVencSelecionada < hoje) {
+            setMensagem({
+                type: "error",
+                text: "Não é permitido cadastrar produto vencido. Informe uma data de vencimento igual ou superior a hoje."
+            });
+            return;
+        }
+
         if (!form.imagem) {
             setMensagem({ type: "error", text: "Selecione uma imagem do produto." });
             return;
