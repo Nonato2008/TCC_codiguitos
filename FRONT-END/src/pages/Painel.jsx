@@ -1,4 +1,5 @@
-import React, { useContext } from "react";
+
+import React, { useContext, useRef, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import { useProdutos } from "../hooks/useProdutos";
 import { useVendas } from "../hooks/useVendas";
@@ -6,16 +7,50 @@ import { useNavigate } from "react-router-dom";
 import { ThemeContext } from "../contexts/ThemeContext";
 
 export default function Painel() {
-
   const navigate = useNavigate();
 
   const { theme } = useContext(ThemeContext);
   const isDark = theme === "dark";
 
-  // Hook que carrega os produtos (usado para os cards de resumo)
+  const cliquesFoguinho = useRef(0);
+  const [mostrarSegredo, setMostrarSegredo] = useState(false);
+
+  function clicarFoguinho() {
+    cliquesFoguinho.current += 1;
+
+    if (cliquesFoguinho.current === 5) {
+      cliquesFoguinho.current = 0;
+      setMostrarSegredo(true);
+
+      let encontrados = [];
+
+      try {
+        encontrados = JSON.parse(
+          localStorage.getItem("easterEggsEncontrados") || "[]"
+        );
+      } catch {
+        encontrados = [];
+      }
+
+      if (!encontrados.includes(5)) {
+        encontrados.push(5);
+
+        localStorage.setItem(
+          "easterEggsEncontrados",
+          JSON.stringify(encontrados)
+        );
+
+        window.dispatchEvent(
+          new CustomEvent("easterEggDesbloqueado", {
+            detail: { id: 5 },
+          })
+        );
+      }
+    }
+  }
+
   const { produtos, loading, error } = useProdutos();
 
-  // Hook que carrega as vendas e o valor total (lucro)
   const {
     vendas,
     valorTotal,
@@ -23,16 +58,10 @@ export default function Painel() {
     error: errorVendas,
   } = useVendas();
 
-  // Garante que `vendas` seja sempre um array válido
   const vendasLista = Array.isArray(vendas) ? vendas : [];
-
-  // Pega as 3 últimas vendas e inverte para mostrar as mais recentes primeiro
   const ultimasVendas = [...vendasLista].slice(-3).reverse();
-
-  // Total de produtos cadastrados
   const produtosTotais = Array.isArray(produtos) ? produtos.length : 0;
 
-  // Função para obter a data de vencimento de um produto
   const getDataVencimento = (produto) =>
     produto?.DataVenc ??
     produto?.dataVenc ??
@@ -41,9 +70,9 @@ export default function Painel() {
     produto?.data_venc ??
     null;
 
-  // Função para verificar se um produto está vencido
   const isProdutoVencido = (produto) => {
     const status = String(produto?.Status ?? "").trim().toLowerCase();
+
     if (status === "vencido") return true;
 
     const dataVencimento = getDataVencimento(produto);
@@ -58,27 +87,29 @@ export default function Painel() {
     return data < hoje;
   };
 
-  // Conta produtos com status "esgotado"
   const produtosEsgotados = Array.isArray(produtos)
     ? produtos.filter((produto) => {
-      const status = String(produto.Status ?? "").toLowerCase();
-      return status === "esgotado";
-    }).length
+        const status = String(produto.Status ?? "").toLowerCase();
+        return status === "esgotado";
+      }).length
     : 0;
 
-  // Conta produtos vencidos pela data de vencimento ou pelo status do produto
   const produtosVencimento = Array.isArray(produtos)
     ? produtos.filter(isProdutoVencido).length
     : 0;
 
-  // Estado de carregamento dos produtos
   if (loading) {
     return (
       <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
         <Sidebar />
 
         <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
-          <div style={{ ...styles.loadingBox, ...(isDark ? styles.loadingBoxDark : {}) }}>
+          <div
+            style={{
+              ...styles.loadingBox,
+              ...(isDark ? styles.loadingBoxDark : {}),
+            }}
+          >
             Carregando resumo do painel...
           </div>
         </main>
@@ -86,14 +117,20 @@ export default function Painel() {
     );
   }
 
-  // Estado de erro dos produtos
   if (error) {
     return (
       <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
         <Sidebar />
 
         <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
-          <div style={{ ...styles.errorBox, ...(isDark ? styles.errorBoxDark : {}) }}>{error}</div>
+          <div
+            style={{
+              ...styles.errorBox,
+              ...(isDark ? styles.errorBoxDark : {}),
+            }}
+          >
+            {error}
+          </div>
         </main>
       </div>
     );
@@ -108,13 +145,57 @@ export default function Painel() {
         <header style={styles.header}>
           <div style={styles.headerRow}>
             <div>
-              <h2 style={{ ...styles.title, ...(isDark ? styles.titleDark : {}) }}>Visão Geral</h2>
-              <p style={{ ...styles.subtitle, ...(isDark ? styles.subtitleDark : {}) }}>
+              <h2
+                style={{
+                  ...styles.title,
+                  ...(isDark ? styles.titleDark : {}),
+                }}
+              >
+                Visão Geral
+              </h2>
+
+              <p
+                style={{
+                  ...styles.subtitle,
+                  ...(isDark ? styles.subtitleDark : {}),
+                }}
+              >
                 Resumo operacional da loja.
               </p>
             </div>
           </div>
         </header>
+
+        {/* MODAL DO EASTER EGG */}
+        {mostrarSegredo && (
+          <div style={styles.secretOverlay}>
+            <div
+              style={{
+                ...styles.secretCard,
+                ...(isDark ? styles.secretCardDark : {}),
+              }}
+            >
+              <h2 style={styles.secretTitle}>Easter Eggs Do Nelson</h2>
+
+              <img
+                src="/bryan.png"
+                alt="Bryan - O Líder da Codiguitos"
+                style={styles.secretImage}
+              />
+
+              <p style={styles.secretText}>
+                Parabéns! Você encontrou Bryan!!!
+              </p>
+
+              <button
+                onClick={() => setMostrarSegredo(false)}
+                style={styles.secretButton}
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* CARDS */}
         <section style={styles.cards}>
@@ -145,22 +226,40 @@ export default function Painel() {
         {/* PARTE INFERIOR */}
         <section style={styles.bottom}>
           {/* VENDAS RECENTES */}
-          <div style={{ ...styles.largeCard, ...(isDark ? styles.largeCardDark : {}) }}>
+          <div
+            style={{
+              ...styles.largeCard,
+              ...(isDark ? styles.largeCardDark : {}),
+            }}
+          >
             <div style={styles.cardHeader}>
-              <h3 style={{ ...styles.cardTitle, ...(isDark ? styles.cardTitleDark : {}) }}>
+              <h3
+                style={{
+                  ...styles.cardTitle,
+                  ...(isDark ? styles.cardTitleDark : {}),
+                }}
+              >
                 Vendas Recentes
               </h3>
 
               <button
                 onClick={() => navigate("/vendas")}
-                style={{ ...styles.linkButton, ...(isDark ? styles.linkButtonDark : {}) }}
+                style={{
+                  ...styles.linkButton,
+                  ...(isDark ? styles.linkButtonDark : {}),
+                }}
               >
                 Ver todas
               </button>
             </div>
 
             {loadingVendas ? (
-              <div style={{ ...styles.empty, ...(isDark ? styles.emptyDark : {}) }}>
+              <div
+                style={{
+                  ...styles.empty,
+                  ...(isDark ? styles.emptyDark : {}),
+                }}
+              >
                 <span className="material-symbols-outlined">
                   progress_activity
                 </span>
@@ -168,7 +267,12 @@ export default function Painel() {
                 <span>Carregando vendas...</span>
               </div>
             ) : errorVendas ? (
-              <div style={{ ...styles.empty, ...(isDark ? styles.emptyDark : {}) }}>
+              <div
+                style={{
+                  ...styles.empty,
+                  ...(isDark ? styles.emptyDark : {}),
+                }}
+              >
                 <span className="material-symbols-outlined">error</span>
 
                 <span>{errorVendas}</span>
@@ -176,18 +280,39 @@ export default function Painel() {
             ) : vendasLista.length > 0 ? (
               <div style={styles.vendasLista}>
                 {ultimasVendas.map((venda) => (
-                  <div key={venda.Id} style={{ ...styles.vendaItem, ...(isDark ? styles.vendaItemDark : {}) }}>
+                  <div
+                    key={venda.Id}
+                    style={{
+                      ...styles.vendaItem,
+                      ...(isDark ? styles.vendaItemDark : {}),
+                    }}
+                  >
                     <div style={styles.vendaInfo}>
-                      <strong style={{ ...styles.vendaTitulo, ...(isDark ? styles.vendaTituloDark : {}) }}>
+                      <strong
+                        style={{
+                          ...styles.vendaTitulo,
+                          ...(isDark ? styles.vendaTituloDark : {}),
+                        }}
+                      >
                         Venda #{venda.Id}
                       </strong>
 
-                      <span style={{ ...styles.vendaVendedor, ...(isDark ? styles.vendaVendedorDark : {}) }}>
+                      <span
+                        style={{
+                          ...styles.vendaVendedor,
+                          ...(isDark ? styles.vendaVendedorDark : {}),
+                        }}
+                      >
                         Vendedor #{venda.IdVendedor}
                       </span>
                     </div>
 
-                    <strong style={{ ...styles.vendaValor, ...(isDark ? styles.vendaValorDark : {}) }}>
+                    <strong
+                      style={{
+                        ...styles.vendaValor,
+                        ...(isDark ? styles.vendaValorDark : {}),
+                      }}
+                    >
                       R${" "}
                       {Number(venda.ValorTotal || 0)
                         .toFixed(2)
@@ -197,8 +322,15 @@ export default function Painel() {
                 ))}
               </div>
             ) : (
-              <div style={{ ...styles.empty, ...(isDark ? styles.emptyDark : {}) }}>
-                <span className="material-symbols-outlined">point_of_sale</span>
+              <div
+                style={{
+                  ...styles.empty,
+                  ...(isDark ? styles.emptyDark : {}),
+                }}
+              >
+                <span className="material-symbols-outlined">
+                  point_of_sale
+                </span>
 
                 <span>Nenhuma venda encontrada.</span>
               </div>
@@ -206,11 +338,31 @@ export default function Painel() {
           </div>
 
           {/* LUCRO TOTAL */}
-          <div style={{ ...styles.largeCard, ...(isDark ? styles.largeCardDark : {}) }}>
+          <div
+            style={{
+              ...styles.largeCard,
+              ...(isDark ? styles.largeCardDark : {}),
+            }}
+          >
             <div style={styles.cardHeader}>
-              <h3 style={{ ...styles.cardTitle, ...(isDark ? styles.cardTitleDark : {}) }}>Lucro total</h3>
+              <h3
+                style={{
+                  ...styles.cardTitle,
+                  ...(isDark ? styles.cardTitleDark : {}),
+                }}
+              >
+                Lucro total
+              </h3>
 
-              <span className="material-symbols-outlined" style={isDark ? styles.iconDark : {}}>
+              <span
+                className="material-symbols-outlined"
+                style={{
+                  ...(isDark ? styles.iconDark : {}),
+                  cursor: "pointer",
+                  userSelect: "none",
+                }}
+                onClick={clicarFoguinho}
+              >
                 local_fire_department
               </span>
             </div>
@@ -227,8 +379,6 @@ export default function Painel() {
   );
 }
 
-// Card reutilizável do topo do painel
-// Aceita variações visuais através do `tipo` (error / warning)
 function DashboardCard({ titulo, valor, icone, tipo, dark }) {
   return (
     <div
@@ -252,11 +402,17 @@ function DashboardCard({ titulo, valor, icone, tipo, dark }) {
             <span className="material-symbols-outlined">{icone}</span>
           </div>
 
-          <h3 style={{ ...styles.cardLabel, ...(dark ? styles.cardLabelDark : {}) }}>{titulo}</h3>
+          <h3
+            style={{
+              ...styles.cardLabel,
+              ...(dark ? styles.cardLabelDark : {}),
+            }}
+          >
+            {titulo}
+          </h3>
         </div>
 
-        <span className="material-symbols-outlined" style={styles.arrow}>
-        </span>
+        <span className="material-symbols-outlined" style={styles.arrow}></span>
       </div>
 
       <strong
@@ -595,5 +751,60 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+  },
+
+  secretOverlay: {
+    position: "fixed",
+    inset: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 9999,
+    padding: "24px",
+  },
+
+  secretCard: {
+    backgroundColor: "#ffffff",
+    width: "100%",
+    maxWidth: "400px",
+    padding: "24px",
+    borderRadius: "16px",
+    textAlign: "center",
+    boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+  },
+
+  secretCardDark: {
+    backgroundColor: "#1f2937",
+    color: "#f9fafb",
+  },
+
+  secretTitle: {
+    fontSize: "22px",
+    fontWeight: "700",
+    marginBottom: "20px",
+  },
+
+  secretImage: {
+    width: "100%",
+    maxHeight: "250px",
+    objectFit: "contain",
+    borderRadius: "10px",
+  },
+
+  secretText: {
+    fontSize: "16px",
+    fontWeight: "600",
+    margin: "20px 0",
+  },
+
+  secretButton: {
+    backgroundColor: "#303e51",
+    color: "#ffffff",
+    border: "none",
+    borderRadius: "8px",
+    padding: "10px 24px",
+    fontWeight: "600",
+    cursor: "pointer",
   },
 };

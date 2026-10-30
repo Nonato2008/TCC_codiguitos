@@ -1,8 +1,8 @@
-import React, { useContext } from "react";
+
+import React, { useContext, useState, useRef, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { ThemeContext } from "../contexts/ThemeContext";
 
-// Estrutura do menu: cada item tem nome, ícone, rota e quais perfis podem acessar
 const menu = [
     {
         nome: "Painel",
@@ -37,30 +37,131 @@ const menu = [
 ];
 
 export default function Sidebar() {
-
     const navigate = useNavigate();
 
     const { theme, toggleTheme } = useContext(ThemeContext);
     const isDark = theme === "dark";
 
-    // Lê o usuário do localStorage (pode vir null ou malformado)
+    const [mostrarSegredo, setMostrarSegredo] = useState(false);
+    const [mostrarLista, setMostrarLista] = useState(false);
+
+    const [easterEggsEncontrados, setEasterEggsEncontrados] = useState(() => {
+        try {
+            return JSON.parse(localStorage.getItem("easterEggsEncontrados") || "[]");
+        } catch {
+            return [];
+        }
+    });
+
+    const cliquesLogo = useRef(0);
+
+    const listaEasterEggs = [
+        { id: 1, nome: "Segredo da Logo do Nelson" },
+        { id: 2, nome: "Segredo das Vendas" },
+        { id: 3, nome: "Segredo dos Produtos" },
+        { id: 4, nome: "Segredo dos Fornecedores" },
+        { id: 5, nome: "Segredo do Foguinho" }
+    ];
+
+    function atualizarEasterEgg(id) {
+        let encontrados = [];
+
+        try {
+            encontrados = JSON.parse(
+                localStorage.getItem("easterEggsEncontrados") || "[]"
+            );
+        } catch {
+            encontrados = [];
+        }
+
+        if (!encontrados.includes(id)) {
+            encontrados.push(id);
+
+            localStorage.setItem(
+                "easterEggsEncontrados",
+                JSON.stringify(encontrados)
+            );
+
+            window.dispatchEvent(
+                new CustomEvent("easterEggDesbloqueado", {
+                    detail: { id }
+                })
+            );
+        }
+
+        setEasterEggsEncontrados(encontrados);
+    }
+
+    function clicarLogo() {
+        cliquesLogo.current += 1;
+
+        if (cliquesLogo.current === 5) {
+            setMostrarSegredo(true);
+            cliquesLogo.current = 0;
+            atualizarEasterEgg(1);
+        }
+    }
+
+    useEffect(() => {
+        let digitado = "";
+
+        function detectarCodigo(event) {
+            if (
+                event.target.tagName === "INPUT" ||
+                event.target.tagName === "TEXTAREA" ||
+                event.target.isContentEditable
+            ) {
+                return;
+            }
+
+            if (event.key.length === 1) {
+                digitado += event.key.toUpperCase();
+
+                if (digitado.length > 6) {
+                    digitado = digitado.slice(-6);
+                }
+
+                if (digitado === "NELSON") {
+                    try {
+                        const encontrados = JSON.parse(
+                            localStorage.getItem("easterEggsEncontrados") || "[]"
+                        );
+
+                        setEasterEggsEncontrados(encontrados);
+                    } catch {
+                        setEasterEggsEncontrados([]);
+                    }
+
+                    setMostrarLista(true);
+                    digitado = "";
+                }
+            } else if (event.key === "Backspace") {
+                digitado = digitado.slice(0, -1);
+            }
+        }
+
+        window.addEventListener("keydown", detectarCodigo);
+
+        return () => {
+            window.removeEventListener("keydown", detectarCodigo);
+        };
+    }, []);
+
     const usuarioSalvo = localStorage.getItem("usuario");
 
     let usuario = null;
 
     try {
         usuario = usuarioSalvo ? JSON.parse(usuarioSalvo) : null;
-    } catch (error) {
+    } catch {
         usuario = null;
     }
 
-    // Nome do usuário (aceita "nome" ou "Nome")
     const nomeUsuario =
         usuario?.nome ||
         usuario?.Nome ||
         "Usuário";
 
-    // Perfil do usuário — aceita várias chaves possíveis vindas da API
     const perfilOriginal =
         usuario?.perfil ||
         usuario?.Perfil ||
@@ -70,61 +171,52 @@ export default function Sidebar() {
         usuario?.Role ||
         "VENDEDOR";
 
-    // Normaliza o perfil: trim, upper, remove acentos
-    // Ex: "Proprietário" -> "PROPRIETARIO"
-    const perfilNormalizado =
-        String(perfilOriginal)
-            .trim()
-            .toUpperCase()
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "");
+    const perfilNormalizado = String(perfilOriginal)
+        .trim()
+        .toUpperCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
 
-    // Nome amigável para exibir na UI
     const perfilUsuario =
         perfilNormalizado === "PROPRIETARIO"
             ? "Proprietário"
             : "Vendedor";
 
-    // Filtra o menu com base no perfil normalizado
-    const menuPermitido =
-        menu.filter((item) =>
-            item.acesso.includes(perfilNormalizado)
-        );
+    const menuPermitido = menu.filter((item) =>
+        item.acesso.includes(perfilNormalizado)
+    );
 
-    // Logout: remove usuário e volta para o login
     function sair() {
         localStorage.removeItem("usuario");
         navigate("/login");
     }
 
     return (
-
         <aside
             style={{
                 ...styles.sidebar,
                 ...(isDark ? styles.sidebarDark : {})
             }}
         >
-
             <div style={styles.logoContainer}>
-
                 <div
                     style={{
                         ...styles.logo,
                         ...(isDark ? styles.logoDark : {})
                     }}
                 >
-
                     <img
                         src="/logo.png"
                         alt="Adega do Nelson"
-                        style={styles.logoImage}
+                        style={{
+                            ...styles.logoImage,
+                            cursor: "pointer"
+                        }}
+                        onClick={clicarLogo}
                     />
-
                 </div>
 
                 <div>
-
                     <h1
                         style={{
                             ...styles.logoTitle,
@@ -142,34 +234,27 @@ export default function Sidebar() {
                     >
                         Melhores Bebidas
                     </p>
-
                 </div>
-
             </div>
 
-            {/* Cartão do usuário logado (nome + perfil) */}
             <div
                 style={{
                     ...styles.usuarioContainer,
                     ...(isDark ? styles.usuarioContainerDark : {})
                 }}
             >
-
                 <div
                     style={{
                         ...styles.usuarioIcon,
                         ...(isDark ? styles.usuarioIconDark : {})
                     }}
                 >
-
                     <span className="material-symbols-outlined">
                         person
                     </span>
-
                 </div>
 
                 <div style={styles.usuarioInfo}>
-
                     <span
                         style={{
                             ...styles.usuarioNome,
@@ -187,16 +272,11 @@ export default function Sidebar() {
                     >
                         {perfilUsuario}
                     </span>
-
                 </div>
-
             </div>
 
-            {/* Menu — renderiza só os itens permitidos para o perfil */}
             <nav style={styles.navigation}>
-
                 {menuPermitido.map((item) => (
-
                     <NavLink
                         key={item.rota}
                         to={item.rota}
@@ -204,32 +284,26 @@ export default function Sidebar() {
                             ...styles.menuItem,
                             ...(isDark ? styles.menuItemDark : {}),
                             ...(isActive ? styles.menuItemActive : {}),
-                            ...(isActive && isDark ? styles.menuItemActiveDark : {})
+                            ...(isActive && isDark
+                                ? styles.menuItemActiveDark
+                                : {})
                         })}
                     >
-
                         <span className="material-symbols-outlined">
                             {item.icone}
                         </span>
 
-                        <span>
-                            {item.nome}
-                        </span>
-
+                        <span>{item.nome}</span>
                     </NavLink>
-
                 ))}
-
             </nav>
 
-            {/* Rodapé: alternar tema + sair */}
             <div
                 style={{
                     ...styles.bottomMenu,
                     ...(isDark ? styles.bottomMenuDark : {})
                 }}
             >
-
                 <button
                     type="button"
                     onClick={toggleTheme}
@@ -238,13 +312,11 @@ export default function Sidebar() {
                         ...(isDark ? styles.themeButtonDark : {})
                     }}
                 >
-
                     <span className="material-symbols-outlined">
                         {isDark ? "light_mode" : "dark_mode"}
                     </span>
 
                     {isDark ? "Modo claro" : "Modo escuro"}
-
                 </button>
 
                 <button
@@ -255,23 +327,135 @@ export default function Sidebar() {
                     }}
                     onClick={sair}
                 >
-
                     <span className="material-symbols-outlined">
                         logout
                     </span>
 
                     Sair
-
                 </button>
-
             </div>
 
+            {mostrarSegredo && (
+                <div
+                    style={styles.secretOverlay}
+                    onClick={() => setMostrarSegredo(false)}
+                >
+                    <div
+                        style={{
+                            ...styles.secretCard,
+                            ...(isDark ? styles.secretCardDark : {})
+                        }}
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <img
+                            src="/miguel-henri.png"
+                            alt="Miguel Henri - O Filho do Dono"
+                            style={styles.secretImage}
+                        />
+
+                        <h3
+                            style={{
+                                ...styles.secretTitle,
+                                ...(isDark ? styles.secretTitleDark : {})
+                            }}
+                        >
+                            Easter Eggs Do Nelson
+                        </h3>
+
+                        <p
+                            style={{
+                                ...styles.secretText,
+                                ...(isDark ? styles.secretTextDark : {})
+                            }}
+                        >
+                            Parabéns! Você encontrou Miguel Henri!!!
+                        </p>
+
+                        <button
+                            type="button"
+                            style={styles.secretButton}
+                            onClick={() => setMostrarSegredo(false)}
+                        >
+                            Fechar
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {mostrarLista && (
+                <div
+                    style={styles.secretOverlay}
+                    onClick={() => setMostrarLista(false)}
+                >
+                    <div
+                        style={{
+                            ...styles.secretCard,
+                            ...(isDark ? styles.secretCardDark : {})
+                        }}
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <h2
+                            style={{
+                                ...styles.secretTitle,
+                                ...(isDark ? styles.secretTitleDark : {})
+                            }}
+                        >
+                            Easter Eggs da Adega
+                        </h2>
+
+                        <p
+                            style={{
+                                ...styles.secretText,
+                                ...(isDark ? styles.secretTextDark : {})
+                            }}
+                        >
+                            Descubra todos os segredos escondidos no sistema!
+                        </p>
+
+                        {listaEasterEggs.map((egg) => {
+                            const encontrado =
+                                easterEggsEncontrados.includes(egg.id);
+
+                            return (
+                                <div
+                                    key={egg.id}
+                                    style={{
+                                        ...styles.eggItem,
+                                        ...(isDark ? styles.eggItemDark : {})
+                                    }}
+                                >
+                                    <span>{egg.nome}</span>
+
+                                    <strong
+                                        style={{
+                                            color: encontrado
+                                                ? "#16a34a"
+                                                : "#dc2626"
+                                        }}
+                                    >
+                                        {encontrado
+                                            ? "ENCONTRADO"
+                                            : "BLOQUEADO"}
+                                    </strong>
+                                </div>
+                            );
+                        })}
+
+                        <button
+                            type="button"
+                            style={styles.secretButton}
+                            onClick={() => setMostrarLista(false)}
+                        >
+                            Fechar
+                        </button>
+                    </div>
+                </div>
+            )}
         </aside>
     );
 }
 
 const styles = {
-
     sidebar: {
         position: "fixed",
         left: 0,
@@ -498,5 +682,87 @@ const styles = {
 
     bottomItemDark: {
         color: "#e5e7eb"
+    },
+
+    secretOverlay: {
+        position: "fixed",
+        inset: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.8)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 9999,
+        padding: "20px"
+    },
+
+    secretCard: {
+        width: "100%",
+        maxWidth: "420px",
+        backgroundColor: "#ffffff",
+        borderRadius: "18px",
+        padding: "24px",
+        textAlign: "center",
+        boxShadow: "0 20px 50px rgba(0,0,0,0.35)",
+        boxSizing: "border-box"
+    },
+
+    secretCardDark: {
+        backgroundColor: "#111827"
+    },
+
+    secretImage: {
+        width: "100%",
+        maxHeight: "300px",
+        objectFit: "contain",
+        borderRadius: "10px",
+        marginBottom: "18px"
+    },
+
+    secretTitle: {
+        margin: 0,
+        fontSize: "24px",
+        color: "#111827"
+    },
+
+    secretTitleDark: {
+        color: "#f9fafb"
+    },
+
+    secretText: {
+        margin: "12px 0 20px",
+        color: "#4b5563"
+    },
+
+    secretTextDark: {
+        color: "#d1d5db"
+    },
+
+    secretButton: {
+        border: "none",
+        borderRadius: "10px",
+        backgroundColor: "#303e51",
+        color: "#ffffff",
+        padding: "12px 24px",
+        fontWeight: "700",
+        cursor: "pointer"
+    },
+
+    eggItem: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: "12px",
+        padding: "12px",
+        marginBottom: "8px",
+        border: "1px solid #e2e8f0",
+        borderRadius: "10px",
+        color: "#111827",
+        fontSize: "13px",
+        textAlign: "left"
+    },
+
+    eggItemDark: {
+        borderColor: "#374151",
+        color: "#f9fafb"
     }
 };
