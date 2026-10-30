@@ -178,7 +178,7 @@ export default function Painel() {
               <h2 style={styles.secretTitle}>Easter Eggs Do Nelson</h2>
 
               <img
-                src="/bryan.png"
+                src="/bryan.jpg"
                 alt="Bryan - O Líder da Codiguitos"
                 style={styles.secretImage}
               />

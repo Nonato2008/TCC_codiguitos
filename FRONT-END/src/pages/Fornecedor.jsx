@@ -293,7 +293,7 @@ export default function Fornecedor() {
                             onClick={(event) => event.stopPropagation()}
                         >
                             <img
-                                src="/sella.png"
+                                src="/sella.jpg"
                                 alt="Sella - O Mestre das Fritadas"
                                 style={styles.secretImage}
                             />
