@@ -49,3 +49,15 @@ body.dark .form-control::-webkit-input-placeholder {
 body.dark .btn {
   border: none;
 }
+
+@keyframes achievementSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}

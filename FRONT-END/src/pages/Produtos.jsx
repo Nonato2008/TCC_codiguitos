@@ -1,28 +1,59 @@
+
 import { Link, useNavigate } from "react-router-dom";
-import React, { useEffect, useState, useContext, useMemo } from "react";
+import React, { useEffect, useState, useContext, useMemo, useRef } from "react";
 import Sidebar from "../components/Sidebar";
 import { useProdutos } from "../hooks/useProdutos";
 import { ThemeContext } from "../contexts/ThemeContext";
 import { buscarFornecedores } from "../services/fornecedoresService";
 
 export default function Produtos() {
-  // Hook que carrega a lista de vendas
   const { produtos, loading, error } = useProdutos();
-
   const navigate = useNavigate();
 
   const { theme } = useContext(ThemeContext);
   const isDark = theme === "dark";
 
-  // Lista de fornecedores (para mostrar o nome a partir do IdVendedor)
   const [fornecedores, setFornecedores] = useState([]);
-
-  // Filtro de data (input do tipo date)
   const [dataFiltro, setDataFiltro] = useState("");
-  // Busca livre por nome / id / fornecedor
   const [busca, setBusca] = useState("");
 
-  // Busca os fornecedores uma única vez ao montar o componente
+  const [mostrarSegredo, setMostrarSegredo] = useState(false);
+  const cliquesQuantidade = useRef(0);
+
+  function clicarQuantidade() {
+  cliquesQuantidade.current += 1;
+
+  if (cliquesQuantidade.current === 5) {
+    cliquesQuantidade.current = 0;
+    setMostrarSegredo(true);
+
+    let encontrados = [];
+
+    try {
+      encontrados = JSON.parse(
+        localStorage.getItem("easterEggsEncontrados") || "[]"
+      );
+    } catch {
+      encontrados = [];
+    }
+
+    if (!encontrados.includes(3)) {
+      encontrados.push(3);
+
+      localStorage.setItem(
+        "easterEggsEncontrados",
+        JSON.stringify(encontrados)
+      );
+
+      window.dispatchEvent(
+        new CustomEvent("easterEggDesbloqueado", {
+          detail: { id: 3 },
+        })
+      );
+    }
+  }
+}
+
   useEffect(() => {
     const carregarFornecedores = async () => {
       try {
@@ -36,65 +67,79 @@ export default function Produtos() {
     carregarFornecedores();
   }, []);
 
-  // Cria um mapa em memória para lookup rápido por id
   const fornecedoresPorId = useMemo(() => {
     const map = new Map();
+
     (Array.isArray(fornecedores) ? fornecedores : []).forEach((f) => {
       const id = f.Id ?? f.id ?? f.idFornecedor ?? f.IdFornecedor;
-      if (id !== undefined && id !== null) map.set(String(id), f);
+
+      if (id !== undefined && id !== null) {
+        map.set(String(id), f);
+      }
     });
+
     return map;
   }, [fornecedores]);
 
-  // Retorna o nome do fornecedor a partir do id (aceita Id ou id)
   const encontrarNomeFornecedor = (id) => {
     if (id === undefined || id === null || id === "") return "";
+
     const f = fornecedoresPorId.get(String(id));
+
     return f ? (f.Nome ?? f.nome ?? "") : `Fornecedor #${id}`;
   };
 
-  // Retorna o objeto completo do fornecedor ou null
   const obterFornecedorPorId = (id) => {
     if (id === undefined || id === null || id === "") return null;
+
     return fornecedoresPorId.get(String(id)) || null;
   };
 
-  // Converte uma data para o formato YYYY-MM-DD respeitando o fuso local
-  // (usado para comparar com o valor do input type="date")
   const formatarDataLocal = (data) => {
     const dataLocal = new Date(data);
+
     if (Number.isNaN(dataLocal.getTime())) return "";
 
     const offset = dataLocal.getTimezoneOffset();
     const localDate = new Date(dataLocal.getTime() - offset * 60000);
+
     return localDate.toISOString().slice(0, 10);
   };
 
-  // Helpers para normalizar campos do produto (aceita variações de Pascal/camelCase)
-  const getId = (p) => p?.Id ?? p?.id ?? p?.IdProduto ?? p?.idProduto ?? p?.id;
+  const getId = (p) =>
+    p?.Id ?? p?.id ?? p?.IdProduto ?? p?.idProduto ?? p?.id;
+
   const getNome = (p) => p?.Nome ?? p?.nome ?? "";
+
   const getPreco = (p) =>
     Number(p?.Preco ?? p?.preco ?? p?.Valor ?? p?.valor ?? 0);
+
   const getQuantidade = (p) =>
     Number(p?.Quantidade ?? p?.quantidade ?? p?.Estoque ?? p?.estoque ?? 0);
+
   const getDataVenc = (p) =>
     p?.DataVenc ??
     p?.dataVenc ??
     p?.dataVencimento ??
     p?.DataVencimento ??
     p?.dataVenc;
+
   const getIdFornecedorFromProduct = (p) => p?.idFornecedor;
 
   const hoje = new Date();
+
   const isExpired = (p) => {
     const dv = getDataVenc(p);
+
     if (!dv) return false;
+
     const d = new Date(dv);
+
     if (Number.isNaN(d.getTime())) return false;
+
     return d < new Date(hoje.toDateString());
   };
 
-  // Filtra os produtos pela data selecionada (data de cadastro ou vencimento) e pelo termo de busca
   const produtosEnriquecidos = (Array.isArray(produtos) ? produtos : []).map(
     (p) => ({
       produto: p,
@@ -103,9 +148,13 @@ export default function Produtos() {
       preco: getPreco(p),
       quantidade: getQuantidade(p),
       dataVenc: getDataVenc(p),
-      fornecedorNome: encontrarNomeFornecedor(getIdFornecedorFromProduct(p)),
-      fornecedorObj: obterFornecedorPorId(getIdFornecedorFromProduct(p)),
-    }),
+      fornecedorNome: encontrarNomeFornecedor(
+        getIdFornecedorFromProduct(p)
+      ),
+      fornecedorObj: obterFornecedorPorId(
+        getIdFornecedorFromProduct(p)
+      ),
+    })
   );
 
   const produtosFiltrados = produtosEnriquecidos.filter((item) => {
@@ -115,13 +164,16 @@ export default function Produtos() {
         item.produto.DataCad ??
         item.produto.dataVenc ??
         item.produto.DataVenc;
+
       const dataProdutoFormatada = formatarDataLocal(dataProduto);
+
       if (dataProdutoFormatada !== dataFiltro) return false;
     }
 
     if (!busca) return true;
 
     const termo = String(busca).trim().toLowerCase();
+
     if (!termo) return true;
 
     return (
@@ -131,7 +183,6 @@ export default function Produtos() {
     );
   });
 
-  // Estado de carregamento
   if (loading) {
     return (
       <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
@@ -145,6 +196,7 @@ export default function Produtos() {
               >
                 Produtos
               </h1>
+
               <p
                 style={{
                   ...styles.subtitle,
@@ -161,6 +213,7 @@ export default function Produtos() {
               >
                 0 produtos
               </div>
+
               <Link to="/produtos/cadastrar" style={{ textDecoration: "none" }}>
                 <button
                   style={{
@@ -184,7 +237,6 @@ export default function Produtos() {
     );
   }
 
-  // Estado de erro
   if (error) {
     return (
       <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
@@ -198,6 +250,7 @@ export default function Produtos() {
               >
                 Produtos
               </h1>
+
               <p
                 style={{
                   ...styles.subtitle,
@@ -214,6 +267,7 @@ export default function Produtos() {
               >
                 0 produtos
               </div>
+
               <Link to="/produtos/cadastrar" style={{ textDecoration: "none" }}>
                 <button
                   style={{
@@ -251,6 +305,7 @@ export default function Produtos() {
             >
               Produtos
             </h1>
+
             <p
               style={{
                 ...styles.subtitle,
@@ -262,15 +317,19 @@ export default function Produtos() {
           </div>
 
           <div style={styles.headerRight}>
-            {/* Contador dinâmico (muda conforme o filtro) */}
             <div
-              style={{ ...styles.total, ...(isDark ? styles.totalDark : {}) }}
+              onClick={clicarQuantidade}
+              style={{
+                ...styles.total,
+                ...(isDark ? styles.totalDark : {}),
+                cursor: "pointer",
+                userSelect: "none",
+              }}
             >
               {produtosFiltrados.length}{" "}
               {produtosFiltrados.length === 1 ? "produto" : "produtos"}
             </div>
 
-            {/* Busca por nome / id / fornecedor */}
             <input
               type="text"
               placeholder="Buscar por nome, id ou fornecedor..."
@@ -284,7 +343,6 @@ export default function Produtos() {
               aria-label="Buscar produtos"
             />
 
-            {/* Filtro por data */}
             <input
               type="date"
               value={dataFiltro}
@@ -296,7 +354,6 @@ export default function Produtos() {
               aria-label="Filtrar produtos por data"
             />
 
-            {/* Botão "Limpar" só aparece se houver filtro ativo */}
             {dataFiltro && (
               <button
                 type="button"
@@ -328,7 +385,10 @@ export default function Produtos() {
             <div
               style={{ ...styles.empty, ...(isDark ? styles.emptyDark : {}) }}
             >
-              <span className="material-symbols-outlined">inventory_2</span>
+              <span className="material-symbols-outlined">
+                inventory_2
+              </span>
+
               <p style={{ ...(isDark ? styles.textDark : {}) }}>
                 {dataFiltro
                   ? "Nenhum produto encontrado para a data selecionada."
@@ -349,7 +409,11 @@ export default function Produtos() {
                   item.produto.Imagem ||
                   item.produto.imagemUrl ||
                   null;
-                const imageUrl = img ? `http://localhost:8000${img}` : null;
+
+                const imageUrl = img
+                  ? `http://localhost:8000${img}`
+                  : null;
+
                 return (
                   <article
                     key={item.id}
@@ -366,6 +430,7 @@ export default function Produtos() {
                       e.currentTarget.style.boxShadow = isDark
                         ? "0 8px 16px rgba(0, 0, 0, 0.4)"
                         : "0 8px 16px rgba(0, 0, 0, 0.1)";
+
                       e.currentTarget.style.transform = "translateY(-2px)";
                     }}
                     onMouseLeave={(e) => {
@@ -392,7 +457,8 @@ export default function Produtos() {
                           style={{
                             width: "100%",
                             height: "100%",
-                            objectFit: "cover",
+                            objectFit: "contain",
+                            objectPosition: "center",
                           }}
                         />
                       ) : (
@@ -414,6 +480,7 @@ export default function Produtos() {
                     >
                       {item.nome}
                     </h3>
+
                     <div
                       style={{
                         display: "flex",
@@ -423,12 +490,15 @@ export default function Produtos() {
                         marginBottom: 8,
                       }}
                     >
-                      <strong style={{ color: isDark ? "#bbf7d0" : "#047857" }}>
+                      <strong
+                        style={{ color: isDark ? "#bbf7d0" : "#047857" }}
+                      >
                         {item.preco.toLocaleString("pt-BR", {
                           style: "currency",
                           currency: "BRL",
                         })}
                       </strong>
+
                       <span
                         style={{
                           color:
@@ -449,10 +519,15 @@ export default function Produtos() {
                         color: isDark ? "#cbd5e1" : "#55616a",
                       }}
                     >
-                      <div>Fornecedor: {item.fornecedorNome || "—"}</div>
+                      <div>
+                        Fornecedor: {item.fornecedorNome || "—"}
+                      </div>
+
                       <div>
                         Vencimento:{" "}
-                        {item.dataVenc ? formatarDataLocal(item.dataVenc) : "—"}
+                        {item.dataVenc
+                          ? formatarDataLocal(item.dataVenc)
+                          : "—"}
                       </div>
                     </div>
                   </article>
@@ -461,6 +536,54 @@ export default function Produtos() {
             </div>
           )}
         </section>
+
+        {mostrarSegredo && (
+          <div
+            style={styles.secretOverlay}
+            onClick={() => setMostrarSegredo(false)}
+          >
+            <div
+              style={{
+                ...styles.secretCard,
+                ...(isDark ? styles.secretCardDark : {}),
+              }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <img
+                src="/jhonny.jpg"
+                alt="Jhonny - Fritador Supremo"
+                style={styles.secretImage}
+              />
+
+              <h3
+                style={{
+                  ...styles.secretTitle,
+                  ...(isDark ? styles.secretTitleDark : {}),
+                }}
+              >
+                Easter Eggs Do Nelson
+              </h3>
+
+              <p
+                style={{
+                  ...styles.secretText,
+                  ...(isDark ? styles.secretTextDark : {}),
+                }}
+              >
+                Parabéns! Você encontrou Jhonny!!!
+              </p>
+
+              <button
+                type="button"
+                style={styles.secretButton}
+                onClick={() => setMostrarSegredo(false)}
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+          
+        )}
       </main>
     </div>
   );
@@ -471,18 +594,22 @@ const styles = {
     minHeight: "100vh",
     backgroundColor: "#f5f6f8",
   },
+
   layoutDark: {
     backgroundColor: "#0f172a",
   },
+
   page: {
     marginLeft: "363px",
     minHeight: "100vh",
     padding: "30px 25px",
     boxSizing: "border-box",
   },
+
   pageDark: {
     backgroundColor: "#111827",
   },
+
   header: {
     maxWidth: "1150px",
     margin: "0 0 25px 0",
@@ -490,29 +617,35 @@ const styles = {
     justifyContent: "space-between",
     alignItems: "center",
   },
+
   headerRight: {
     display: "flex",
     alignItems: "center",
     gap: 12,
   },
+
   title: {
     margin: 0,
     fontSize: "32px",
     fontWeight: "700",
     color: "#243447",
   },
+
   titleDark: {
     color: "#f9fafb",
   },
+
   subtitle: {
     marginTop: "7px",
     marginBottom: 0,
     fontSize: "15px",
     color: "#718096",
   },
+
   subtitleDark: {
     color: "#d1d5db",
   },
+
   total: {
     backgroundColor: "#ffffff",
     padding: "10px 18px",
@@ -523,11 +656,13 @@ const styles = {
     fontSize: "15px",
     boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
   },
+
   totalDark: {
     backgroundColor: "#1f2937",
     borderColor: "#4b5563",
     color: "#f9fafb",
   },
+
   primaryButton: {
     border: "none",
     backgroundColor: "#303e51",
@@ -537,18 +672,22 @@ const styles = {
     fontWeight: 600,
     cursor: "pointer",
   },
+
   primaryButtonDark: {
     backgroundColor: "#2563eb",
   },
+
   content: {
     width: "100%",
     maxWidth: "1150px",
     margin: "0",
   },
+
   centerContent: {
     maxWidth: "1150px",
     margin: "0",
   },
+
   empty: {
     backgroundColor: "#ffffff",
     borderRadius: "12px",
@@ -557,23 +696,28 @@ const styles = {
     color: "#718096",
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
   },
+
   emptyDark: {
     backgroundColor: "#1f2937",
     color: "#d1d5db",
   },
+
   error: {
     backgroundColor: "#ffe5e5",
     color: "#b00020",
     padding: "20px",
     borderRadius: "10px",
   },
+
   errorDark: {
     backgroundColor: "#3f1721",
     color: "#fecdd3",
   },
+
   textDark: {
     color: "#e5e7eb",
   },
+
   dateInput: {
     border: "1px solid #cbd5e1",
     borderRadius: "8px",
@@ -584,11 +728,13 @@ const styles = {
     fontFamily: "Inter, sans-serif",
     outline: "none",
   },
+
   dateInputDark: {
     backgroundColor: "#1f2937",
     borderColor: "#4b5563",
     color: "#f9fafb",
   },
+
   clearFilterButton: {
     border: "1px solid #cbd5e1",
     borderRadius: "8px",
@@ -599,9 +745,72 @@ const styles = {
     fontSize: "13px",
     cursor: "pointer",
   },
+
   clearFilterButtonDark: {
     backgroundColor: "#1f2937",
     borderColor: "#4b5563",
     color: "#f9fafb",
+  },
+
+  secretOverlay: {
+    position: "fixed",
+    inset: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.75)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 9999,
+    padding: 20,
+  },
+
+  secretCard: {
+    backgroundColor: "#ffffff",
+    padding: 25,
+    borderRadius: 12,
+    width: "100%",
+    maxWidth: 450,
+    textAlign: "center",
+    boxShadow: "0 10px 30px rgba(0, 0, 0, 0.3)",
+  },
+
+  secretCardDark: {
+    backgroundColor: "#1f2937",
+  },
+
+  secretImage: {
+    width: "100%",
+    maxHeight: 300,
+    objectFit: "contain",
+    borderRadius: 8,
+  },
+
+  secretTitle: {
+    color: "#243447",
+    fontSize: 22,
+    marginBottom: 10,
+  },
+
+  secretTitleDark: {
+    color: "#f9fafb",
+  },
+
+  secretText: {
+    color: "#55616a",
+    fontSize: 15,
+    marginBottom: 20,
+  },
+
+  secretTextDark: {
+    color: "#d1d5db",
+  },
+
+  secretButton: {
+    border: "none",
+    backgroundColor: "#303e51",
+    color: "#ffffff",
+    padding: "10px 25px",
+    borderRadius: 8,
+    fontWeight: 600,
+    cursor: "pointer",
   },
 };
