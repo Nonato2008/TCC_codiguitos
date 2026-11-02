@@ -1,11 +1,10 @@
 
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import { useProdutos } from "../hooks/useProdutos";
 import { useVendas } from "../hooks/useVendas";
 import { useNavigate } from "react-router-dom";
 import { ThemeContext } from "../contexts/ThemeContext";
-import { buscarLucroReal } from "../services/vendasService";
 
 const MESES = [
   "Janeiro",
@@ -62,43 +61,6 @@ export default function Painel() {
   const isDark = theme === "dark";
 
   const { produtos, loading, error } = useProdutos();
-  const [historicoLucro, setHistoricoLucro] = useState([]);
-  const [loadingLucro, setLoadingLucro] = useState(true);
-  const [erroLucro, setErroLucro] = useState("");
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function carregarLucroReal() {
-      try {
-        setLoadingLucro(true);
-        setErroLucro("");
-        const dados = await buscarLucroReal();
-
-        if (!Array.isArray(dados)) {
-          throw new Error("O servidor retornou um histórico de lucro inválido.");
-        }
-
-        if (mounted) setHistoricoLucro(dados);
-      } catch (error) {
-        console.error("Erro ao carregar lucro realizado:", error);
-        if (mounted) {
-          setErroLucro(
-            error?.response?.data?.message ||
-              error?.message ||
-              "Não foi possível carregar o lucro realizado."
-          );
-        }
-      } finally {
-        if (mounted) setLoadingLucro(false);
-      }
-    }
-
-    carregarLucroReal();
-    return () => {
-      mounted = false;
-    };
-  }, []);
 
   const {
     vendas,
@@ -178,29 +140,32 @@ export default function Painel() {
           ? `${MESES[Number(mesFaturamento)]} de ${anoFaturamento}`
           : `Ano de ${anoFaturamento}`;
 
-  let lucroAcumuladoCentavos = 0;
-  const lucroSerie = historicoLucro
-    .map((item) => {
-      const vendasComCusto = Number(item.VendasComCusto ?? 0);
-      const lucroDia = Number(item.LucroDia ?? 0);
-      if (!Number.isFinite(lucroDia) || !vendasComCusto) return null;
+  const vendasPorDiaCentavos = vendasLista.reduce((totais, venda) => {
+    const data = obterDataVenda(venda);
+    const valor = Number(venda.ValorTotal ?? venda.valorTotal ?? 0);
+    if (!data || !Number.isFinite(valor)) return totais;
 
-      const lucroDiaCentavos = Math.round(lucroDia * 100);
-      lucroAcumuladoCentavos += lucroDiaCentavos;
-      return {
-        data: String(item.Data ?? ""),
-        lucroDia: lucroDiaCentavos / 100,
-        acumulado: lucroAcumuladoCentavos / 100,
-      };
-    })
-    .filter(Boolean);
-  const vendasSemCustoHistorico = historicoLucro.reduce(
-    (total, item) => total + Number(item.VendasSemCusto ?? 0),
+    const chaveData = [
+      data.getFullYear(),
+      String(data.getMonth() + 1).padStart(2, "0"),
+      String(data.getDate()).padStart(2, "0"),
+    ].join("-");
+    totais.set(
+      chaveData,
+      (totais.get(chaveData) ?? 0) + Math.round(valor * 100)
+    );
+    return totais;
+  }, new Map());
+  const vendasDiarias = [...vendasPorDiaCentavos.entries()]
+    .sort(([dataA], [dataB]) => dataA.localeCompare(dataB))
+    .map(([data, valorCentavos]) => ({
+      data,
+      valor: valorCentavos / 100,
+    }));
+  const faturamentoGrafico = vendasDiarias.reduce(
+    (total, item) => total + item.valor,
     0
   );
-  const lucroRealTotal = lucroSerie.length
-    ? lucroSerie[lucroSerie.length - 1].acumulado
-    : 0;
 
   const chart = {
     width: 760,
@@ -212,34 +177,22 @@ export default function Painel() {
   };
   const chartPlotWidth = chart.width - chart.left - chart.right;
   const chartPlotHeight = chart.bottom - chart.top;
-  const chartValues = lucroSerie.map((item) => item.acumulado);
-  const chartMinOriginal = chartValues.reduce(
-    (minimo, valor) => Math.min(minimo, valor),
+  const chartMaxOriginal = vendasDiarias.reduce(
+    (maximo, item) => Math.max(maximo, item.valor),
     0
   );
-  const chartMaxOriginal = chartValues.reduce(
-    (maximo, valor) => Math.max(maximo, valor),
-    0
-  );
-  const chartMin =
-    chartMinOriginal === chartMaxOriginal
-      ? chartMinOriginal - 1
-      : chartMinOriginal;
-  const chartMax =
-    chartMinOriginal === chartMaxOriginal
-      ? chartMaxOriginal + 1
-      : chartMaxOriginal;
-  const chartRange = chartMax - chartMin;
-  const chartPoints = lucroSerie.map((item, index) => ({
+  const chartMax = chartMaxOriginal === 0 ? 1 : chartMaxOriginal;
+  const chartRange = chartMax;
+  const chartPoints = vendasDiarias.map((item, index) => ({
     ...item,
     x:
       chart.left +
-      (lucroSerie.length === 1
+      (vendasDiarias.length === 1
         ? chartPlotWidth / 2
-        : (index / (lucroSerie.length - 1)) * chartPlotWidth),
+        : (index / (vendasDiarias.length - 1)) * chartPlotWidth),
     y:
       chart.top +
-      ((chartMax - item.acumulado) / chartRange) * chartPlotHeight,
+      ((chartMax - item.valor) / chartRange) * chartPlotHeight,
   }));
   const linePoints = chartPoints.map((point) => `${point.x},${point.y}`).join(" ");
   const chartTickStep = Math.max(1, Math.ceil((chartPoints.length - 1) / 5));
@@ -256,8 +209,7 @@ export default function Painel() {
       y: chart.top + (chartPlotHeight * index) / 4,
     };
   });
-  const yZero =
-    chart.top + ((chartMax - 0) / chartRange) * chartPlotHeight;
+  const yZero = chart.bottom;
 
   function formatarDataGrafico(valor) {
     if (valor instanceof Date && !Number.isNaN(valor.getTime())) {
@@ -630,46 +582,53 @@ export default function Painel() {
             ...styles.profitCard,
             ...(isDark ? styles.largeCardDark : {}),
           }}
-          aria-labelledby="lucro-real-titulo"
+          aria-labelledby="faturamento-diario-titulo"
         >
           <div style={styles.profitHeader}>
             <div>
               <h3
-                id="lucro-real-titulo"
+                id="faturamento-diario-titulo"
                 style={{
                   ...styles.cardTitle,
                   ...(isDark ? styles.cardTitleDark : {}),
                 }}
               >
-                Lucro realizado acumulado
+                Faturamento diário
               </h3>
+              <p
+                style={{
+                  ...styles.profitDescription,
+                  ...(isDark ? styles.profitDescriptionDark : {}),
+                }}
+              >
+                Valor total das vendas realizadas em cada dia.
+              </p>
             </div>
             <strong
               style={{
                 ...styles.profitTotal,
                 ...(isDark ? styles.profitTotalDark : {}),
-                ...(lucroRealTotal < 0 ? styles.profitNegative : {}),
               }}
               aria-live="polite"
             >
-              {loadingLucro
+              {loadingVendas
                 ? "Carregando..."
-                : erroLucro
+                : errorVendas
                   ? "Indisponível"
-                  : formatarMoeda(lucroRealTotal)}
+                  : formatarMoeda(faturamentoGrafico)}
             </strong>
           </div>
 
-          {loadingLucro ? (
+          {loadingVendas ? (
             <div
               style={{
                 ...styles.profitEmpty,
                 ...(isDark ? styles.profitEmptyDark : {}),
               }}
             >
-              Carregando histórico de lucro...
+              Carregando vendas...
             </div>
-          ) : erroLucro ? (
+          ) : errorVendas ? (
             <div
               style={{
                 ...styles.profitError,
@@ -677,15 +636,13 @@ export default function Painel() {
               }}
               role="alert"
             >
-              {erroLucro}
-              <br />
-              Aplique a migration `BACK-END/migrations/20261101_add_custo_unitario_itens_vendas.sql` para habilitar o registro de custo por item vendido.
+              {errorVendas}
             </div>
           ) : chartPoints.length > 0 ? (
             <div
               style={styles.lineChartContainer}
               role="img"
-              aria-label={`Gráfico de linha do lucro realizado acumulado por data. Total calculável: ${formatarMoeda(lucroRealTotal)}.`}
+              aria-label={`Gráfico de linha do faturamento diário. Total vendido: ${formatarMoeda(faturamentoGrafico)}.`}
             >
               <svg
                 viewBox={`0 0 ${chart.width} ${chart.height}`}
@@ -726,7 +683,7 @@ export default function Painel() {
                   <polyline
                     points={linePoints}
                     fill="none"
-                    stroke={lucroRealTotal < 0 ? "#ef4444" : "#16a34a"}
+                    stroke="#16a34a"
                     strokeWidth="3"
                     strokeLinejoin="round"
                     strokeLinecap="round"
@@ -738,12 +695,11 @@ export default function Painel() {
                     cx={point.x}
                     cy={point.y}
                     r="4"
-                    fill={lucroRealTotal < 0 ? "#ef4444" : "#16a34a"}
+                    fill="#16a34a"
                   >
                     <title>
-                      {formatarDataGrafico(point.data)} — lucro do dia:{" "}
-                      {formatarMoeda(point.lucroDia)}; acumulado:{" "}
-                      {formatarMoeda(point.acumulado)}
+                      {formatarDataGrafico(point.data)} — vendas do dia:{" "}
+                      {formatarMoeda(point.valor)}
                     </title>
                   </circle>
                 ))}
@@ -768,30 +724,9 @@ export default function Painel() {
                 ...(isDark ? styles.profitEmptyDark : {}),
               }}
             >
-                Ainda não há vendas com custo histórico registrado para calcular o lucro realizado.
+              Ainda não há vendas registradas para exibir.
             </div>
           )}
-          {vendasSemCustoHistorico > 0 && !loadingLucro && !erroLucro && (
-            <div
-                style={{
-                  ...styles.profitWarning,
-                  ...(isDark ? styles.profitWarningDark : {}),
-                }}
-                role="status"
-            >
-                {vendasSemCustoHistorico === 1
-                  ? "1 venda antiga não possui custo histórico registrado e não foi incluída no cálculo."
-                  : `${vendasSemCustoHistorico} vendas antigas não possuem custo histórico registrado e não foram incluídas no cálculo.`}
-            </div>
-          )}
-          <p
-            style={{
-                ...styles.profitFootnote,
-              ...(isDark ? styles.profitFootnoteDark : {}),
-            }}
-          >
-            Lucro bruto acumulado das vendas com custo unitário registrado; não inclui impostos ou outras despesas.
-          </p>
         </section>
       </main>
     </div>
@@ -1269,10 +1204,6 @@ const styles = {
     color: "#86efac",
   },
 
-  profitNegative: {
-    color: "#dc2626",
-  },
-
   lineChartContainer: {
     width: "100%",
     overflowX: "auto",
@@ -1309,31 +1240,6 @@ const styles = {
   profitErrorDark: {
     backgroundColor: "#3f1721",
     color: "#fecdd3",
-  },
-
-  profitWarning: {
-    marginTop: "14px",
-    padding: "12px 14px",
-    borderRadius: "8px",
-    backgroundColor: "#fffbeb",
-    color: "#92400e",
-    fontSize: "13px",
-    lineHeight: 1.5,
-  },
-
-  profitWarningDark: {
-    backgroundColor: "#422006",
-    color: "#fde68a",
-  },
-
-  profitFootnote: {
-    margin: "18px 0 0",
-    color: "#718096",
-    fontSize: "12px",
-  },
-
-  profitFootnoteDark: {
-    color: "#cbd5e1",
   },
 
 };
