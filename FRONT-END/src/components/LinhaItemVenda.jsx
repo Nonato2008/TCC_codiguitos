@@ -12,27 +12,14 @@ function getNomeProduto(produto) {
 
 function getPrecoProduto(produto) {
   return Number(
-    produto?.Preco ??
-      produto?.preco ??
-      produto?.Valor ??
-      produto?.valor ??
-      produto?.PrecoVenda ??
-      produto?.precoVenda ??
-      0
+    produto.Preco 
+    
   );
 }
 
 function getEstoqueProduto(produto) {
   return Number(
-    produto?.Quantidade ??
-      produto?.quantidade ??
-      produto?.Estoque ??
-      produto?.estoque ??
-      produto?.QuantidadeEstoque ??
-      produto?.quantidadeEstoque ??
-      produto?.Qtd ??
-      produto?.qtd ??
-      0
+    produto.Quantidade 
   );
 }
 

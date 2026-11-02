@@ -2,9 +2,24 @@ import { useEffect, useState, useContext } from "react";
 import Sidebar from "../components/Sidebar";
 import { useProdutos } from "../hooks/useProdutos";
 import { useFornecedores } from "../hooks/useFornecedores";
-import { atualizarProduto } from "../services/produtosService";
+import { ajustarQuantidadeEstoque } from "../services/produtosService";
 import { formatErrorMessage } from "../utils/formatErrorMessage";
 import { ThemeContext } from "../contexts/ThemeContext";
+
+const CHAVE_PRODUTOS_DESATIVADOS = "produtosDesativados";
+
+function lerProdutosDesativados() {
+  try {
+    const ids = JSON.parse(
+      localStorage.getItem(CHAVE_PRODUTOS_DESATIVADOS) || "[]"
+    );
+
+    return Array.isArray(ids) ? ids.map(String) : [];
+  } catch (error) {
+    console.error("Erro ao carregar produtos desativados:", error);
+    return [];
+  }
+}
 
 // Monta a URL correta da imagem do produto
 // Aceita URL absoluta, caminho com/sem barra, ou retorna placeholder
@@ -22,18 +37,6 @@ function getImagemProduto(imagem) {
   return `http://localhost:8000${caminho}`;
 }
 
-// Monta o payload de atualização do produto
-// Normaliza nomes de campos que podem vir em PascalCase ou camelCase
-function montarPayloadProduto(produto, quantidadeAtual) {
-  return {
-    idFornecedor: produto.IdFornecedor ?? produto.idFornecedor ?? 1,
-    nome: produto.nome ?? produto.Nome ?? "",
-    preco: Number(produto.Preco ?? produto.preco ?? 0),
-    quantidade: Number(quantidadeAtual ?? produto.quantidade ?? 0),
-    dataVenc: produto.DataVenc ?? produto.dataVenc,
-  };
-}
-
 // Verifica se o produto está vencido com base na data de vencimento
 function getStatusValidade(produto) {
   const dataVencimento = produto?.DataVenc ?? produto?.dataVenc ?? produto?.data_venc;
@@ -42,7 +45,14 @@ function getStatusValidade(produto) {
     return { texto: "Na validade", tipo: "valid" };
   }
 
-  const data = new Date(dataVencimento);
+  const textoData = String(dataVencimento).trim();
+  const data = /^\d{4}-\d{2}-\d{2}$/.test(textoData)
+    ? new Date(
+        Number(textoData.slice(0, 4)),
+        Number(textoData.slice(5, 7)) - 1,
+        Number(textoData.slice(8, 10))
+      )
+    : new Date(textoData);
   if (Number.isNaN(data.getTime())) {
     return { texto: "Na validade", tipo: "valid" };
   }
@@ -64,8 +74,17 @@ export default function GerenciamentoEstoque() {
   const { theme } = useContext(ThemeContext);
   const isDark = theme === "dark";
 
-  // Lista local de produtos (permite ajustes otimistas sem refetch)
+  // Mantém a lista local sincronizada com os ajustes confirmados.
   const [listaProdutos, setListaProdutos] = useState([]);
+  const [produtosSalvando, setProdutosSalvando] = useState([]);
+  const [idsProdutosDesativados, setIdsProdutosDesativados] = useState(
+    lerProdutosDesativados
+  );
+  const [abaProdutos, setAbaProdutos] = useState("ativos");
+  const [filtroNome, setFiltroNome] = useState("");
+  const [filtroFornecedor, setFiltroFornecedor] = useState("");
+  const [quantidadeMinima, setQuantidadeMinima] = useState("");
+  const [filtroValidade, setFiltroValidade] = useState("todos");
 
   // Descobre o nome do fornecedor a partir do id do produto
   const getFornecedorNome = (produto) => {
@@ -77,8 +96,7 @@ export default function GerenciamentoEstoque() {
     return fornecedor?.Nome ?? fornecedor?.nome ?? "Fornecedor não informado";
   };
 
-  // Normaliza os produtos vindos do hook para o formato usado na tela
-  // Adiciona campos auxiliares como quantidadeAjuste, ativoParaVenda e imagem
+  // Normaliza os produtos vindos do hook para o formato usado na tela.
   useEffect(() => {
     setListaProdutos(
       (produtos || []).map((produto, index) => {
@@ -95,9 +113,8 @@ export default function GerenciamentoEstoque() {
             `${produto.Nome ?? produto.nome ?? "produto"}-${index}`,
           nome: produto.Nome ?? produto.nome ?? `Produto ${index + 1}`,
           quantidade: quantidadeAtual,
-          quantidadeAjuste: 0,
-          ativoParaVenda:
-            produto.ativoParaVenda ?? (produto.Status ? produto.Status !== "Esgotado" : true),
+          quantidadeAjuste: "",
+          operacaoEstoque: "entrada",
           imagemOriginal,
           imagem: quantidadeAtual === 0 ? "esgotado.jpg" : imagemOriginal,
         };
@@ -105,119 +122,163 @@ export default function GerenciamentoEstoque() {
     );
   }, [produtos]);
 
-  // Atualiza o input de ajuste de quantidade do produto
-  // Aceita string vazia temporariamente para permitir apagar o valor
+  // Mantém a quantidade digitada sem arredondar valores inválidos em silêncio.
   function atualizarQuantidadeEntrada(event, idProduto) {
     const valorDigitado = event.target.value;
-
-    if (valorDigitado === "") {
-      setListaProdutos((atual) =>
-        atual.map((produto) =>
-          produto.id === idProduto
-            ? { ...produto, quantidadeAjuste: "" }
-            : produto
-        )
-      );
-
-      return;
-    }
-
-    const valor = Number(valorDigitado);
-
-    if (Number.isNaN(valor)) {
-      return;
-    }
 
     setListaProdutos((atual) =>
       atual.map((produto) =>
         produto.id === idProduto
-          ? { ...produto, quantidadeAjuste: Math.max(0, Math.floor(valor)) }
+          ? { ...produto, quantidadeAjuste: valorDigitado }
           : produto
       )
     );
   }
 
-  // Salva a nova quantidade do produto no banco de dados
-  async function salvarProdutoNoBanco(idProduto, quantidadeAtual) {
-    const produto = listaProdutos.find((p) => p.id === idProduto);
-    if (!produto) return;
-
-    const payload = montarPayloadProduto(produto, quantidadeAtual);
-    await atualizarProduto(idProduto, payload);
+  function selecionarOperacaoEstoque(idProduto, operacaoEstoque) {
+    setListaProdutos((atual) =>
+      atual.map((produto) =>
+        produto.id === idProduto
+          ? { ...produto, operacaoEstoque }
+          : produto
+      )
+    );
   }
 
-  // Ajusta o estoque somando ou subtraindo o valor informado
-  // Faz atualização otimista e reverte em caso de erro
-  async function ajustarEstoque(tipo, idProduto) {
-    const produtoAtual = listaProdutos.find((produto) => produto.id === idProduto);
-    const ajuste = Number(produtoAtual?.quantidadeAjuste ?? 0);
+  async function confirmarOperacaoEstoque(event, idProduto) {
+    event.preventDefault();
 
-    if (!produtoAtual || !Number.isFinite(ajuste) || ajuste <= 0) {
+    const produtoAtual = listaProdutos.find((produto) => produto.id === idProduto);
+    const ajuste = Number(produtoAtual?.quantidadeAjuste);
+
+    if (
+      !produtoAtual ||
+      !Number.isInteger(ajuste) ||
+      ajuste <= 0 ||
+      produtosSalvando.includes(idProduto)
+    ) {
       return;
     }
 
-    const quantidadeAnterior = produtoAtual.quantidade;
     const novaQuantidade =
-      tipo === "mais"
+      produtoAtual.operacaoEstoque === "entrada"
         ? produtoAtual.quantidade + ajuste
-        : Math.max(0, produtoAtual.quantidade - ajuste);
+        : produtoAtual.quantidade - ajuste;
 
-    // Atualiza a UI imediatamente (otimista)
-    setListaProdutos((atual) =>
-      atual.map((produto) => {
-        if (produto.id !== idProduto) {
-          return produto;
-        }
+    if (novaQuantidade < 0) {
+      alert("A retirada não pode ser maior que o estoque disponível.");
+      return;
+    }
 
-        const imagemAtual = produto.imagemOriginal ?? produto.imagem ?? "/example.jpg";
+    if (novaQuantidade > 999999) {
+      alert("A quantidade em estoque não pode ultrapassar 999.999 unidades.");
+      return;
+    }
 
-        return {
-          ...produto,
-          quantidade: novaQuantidade,
-          quantidadeAjuste: 0,
-          imagem: novaQuantidade === 0 ? "esgotado.jpg" : imagemAtual,
-        };
-      })
-    );
+    setProdutosSalvando((atual) => [...atual, idProduto]);
 
     try {
-      await salvarProdutoNoBanco(idProduto, novaQuantidade);
-    } catch (err) {
-      console.error(err);
+      const resultado = await ajustarQuantidadeEstoque(idProduto, {
+        operacao: produtoAtual.operacaoEstoque,
+        quantidade: ajuste,
+      });
 
-      // Reverte para os valores anteriores em caso de falha
       setListaProdutos((atual) =>
         atual.map((produto) =>
           produto.id === idProduto
             ? {
                 ...produto,
-                quantidade: quantidadeAnterior,
-                quantidadeAjuste: ajuste,
+                quantidade: resultado.quantidade,
+                quantidadeAjuste: "",
+                Status: resultado.status,
                 imagem:
-                  quantidadeAnterior === 0 ? "esgotado.jpg" : produto.imagemOriginal ?? produto.imagem,
+                  resultado.quantidade === 0
+                    ? "esgotado.jpg"
+                    : produto.imagemOriginal ?? produto.imagem,
               }
             : produto
         )
       );
-
+    } catch (err) {
+      console.error(err);
       alert(
         formatErrorMessage(
           err,
           "Falha ao atualizar o estoque no banco de dados."
         )
       );
+    } finally {
+      setProdutosSalvando((atual) =>
+        atual.filter((id) => id !== idProduto)
+      );
     }
   }
 
-  // Alterna o produto entre disponível/desativado para venda (apenas local)
-  function alternarDisponibilidade(idProduto) {
-    setListaProdutos((atual) =>
-      atual.map((produto) =>
-        produto.id === idProduto
-          ? { ...produto, ativoParaVenda: !produto.ativoParaVenda }
-          : produto
-      )
-    );
+  function alternarDisponibilidade(idProduto, ativo) {
+    const idsAtualizados = ativo
+      ? idsProdutosDesativados.filter((id) => id !== String(idProduto))
+      : [...new Set([...idsProdutosDesativados, String(idProduto)])];
+
+    try {
+      localStorage.setItem(
+        CHAVE_PRODUTOS_DESATIVADOS,
+        JSON.stringify(idsAtualizados)
+      );
+      setIdsProdutosDesativados(idsAtualizados);
+    } catch (error) {
+      console.error("Erro ao alterar status do produto:", error);
+      alert("Não foi possível atualizar o status do produto neste navegador.");
+    }
+  }
+
+  const produtosFiltrados = listaProdutos.filter((produto) =>
+    {
+      const produtoAtivo = !idsProdutosDesativados.includes(String(produto.id));
+      const termoNome = filtroNome.trim().toLocaleLowerCase("pt-BR");
+      const nomeProduto = String(produto.nome ?? "").toLocaleLowerCase("pt-BR");
+      const idFornecedor = String(
+        produto.IdFornecedor ?? produto.idFornecedor ?? produto.id_fornecedor ?? ""
+      );
+      const quantidadeMinimaNumero =
+        quantidadeMinima === "" ? null : Number(quantidadeMinima);
+      const validade = getStatusValidade(produto);
+
+      if (abaProdutos === "ativos" ? !produtoAtivo : produtoAtivo) return false;
+      if (termoNome && !nomeProduto.includes(termoNome)) return false;
+      if (filtroFornecedor && idFornecedor !== filtroFornecedor) return false;
+      if (
+        quantidadeMinimaNumero !== null &&
+        produto.quantidade < quantidadeMinimaNumero
+      ) {
+        return false;
+      }
+      if (filtroValidade === "vencidos" && validade.tipo !== "expired") {
+        return false;
+      }
+      if (filtroValidade === "validos" && validade.tipo !== "valid") {
+        return false;
+      }
+
+      return true;
+    }
+  );
+
+  const totalProdutosAtivos = listaProdutos.filter(
+    (produto) => !idsProdutosDesativados.includes(String(produto.id))
+  ).length;
+
+  const totalProdutosDesativados = listaProdutos.length - totalProdutosAtivos;
+  const filtrosAtivos =
+    filtroNome ||
+    filtroFornecedor ||
+    quantidadeMinima !== "" ||
+    filtroValidade !== "todos";
+
+  function limparFiltros() {
+    setFiltroNome("");
+    setFiltroFornecedor("");
+    setQuantidadeMinima("");
+    setFiltroValidade("todos");
   }
 
   return (
@@ -234,6 +295,133 @@ export default function GerenciamentoEstoque() {
           </div>
         </header>
 
+        {!loading && !error && listaProdutos.length > 0 && (
+          <div
+            style={styles.tabs}
+            role="group"
+            aria-label="Filtrar produtos por status"
+          >
+            <button
+              type="button"
+              aria-pressed={abaProdutos === "ativos"}
+              onClick={() => setAbaProdutos("ativos")}
+              style={{
+                ...styles.tabButton,
+                ...(isDark ? styles.tabButtonDark : {}),
+                ...(abaProdutos === "ativos" ? styles.tabButtonActive : {}),
+              }}
+            >
+              Ativos ({totalProdutosAtivos})
+            </button>
+            <button
+              type="button"
+              aria-pressed={abaProdutos === "desativados"}
+              onClick={() => setAbaProdutos("desativados")}
+              style={{
+                ...styles.tabButton,
+                ...(isDark ? styles.tabButtonDark : {}),
+                ...(abaProdutos === "desativados" ? styles.tabButtonActive : {}),
+              }}
+            >
+              Desativados ({totalProdutosDesativados})
+            </button>
+          </div>
+        )}
+
+        {!loading && !error && listaProdutos.length > 0 && (
+          <section
+            style={{
+              ...styles.filtersCard,
+              ...(isDark ? styles.filtersCardDark : {}),
+            }}
+            aria-label="Filtros de estoque"
+          >
+            <div style={styles.filtersHeader}>
+              <div>
+                <h3 style={{ ...styles.filtersTitle, ...(isDark ? styles.filtersTitleDark : {}) }}>
+                  Pesquisar e filtrar
+                </h3>
+                <p style={{ ...styles.filtersDescription, ...(isDark ? styles.filtersDescriptionDark : {}) }}>
+                  Filtre os produtos por nome, fornecedor, quantidade e validade.
+                </p>
+              </div>
+              {filtrosAtivos && (
+                <button
+                  type="button"
+                  onClick={limparFiltros}
+                  style={{
+                    ...styles.clearFiltersButton,
+                    ...(isDark ? styles.clearFiltersButtonDark : {}),
+                  }}
+                >
+                  Limpar filtros
+                </button>
+              )}
+            </div>
+
+            <div style={styles.filtersGrid}>
+              <label style={{ ...styles.filterField, ...(isDark ? styles.filterFieldDark : {}) }}>
+                <span>Nome do produto</span>
+                <input
+                  type="search"
+                  value={filtroNome}
+                  onChange={(event) => setFiltroNome(event.target.value)}
+                  placeholder="Pesquisar por nome"
+                  style={{ ...styles.filterInput, ...(isDark ? styles.filterInputDark : {}) }}
+                />
+              </label>
+
+              <label style={{ ...styles.filterField, ...(isDark ? styles.filterFieldDark : {}) }}>
+                <span>Fornecedor</span>
+                <select
+                  value={filtroFornecedor}
+                  onChange={(event) => setFiltroFornecedor(event.target.value)}
+                  style={{ ...styles.filterInput, ...(isDark ? styles.filterInputDark : {}) }}
+                >
+                  <option value="">Todos os fornecedores</option>
+                  {(fornecedores || []).map((fornecedor, index) => {
+                    const id = fornecedor.Id ?? fornecedor.id ?? fornecedor.idFornecedor ?? fornecedor.IdFornecedor;
+                    const nome = fornecedor.Nome ?? fornecedor.nome;
+                    if (id === undefined || id === null || !nome) return null;
+
+                    return (
+                      <option key={`${id}-${index}`} value={String(id)}>
+                        {nome}
+                      </option>
+                    );
+                  })}
+                </select>
+              </label>
+
+              <label style={{ ...styles.filterField, ...(isDark ? styles.filterFieldDark : {}) }}>
+                <span>Quantidade mínima</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={quantidadeMinima}
+                  onChange={(event) => setQuantidadeMinima(event.target.value)}
+                  placeholder="Sem mínimo"
+                  style={{ ...styles.filterInput, ...(isDark ? styles.filterInputDark : {}) }}
+                />
+              </label>
+
+              <label style={{ ...styles.filterField, ...(isDark ? styles.filterFieldDark : {}) }}>
+                <span>Validade</span>
+                <select
+                  value={filtroValidade}
+                  onChange={(event) => setFiltroValidade(event.target.value)}
+                  style={{ ...styles.filterInput, ...(isDark ? styles.filterInputDark : {}) }}
+                >
+                  <option value="todos">Todos</option>
+                  <option value="validos">Na validade</option>
+                  <option value="vencidos">Vencidos</option>
+                </select>
+              </label>
+            </div>
+          </section>
+        )}
+
         {loading && <div style={{ ...styles.emptyState, ...(isDark ? styles.emptyStateDark : {}) }}>Carregando produtos...</div>}
 
         {!loading && error && <div style={{ ...styles.emptyStateError, ...(isDark ? styles.emptyStateErrorDark : {}) }}>{error}</div>}
@@ -242,10 +430,30 @@ export default function GerenciamentoEstoque() {
           <div style={{ ...styles.emptyState, ...(isDark ? styles.emptyStateDark : {}) }}>Nenhum produto cadastrado.</div>
         )}
 
-        {!loading && !error && listaProdutos.length > 0 && (
+        {!loading && !error && listaProdutos.length > 0 && produtosFiltrados.length === 0 && (
+          <div style={{ ...styles.emptyState, ...(isDark ? styles.emptyStateDark : {}) }}>
+            Nenhum produto {abaProdutos === "ativos" ? "ativo" : "desativado"} corresponde aos filtros.
+          </div>
+        )}
+
+        {!loading && !error && produtosFiltrados.length > 0 && (
           <div style={styles.listContainer}>
-            {listaProdutos.map((produto) => {
+            {produtosFiltrados.map((produto) => {
               const validade = getStatusValidade(produto);
+              const produtoAtivo = !idsProdutosDesativados.includes(
+                String(produto.id)
+              );
+              const quantidadeAjuste = Number(produto.quantidadeAjuste);
+              const quantidadePrevista =
+                produto.operacaoEstoque === "entrada"
+                  ? produto.quantidade + quantidadeAjuste
+                  : produto.quantidade - quantidadeAjuste;
+              const ajusteValido =
+                Number.isInteger(quantidadeAjuste) &&
+                quantidadeAjuste > 0 &&
+                quantidadePrevista >= 0 &&
+                quantidadePrevista <= 999999;
+              const salvando = produtosSalvando.includes(produto.id);
 
               return (
                 <section key={String(produto.id)} style={{ ...styles.card, ...(isDark ? styles.cardDark : {}) }}>
@@ -260,11 +468,11 @@ export default function GerenciamentoEstoque() {
                         <span
                           style={{
                             ...styles.statusBadge,
-                            ...(produto.ativoParaVenda ? styles.statusAtivo : styles.statusInativo),
+                            ...(produtoAtivo ? styles.statusAtivo : styles.statusInativo),
                             ...(isDark ? styles.statusBadgeDark : {}),
                           }}
                         >
-                          {produto.ativoParaVenda ? "Disponível para venda" : "Desativado para venda"}
+                          {produtoAtivo ? "Produto ativo" : "Produto desativado"}
                         </span>
                         <span
                           style={{
@@ -304,40 +512,122 @@ export default function GerenciamentoEstoque() {
                         </strong>
                       </div>
 
-                      <div style={styles.controlBox}>
-                        <button
-                          type="button"
-                          style={{ ...styles.circleButton, ...(isDark ? styles.circleButtonDark : {}) }}
-                          onClick={() => ajustarEstoque("menos", produto.id)}
-                          aria-label={`Diminuir estoque de ${produto.nome}`}
-                        >
-                          −
-                        </button>
+                      <form
+                        style={{
+                          ...styles.stockAdjustment,
+                          ...(isDark ? styles.stockAdjustmentDark : {}),
+                        }}
+                        onSubmit={(event) =>
+                          confirmarOperacaoEstoque(event, produto.id)
+                        }
+                      >
+                        <span style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>
+                          Ajustar quantidade
+                        </span>
 
+                        <div style={styles.operationButtons}>
+                          <button
+                            type="button"
+                            aria-pressed={produto.operacaoEstoque === "entrada"}
+                            onClick={() =>
+                              selecionarOperacaoEstoque(produto.id, "entrada")
+                            }
+                            style={{
+                              ...styles.operationButton,
+                              ...(isDark ? styles.operationButtonDark : {}),
+                              ...(produto.operacaoEstoque === "entrada"
+                                ? styles.operationButtonActive
+                                : {}),
+                            }}
+                          >
+                            + Adicionar
+                          </button>
+
+                          <button
+                            type="button"
+                            aria-pressed={produto.operacaoEstoque === "saida"}
+                            onClick={() =>
+                              selecionarOperacaoEstoque(produto.id, "saida")
+                            }
+                            style={{
+                              ...styles.operationButton,
+                              ...(isDark ? styles.operationButtonDark : {}),
+                              ...(produto.operacaoEstoque === "saida"
+                                ? styles.operationButtonRemoveActive
+                                : {}),
+                            }}
+                          >
+                            − Retirar
+                          </button>
+                        </div>
+
+                        <label
+                          htmlFor={`ajuste-estoque-${produto.id}`}
+                          style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}
+                        >
+                          Unidades
+                        </label>
                         <input
+                          id={`ajuste-estoque-${produto.id}`}
                           type="number"
-                          min="0"
+                          min="1"
+                          max="999999"
+                          step="1"
+                          required
                           value={produto.quantidadeAjuste}
-                          onChange={(event) => atualizarQuantidadeEntrada(event, produto.id)}
+                          onChange={(event) =>
+                            atualizarQuantidadeEntrada(event, produto.id)
+                          }
                           style={{ ...styles.input, ...(isDark ? styles.inputDark : {}) }}
                         />
 
+                        {Number.isInteger(quantidadeAjuste) &&
+                          quantidadeAjuste > 0 && (
+                            <span
+                              style={{
+                                ...styles.stockPreview,
+                                ...(isDark ? styles.stockPreviewDark : {}),
+                                ...(quantidadePrevista < 0 ||
+                                quantidadePrevista > 999999
+                                  ? isDark
+                                    ? styles.stockPreviewErrorDark
+                                    : styles.stockPreviewError
+                                  : {}),
+                              }}
+                            >
+                              {quantidadePrevista < 0
+                                ? "A retirada excede o estoque disponível."
+                                : quantidadePrevista > 999999
+                                  ? "O estoque não pode ultrapassar 999.999 unidades."
+                                  : `Estoque após a operação: ${quantidadePrevista} unidades`}
+                            </span>
+                          )}
+
                         <button
-                          type="button"
-                          style={{ ...styles.circleButton, ...(isDark ? styles.circleButtonDark : {}) }}
-                          onClick={() => ajustarEstoque("mais", produto.id)}
-                          aria-label={`Aumentar estoque de ${produto.nome}`}
+                          type="submit"
+                          disabled={!ajusteValido || salvando}
+                          style={{
+                            ...styles.confirmButton,
+                            ...(isDark ? styles.confirmButtonDark : {}),
+                            ...((!ajusteValido || salvando)
+                              ? styles.confirmButtonDisabled
+                              : {}),
+                          }}
                         >
-                          +
+                          {salvando
+                            ? "Salvando..."
+                            : "Confirmar operação"}
                         </button>
-                      </div>
+                      </form>
 
                       <button
                         type="button"
-                        onClick={() => alternarDisponibilidade(produto.id)}
+                        onClick={() =>
+                          alternarDisponibilidade(produto.id, !produtoAtivo)
+                        }
                         style={{ ...styles.toggleButton, ...(isDark ? styles.toggleButtonDark : {}) }}
                       >
-                        {produto.ativoParaVenda ? "Desativar para venda" : "Ativar para venda"}
+                        {produtoAtivo ? "Desativar" : "Reativar"}
                       </button>
                     </div>
                   </div>
@@ -396,6 +686,132 @@ const styles = {
 
   subtitleDark: { 
     color: "#d1d5db" 
+  },
+
+  tabs: {
+    display: "flex",
+    gap: "8px",
+    marginBottom: "20px",
+    borderBottom: "1px solid #e2e8f0",
+  },
+
+  tabButton: {
+    border: "none",
+    borderBottom: "2px solid transparent",
+    backgroundColor: "transparent",
+    color: "#64748b",
+    padding: "10px 12px",
+    fontWeight: 600,
+    cursor: "pointer",
+  },
+
+  tabButtonDark: {
+    color: "#cbd5e1",
+  },
+
+  tabButtonActive: {
+    color: "#303e51",
+    borderBottomColor: "#303e51",
+  },
+
+  filtersCard: {
+    marginBottom: "20px",
+    padding: "18px 20px",
+    backgroundColor: "#ffffff",
+    border: "1px solid #e2e8f0",
+    borderRadius: "12px",
+    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+    boxSizing: "border-box",
+  },
+
+  filtersCardDark: {
+    backgroundColor: "#1f2937",
+    borderColor: "#4b5563",
+  },
+
+  filtersHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: "12px",
+    marginBottom: "16px",
+  },
+
+  filtersTitle: {
+    margin: 0,
+    color: "#243447",
+    fontSize: "16px",
+    fontWeight: 700,
+  },
+
+  filtersTitleDark: {
+    color: "#f9fafb",
+  },
+
+  filtersDescription: {
+    margin: "4px 0 0",
+    color: "#718096",
+    fontSize: "13px",
+  },
+
+  filtersDescriptionDark: {
+    color: "#cbd5e1",
+  },
+
+  clearFiltersButton: {
+    border: "1px solid #cbd5e1",
+    borderRadius: "8px",
+    padding: "9px 10px",
+    backgroundColor: "#f8fafc",
+    color: "#243447",
+    fontWeight: 600,
+    fontSize: "13px",
+    cursor: "pointer",
+  },
+
+  clearFiltersButtonDark: {
+    backgroundColor: "#1f2937",
+    borderColor: "#4b5563",
+    color: "#f9fafb",
+  },
+
+  filtersGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+    gap: "14px",
+  },
+
+  filterField: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "7px",
+    color: "#475569",
+    fontSize: "13px",
+    fontWeight: 600,
+    minWidth: 0,
+  },
+
+  filterFieldDark: {
+    color: "#e5e7eb",
+  },
+
+  filterInput: {
+    width: "100%",
+    boxSizing: "border-box",
+    border: "1px solid #cbd5e1",
+    borderRadius: "8px",
+    padding: "10px 12px",
+    backgroundColor: "#ffffff",
+    color: "#243447",
+    fontSize: "14px",
+    fontFamily: "Inter, sans-serif",
+  },
+
+  filterInputDark: {
+    backgroundColor: "#1f2937",
+    borderColor: "#4b5563",
+    color: "#f9fafb",
   },
 
   emptyState: { 
@@ -617,27 +1033,53 @@ const styles = {
     color: "#f9fafb" 
   },
 
-  controlBox: { 
-    display: "flex", 
-    alignItems: "center", 
-    gap: "8px" 
+  stockAdjustment: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    alignItems: "center",
+    gap: "8px",
+    padding: "12px",
+    border: "1px solid #e2e8f0",
+    borderRadius: "10px",
   },
 
-  circleButton: { 
-    width: "32px", 
-    height: "32px", 
-    borderRadius: "50%", 
-    border: "1px solid #cbd5e1", 
-    backgroundColor: "#f8fafc", 
-    color: "#111827", 
-    cursor: "pointer", 
-    fontSize: "20px" 
+  stockAdjustmentDark: {
+    borderColor: "#374151",
   },
 
-  circleButtonDark: { 
-    backgroundColor: "#1f2937", 
-    borderColor: "#4b5563", 
-    color: "#f9fafb" 
+  operationButtons: {
+    gridColumn: "1 / -1",
+    display: "flex",
+    gap: "8px",
+  },
+
+  operationButton: {
+    flex: 1,
+    border: "1px solid #cbd5e1",
+    borderRadius: "8px",
+    backgroundColor: "#ffffff",
+    color: "#334155",
+    padding: "9px 10px",
+    cursor: "pointer",
+    fontWeight: 600,
+  },
+
+  operationButtonDark: {
+    backgroundColor: "#1f2937",
+    borderColor: "#4b5563",
+    color: "#e5e7eb",
+  },
+
+  operationButtonActive: {
+    backgroundColor: "#dcfce7",
+    borderColor: "#16a34a",
+    color: "#166534",
+  },
+
+  operationButtonRemoveActive: {
+    backgroundColor: "#fee2e2",
+    borderColor: "#dc2626",
+    color: "#991b1b",
   },
 
   input: { 
@@ -654,6 +1096,44 @@ const styles = {
     backgroundColor: "#1f2937", 
     borderColor: "#4b5563", 
     color: "#f9fafb" 
+  },
+
+  stockPreview: {
+    gridColumn: "1 / -1",
+    color: "#475569",
+    fontSize: "13px",
+  },
+
+  stockPreviewDark: {
+    color: "#cbd5e1",
+  },
+
+  stockPreviewError: {
+    color: "#b91c1c",
+  },
+
+  stockPreviewErrorDark: {
+    color: "#fca5a5",
+  },
+
+  confirmButton: {
+    gridColumn: "1 / -1",
+    border: "none",
+    borderRadius: "8px",
+    backgroundColor: "#303e51",
+    color: "#ffffff",
+    padding: "10px 12px",
+    cursor: "pointer",
+    fontWeight: 600,
+  },
+
+  confirmButtonDark: {
+    backgroundColor: "#334155",
+  },
+
+  confirmButtonDisabled: {
+    opacity: 0.6,
+    cursor: "not-allowed",
   },
 
   toggleButton: { 

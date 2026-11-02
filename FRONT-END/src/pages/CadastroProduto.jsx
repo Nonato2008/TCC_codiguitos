@@ -13,6 +13,7 @@ const estadoInicial = {
     idFornecedor: "",
     nome: "",
     preco: "",
+    custo: "",
     quantidade: "",
     dataVenc: "",
     imagem: null,
@@ -130,6 +131,18 @@ export default function CadastroProdutos() {
             return;
         }
 
+        if (
+            form.custo === "" ||
+            !Number.isFinite(Number(form.custo)) ||
+            Number(form.custo) < 0
+        ) {
+            setMensagem({
+                type: "error",
+                text: "Informe um custo válido, maior ou igual a zero."
+            });
+            return;
+        }
+
         if (form.quantidade === "" || Number(form.quantidade) < 0) {
             setMensagem({ type: "error", text: "Informe a quantidade em estoque." });
             return;
@@ -170,6 +183,7 @@ export default function CadastroProdutos() {
             dados.append("idFornecedor", String(form.idFornecedor));
             dados.append("nome", form.nome.trim());
             dados.append("preco", String(form.preco));
+            dados.append("custo", String(form.custo));
             dados.append("quantidade", String(form.quantidade));
             dados.append("dataVenc", form.dataVenc);
             dados.append("imagem", form.imagem);
@@ -231,6 +245,17 @@ export default function CadastroProdutos() {
             setLoading(false);
         }
     }
+
+    const precoNumerico = Number(form.preco);
+    const custoNumerico = Number(form.custo);
+    const quantidadeNumerica = Number(form.quantidade);
+    const lucroUnitario = precoNumerico - custoNumerico;
+    const lucroEstoque = lucroUnitario * quantidadeNumerica;
+    const formatarMoeda = (valor) =>
+        valor.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL"
+        });
 
     return (
 
@@ -325,6 +350,19 @@ export default function CadastroProdutos() {
                             />
 
                             <FormField
+                                label="Custo unitário"
+                                name="custo"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                placeholder="0.00"
+                                value={form.custo}
+                                onChange={atualizarCampo}
+                                dark={isDark}
+                                required
+                            />
+
+                            <FormField
                                 label="Quantidade"
                                 name="quantidade"
                                 type="number"
@@ -362,6 +400,33 @@ export default function CadastroProdutos() {
                             </label>
 
                         </div>
+
+                        {form.preco !== "" && form.custo !== "" && (
+                            <div
+                                style={{
+                                    ...styles.lucroPreview,
+                                    ...(isDark ? styles.lucroPreviewDark : {}),
+                                    ...(lucroUnitario < 0
+                                        ? isDark
+                                            ? styles.prejuizoPreviewDark
+                                            : styles.prejuizoPreview
+                                        : {})
+                                }}
+                                aria-live="polite"
+                            >
+                                <strong>
+                                    {lucroUnitario < 0 ? "Prejuízo" : "Lucro"} estimado
+                                </strong>
+                                <span>
+                                    Por unidade: {formatarMoeda(lucroUnitario)}
+                                </span>
+                                {form.quantidade !== "" && (
+                                    <span>
+                                        No estoque: {formatarMoeda(lucroEstoque)}
+                                    </span>
+                                )}
+                            </div>
+                        )}
 
                         <div style={styles.actions}>
 
@@ -614,6 +679,35 @@ const styles = {
     actions: {
         display: "flex",
         justifyContent: "flex-end",
+    },
+
+    lucroPreview: {
+        display: "flex",
+        flexDirection: "column",
+        gap: "6px",
+        padding: "14px 16px",
+        border: "1px solid #86efac",
+        borderRadius: "10px",
+        backgroundColor: "#f0fdf4",
+        color: "#166534"
+    },
+
+    lucroPreviewDark: {
+        borderColor: "#166534",
+        backgroundColor: "#052e16",
+        color: "#bbf7d0"
+    },
+
+    prejuizoPreview: {
+        borderColor: "#fca5a5",
+        backgroundColor: "#fff1f2",
+        color: "#b91c1c"
+    },
+
+    prejuizoPreviewDark: {
+        borderColor: "#7f1d1d",
+        backgroundColor: "#3f1721",
+        color: "#fecdd3"
     },
 
     nota: {

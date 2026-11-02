@@ -1,126 +1,73 @@
-# 🗄️ Modelo de Dados
+# Modelo de dados
 
-Este documento apresenta o modelo de dados do sistema, com foco nas entidades e seus relacionamentos.
+Os nomes abaixo correspondem aos identificadores das tabelas e colunas MySQL.
+O código JavaScript usa `camelCase` para os dados da aplicação e mantém o
+mapeamento para esses identificadores nos repositórios.
 
-## 📦 Entidade: Produto
+## Tabelas
 
-### 📌 Descrição
-Representa os produtos em estoque.
+### `Proprietarios`
 
-### 📄 Atributos
-- id (PK)
-- idFornecedor (FK)   
-- nome
-- preco
-- qtd(quantidade)
-- status
-- imagemProduto
-- dataVenci
-- dataCad
+- `Id` (PK)
+- `Nome`
+- `Senha`
+- `DataCad`
 
----
+### `Fornecedores`
 
-## 📦 Entidade: Fornecedor
+- `Id` (PK)
+- `Nome`
+- `Imagem`
+- `DataCad`
 
-### 📌 Descrição
-Representa os fornecedores cadastrados no sistema.
+### `Vendedores`
 
-### 📄 Atributos
-- id (PK)
-- nome
-- imagem 
-- dataCad
+- `Id` (PK)
+- `IdProprietario` (FK → `Proprietarios.Id`)
+- `Nome`
+- `DataCad`
+- `Senha`
 
-##  🪢 Relacionamento: Fornecedor x Produto
+### `Produtos`
 
-### 📌 Descrição
-Um fornecedor pode fornecer vários produtos.
+- `Id` (PK)
+- `IdFornecedor` (FK → `Fornecedores.Id`)
+- `Nome`
+- `Preco`
+- `Custo`
+- `Quantidade`
+- `Status` (`Em Estoque`, `Vencido` ou `Esgotado`)
+- `Imagem`
+- `DataCad`
+- `DataVenc`
 
-### Cardinalidade
-Fornecedor (1) ------ (N) Produto
+### `Vendas`
 
----
+- `Id` (PK)
+- `IdProprietario` (FK → `Proprietarios.Id`)
+- `IdVendedor` (FK → `Vendedores.Id`)
+- `ValorTotal`
+- `DataCad`
+- `formaPagamento`
 
-## 🧾 Entidade: Venda
+### `Itens_vendas`
 
-### 📌 Descrição
-Representa uma transação de venda realizada no sistema.
+- `Id` (PK)
+- `IdVenda` (FK → `Vendas.Id`)
+- `IdProduto` (FK → `Produtos.Id`)
+- `Qtd`
+- `Valor`
+- `CustoUnitario` (custo unitário registrado no momento da venda; nulo em itens antigos sem histórico)
 
-### 📄 Atributos 
-- id (PK)
-- idPropritario (FK)
-- idVendedor (FK)
-- valorTotal
-- dataCad
+Para registrar e consultar o lucro realizado, aplique a migration
+`migrations/20261101_add_custo_unitario_itens_vendas.sql` antes de iniciar o backend.
+Vendas existentes sem custo histórico permanecem sem esse dado e não entram no
+cálculo do lucro realizado.
 
-## 🪢 Relacionamento: Venda x ItemVenda
+## Relacionamentos
 
-### 📌 Descrição
-Uma venda pode conter vários itens.
-
-### Cardinalidade
-Venda (1) ------ (N) ItemVenda
-
----
-
-## 📦 Entidade: ItemVenda
-
-### 📌 Descrição
-Representa os itens associados a uma venda.
-
-### 🧾 Estrutura (ItemVenda)
-- id (PK)
-- idProduto(FK)
-- idVenda (FK)
-- qtd (quantidade)
-- valor
-
-## 🪢 Relacionamento: Produto x ItemVenda
-
-### Descrição
-Um produto pode aparecer em vários itens de venda
-
-### Cardinalidade
-Produto (1) ------ (N) ItemVenda
-
----
-
-## Entidade: Proprietario
-
-### Descrição
-Representa os donos cadastros no sistema
-
-### Atributos
-- id (PK)
-- nome
-- senha 
-- dataCad
-
-## Relacionamento: Proprietario x Vendas
-
-### Descrição
-Um proprietário pode ter várias vendas
-
-### Cardinalidade
-Proprietário (1) ------ (N) Venda
-
----
-
-## Entidade: Vendedores
-
-### Descrição
-Representa os vendedores de uma adega
-
-### Atributos 
-- id (PK)
-- idProprietario (FK)
-- Nome
-- dataCad
-
-## Relacionamento: Vendedores x Proprietario
-
-### Descrição
-Vários vendores posssuem um proprietario
-
-### Cardinalidade
-Vendedores (N) ------ (1) Proprietario
+- Um fornecedor pode fornecer vários produtos.
+- Um proprietário pode ter vários vendedores e várias vendas.
+- Um vendedor pode realizar várias vendas.
+- Uma venda pode conter vários itens.
+- Um produto pode aparecer em vários itens de venda.

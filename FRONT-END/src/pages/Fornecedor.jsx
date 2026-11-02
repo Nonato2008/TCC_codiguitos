@@ -1,12 +1,46 @@
-import React, { useEffect, useState, useContext, useRef } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { useFornecedores } from "../hooks/useFornecedores";
-import { deletarFornecedor } from "../services/fornecedoresService";
+import { useProdutos } from "../hooks/useProdutos";
 import { ThemeContext } from "../contexts/ThemeContext";
+
+const CHAVE_FORNECEDORES_DESATIVADOS = "fornecedoresDesativados";
+
+function getIdFornecedor(fornecedor) {
+    return fornecedor?.Id ?? fornecedor?.id ?? fornecedor?.idFornecedor ?? fornecedor?.IdFornecedor;
+}
+
+function getIdFornecedorProduto(produto) {
+    return produto?.IdFornecedor ?? produto?.idFornecedor ?? produto?.id_fornecedor;
+}
+
+function getIdProduto(produto) {
+    return produto?.Id ?? produto?.id ?? produto?.IdProduto ?? produto?.idProduto;
+}
+
+function lerFornecedoresDesativados() {
+    try {
+        const ids = JSON.parse(
+            localStorage.getItem(CHAVE_FORNECEDORES_DESATIVADOS) || "[]"
+        );
+
+        return Array.isArray(ids)
+            ? ids.map(String)
+            : [];
+    } catch (error) {
+        console.error("Erro ao carregar fornecedores desativados:", error);
+        return [];
+    }
+}
 
 export default function Fornecedor() {
     const { fornecedores, loading, error } = useFornecedores();
+    const {
+        produtos,
+        loading: carregandoProdutos,
+        error: erroProdutos
+    } = useProdutos();
 
     const { theme } = useContext(ThemeContext);
     const isDark = theme === "dark";
@@ -15,80 +49,54 @@ export default function Fornecedor() {
 
     const [listaFornecedores, setListaFornecedores] = useState([]);
     const [fornecedorSelecionado, setFornecedorSelecionado] = useState(null);
-    const [excluindo, setExcluindo] = useState(false);
-
-    const [mostrarSegredo, setMostrarSegredo] = useState(false);
-    const cliquesQuantidade = useRef(0);
+    const [abaFornecedores, setAbaFornecedores] = useState("ativos");
 
     useEffect(() => {
         setListaFornecedores(fornecedores);
     }, [fornecedores]);
 
-    function clicarQuantidade() {
-    cliquesQuantidade.current += 1;
+    const fornecedoresFiltrados = listaFornecedores.filter((fornecedor) =>
+        abaFornecedores === "ativos" ? fornecedor.ativo : !fornecedor.ativo
+    );
 
-    if (cliquesQuantidade.current === 5) {
-        setMostrarSegredo(true);
-        cliquesQuantidade.current = 0;
+    const idFornecedorSelecionado = getIdFornecedor(fornecedorSelecionado);
+    const produtosFornecedor = fornecedorSelecionado &&
+        idFornecedorSelecionado !== undefined &&
+        idFornecedorSelecionado !== null
+        ? (Array.isArray(produtos) ? produtos : []).filter(
+            (produto) => {
+                const idFornecedorProduto = getIdFornecedorProduto(produto);
+                return idFornecedorProduto !== undefined &&
+                    idFornecedorProduto !== null &&
+                    String(idFornecedorProduto) === String(idFornecedorSelecionado);
+            }
+        )
+        : [];
 
-        let encontrados = [];
+    function alterarStatusFornecedor(fornecedor, ativo) {
+        const idFornecedor = getIdFornecedor(fornecedor);
+        const idsDesativados = lerFornecedoresDesativados();
+        const idsAtualizados = ativo
+            ? idsDesativados.filter((id) => id !== String(idFornecedor))
+            : [...new Set([...idsDesativados, String(idFornecedor)])];
 
         try {
-            encontrados = JSON.parse(
-                localStorage.getItem("easterEggsEncontrados") || "[]"
-            );
-        } catch {
-            encontrados = [];
-        }
-
-        if (!encontrados.includes(4)) {
-            encontrados.push(4);
-
             localStorage.setItem(
-                "easterEggsEncontrados",
-                JSON.stringify(encontrados)
+                CHAVE_FORNECEDORES_DESATIVADOS,
+                JSON.stringify(idsAtualizados)
             );
-
-            window.dispatchEvent(
-                new CustomEvent("easterEggDesbloqueado", {
-                    detail: { id: 4 }
-                })
-            );
-        }
-    }
-}
-
-    const handleExcluir = (fornecedor) => {
-        setFornecedorSelecionado(fornecedor);
-    };
-
-    const confirmarExclusao = async () => {
-        if (!fornecedorSelecionado) {
-            return;
-        }
-
-        try {
-            setExcluindo(true);
-
-            await deletarFornecedor(fornecedorSelecionado.Id);
-
             setListaFornecedores((listaAtual) =>
-                listaAtual.filter(
-                    (item) => item.Id !== fornecedorSelecionado.Id
+                listaAtual.map((item) =>
+                    String(getIdFornecedor(item)) === String(idFornecedor)
+                        ? { ...item, ativo }
+                        : item
                 )
             );
-
-            setFornecedorSelecionado(null);
-
         } catch (error) {
-            console.error("Erro ao excluir fornecedor:", error);
-
+            console.error("Erro ao alterar status do fornecedor:", error);
             alert(
-                error.response?.data?.message ||
-                "Não foi possível excluir o fornecedor."
+                "Não foi possível atualizar o status do fornecedor neste navegador."
             );
-        } finally {
-            setExcluindo(false);
         }
     };
 
@@ -185,46 +193,78 @@ export default function Fornecedor() {
                         <div
                             style={{
                                 ...styles.total,
-                                ...(isDark ? styles.totalDark : {}),
-                                cursor: "pointer",
-                                userSelect: "none"
+                                ...(isDark ? styles.totalDark : {})
                             }}
-                            onClick={clicarQuantidade}
                         >
                             <span className="material-symbols-outlined">
                                 groups
                             </span>
 
                             <span>
-                                {listaFornecedores.length} fornecedor
-                                {listaFornecedores.length !== 1 ? "es" : ""}
+                                {fornecedoresFiltrados.length} fornecedor
+                                {fornecedoresFiltrados.length !== 1 ? "es" : ""}
                             </span>
                         </div>
                     </div>
                 </header>
 
-                {listaFornecedores.length === 0 ? (
+                <div style={styles.tabs}>
+                    <button
+                        type="button"
+                        onClick={() => setAbaFornecedores("ativos")}
+                        aria-pressed={abaFornecedores === "ativos"}
+                        style={{
+                            ...styles.tabButton,
+                            ...(isDark ? styles.tabButtonDark : {}),
+                            ...(abaFornecedores === "ativos"
+                                ? styles.tabButtonActive
+                                : {})
+                        }}
+                    >
+                        Ativos ({listaFornecedores.filter((item) => item.ativo).length})
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setAbaFornecedores("desativados")}
+                        aria-pressed={abaFornecedores === "desativados"}
+                        style={{
+                            ...styles.tabButton,
+                            ...(isDark ? styles.tabButtonDark : {}),
+                            ...(abaFornecedores === "desativados"
+                                ? styles.tabButtonActive
+                                : {})
+                        }}
+                    >
+                        Desativados ({listaFornecedores.filter((item) => !item.ativo).length})
+                    </button>
+                </div>
+
+                {fornecedoresFiltrados.length === 0 ? (
                     <section style={{ ...styles.emptyCard, ...(isDark ? styles.emptyCardDark : {}) }}>
                         <span className="material-symbols-outlined">
                             person_search
                         </span>
 
                         <h3 style={{ ...styles.emptyTitle, ...(isDark ? styles.emptyTitleDark : {}) }}>
-                            Nenhum fornecedor encontrado
+                            {abaFornecedores === "ativos"
+                                ? "Nenhum fornecedor ativo"
+                                : "Nenhum fornecedor desativado"}
                         </h3>
 
                         <p style={{ ...styles.emptyText, ...(isDark ? styles.emptyTextDark : {}) }}>
-                            Ainda não existem fornecedores cadastrados.
+                            {abaFornecedores === "ativos"
+                                ? "Não há fornecedores ativos para exibir."
+                                : "Os fornecedores desativados aparecerão aqui."}
                         </p>
                     </section>
                 ) : (
                     <section style={styles.gridContainer}>
-                        {listaFornecedores.map((fornecedor) => (
+                        {fornecedoresFiltrados.map((fornecedor) => (
                             <FornecedorCard
-                                key={fornecedor.Id}
+                                key={getIdFornecedor(fornecedor)}
                                 fornecedor={fornecedor}
-                                onExcluir={handleExcluir}
-                                excluindo={excluindo}
+                                onSelecionar={setFornecedorSelecionado}
+                                onAlterarStatus={alterarStatusFornecedor}
                                 dark={isDark}
                             />
                         ))}
@@ -232,25 +272,149 @@ export default function Fornecedor() {
                 )}
 
                 {fornecedorSelecionado && (
-                    <div style={styles.overlay}>
-                        <div style={{ ...styles.confirmCard, ...(isDark ? styles.confirmCardDark : {}) }}>
-                            <div style={{ ...styles.confirmIcon, ...(isDark ? styles.confirmIconDark : {}) }}>
-                                <span className="material-symbols-outlined">
-                                    delete
-                                </span>
-                            </div>
+                    <div
+                        style={styles.overlay}
+                        onClick={() => setFornecedorSelecionado(null)}
+                    >
+                        <section
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="fornecedor-produtos-titulo"
+                            style={{
+                                ...styles.detailsCard,
+                                ...(isDark ? styles.detailsCardDark : {})
+                            }}
+                            onClick={(event) => event.stopPropagation()}
+                        >
+                            <header style={styles.detailsHeader}>
+                                <div>
+                                    <h2
+                                        id="fornecedor-produtos-titulo"
+                                        style={{
+                                            ...styles.detailsTitle,
+                                            ...(isDark ? styles.detailsTitleDark : {})
+                                        }}
+                                    >
+                                        Produtos de {fornecedorSelecionado.Nome ?? fornecedorSelecionado.nome ?? "Fornecedor"}
+                                    </h2>
+                                    <p
+                                        style={{
+                                            ...styles.detailsSubtitle,
+                                            ...(isDark ? styles.detailsSubtitleDark : {})
+                                        }}
+                                    >
+                                        {produtosFornecedor.length} produto
+                                        {produtosFornecedor.length !== 1 ? "s" : ""} associado
+                                        {produtosFornecedor.length !== 1 ? "s" : ""} a este fornecedor
+                                    </p>
+                                </div>
 
-                            <div style={styles.confirmContent}>
-                                <strong style={{ ...styles.confirmTitle, ...(isDark ? styles.confirmTitleDark : {}) }}>
-                                    Excluir fornecedor?
-                                </strong>
+                                <button
+                                    type="button"
+                                    aria-label="Fechar lista de produtos"
+                                    style={{
+                                        ...styles.closeButton,
+                                        ...(isDark ? styles.closeButtonDark : {})
+                                    }}
+                                    onClick={() => setFornecedorSelecionado(null)}
+                                >
+                                    ×
+                                </button>
+                            </header>
 
-                                <span style={{ ...styles.confirmText, ...(isDark ? styles.confirmTextDark : {}) }}>
-                                    {fornecedorSelecionado.Nome}
-                                </span>
-                            </div>
+                            {carregandoProdutos ? (
+                                <div
+                                    style={{
+                                        ...styles.productsEmpty,
+                                        ...(isDark ? styles.productsEmptyDark : {})
+                                    }}
+                                >
+                                    Carregando produtos...
+                                </div>
+                            ) : erroProdutos ? (
+                                <div
+                                    style={{
+                                        ...styles.productsError,
+                                        ...(isDark ? styles.productsErrorDark : {})
+                                    }}
+                                >
+                                    {erroProdutos}
+                                </div>
+                            ) : produtosFornecedor.length === 0 ? (
+                                <div
+                                    style={{
+                                        ...styles.productsEmpty,
+                                        ...(isDark ? styles.productsEmptyDark : {})
+                                    }}
+                                >
+                                    Nenhum produto está associado a este fornecedor.
+                                </div>
+                            ) : (
+                                <ul style={styles.productsList}>
+                                    {produtosFornecedor.map((produto, index) => (
+                                        <li
+                                            key={getIdProduto(produto) ?? index}
+                                            style={{
+                                                ...styles.productRow,
+                                                ...(isDark ? styles.productRowDark : {})
+                                            }}
+                                        >
+                                            <div>
+                                                <strong
+                                                    style={{
+                                                        ...styles.productName,
+                                                        ...(isDark ? styles.productNameDark : {})
+                                                    }}
+                                                >
+                                                    {produto.Nome ?? produto.nome ?? "Produto sem nome"}
+                                                </strong>
+                                                <span
+                                                    style={{
+                                                        ...styles.productMeta,
+                                                        ...(isDark ? styles.productMetaDark : {})
+                                                    }}
+                                                >
+                                                    Estoque: {produto.Quantidade ?? produto.quantidade ?? 0}
+                                                </span>
+                                            </div>
+                                            <strong
+                                                style={{
+                                                    ...styles.productPrice,
+                                                    ...(isDark ? styles.productPriceDark : {})
+                                                }}
+                                            >
+                                                {Number(produto.Preco ?? produto.preco ?? 0).toLocaleString(
+                                                    "pt-BR",
+                                                    { style: "currency", currency: "BRL" }
+                                                )}
+                                            </strong>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
 
-                            <div style={styles.confirmActions}>
+                            <footer style={styles.detailsActions}>
+                                <button
+                                    type="button"
+                                    style={{
+                                        ...styles.statusButton,
+                                        ...(fornecedorSelecionado.ativo
+                                            ? styles.deactivateButton
+                                            : styles.activateButton),
+                                        ...(isDark ? styles.statusButtonDark : {})
+                                    }}
+                                    onClick={() => {
+                                        alterarStatusFornecedor(
+                                            fornecedorSelecionado,
+                                            !fornecedorSelecionado.ativo
+                                        );
+                                        setFornecedorSelecionado(null);
+                                    }}
+                                >
+                                    {fornecedorSelecionado.ativo
+                                        ? "Desativar fornecedor"
+                                        : "Reativar fornecedor"}
+                                </button>
                                 <button
                                     type="button"
                                     style={{
@@ -258,82 +422,24 @@ export default function Fornecedor() {
                                         ...(isDark ? styles.cancelConfirmButtonDark : {})
                                     }}
                                     onClick={() => setFornecedorSelecionado(null)}
-                                    disabled={excluindo}
                                 >
-                                    Cancelar
+                                    Fechar
                                 </button>
-
-                                <button
-                                    type="button"
-                                    style={styles.confirmDeleteButton}
-                                    onClick={confirmarExclusao}
-                                    disabled={excluindo}
-                                >
-                                    <span className="material-symbols-outlined">
-                                        {excluindo ? "progress_activity" : "delete"}
-                                    </span>
-
-                                    {excluindo ? "Excluindo..." : "Excluir"}
-                                </button>
-                            </div>
-                        </div>
+                            </footer>
+                        </section>
                     </div>
                 )}
 
-                {mostrarSegredo && (
-                    <div
-                        style={styles.secretOverlay}
-                        onClick={() => setMostrarSegredo(false)}
-                    >
-                        <div
-                            style={{
-                                ...styles.secretCard,
-                                ...(isDark ? styles.secretCardDark : {})
-                            }}
-                            onClick={(event) => event.stopPropagation()}
-                        >
-                            <img
-                                src="/sella.jpg"
-                                alt="Sella - O Mestre das Fritadas"
-                                style={styles.secretImage}
-                            />
-
-                            <h3
-                                style={{
-                                    ...styles.secretTitle,
-                                    ...(isDark ? styles.secretTitleDark : {})
-                                }}
-                            >
-                                Easter Eggs Do Nelson
-                            </h3>
-
-                            <p
-                                style={{
-                                    ...styles.secretText,
-                                    ...(isDark ? styles.secretTextDark : {})
-                                }}
-                            >
-                                Parabéns! Você encontrou Sella!!!
-                            </p>
-
-                            <button
-                                type="button"
-                                style={styles.secretButton}
-                                onClick={() => setMostrarSegredo(false)}
-                            >
-                                Fechar
-                            </button>
-                        </div>
-                    </div>
-                )}
             </main>
         </div>
     );
 }
 
-function FornecedorCard({ fornecedor, onExcluir, excluindo, dark }) {
-    const imagem = fornecedor.Imagem
-        ? `http://localhost:8000${fornecedor.Imagem}`
+function FornecedorCard({ fornecedor, onSelecionar, onAlterarStatus, dark }) {
+    const nome = fornecedor.Nome ?? fornecedor.nome ?? "Fornecedor";
+    const caminhoImagem = fornecedor.Imagem ?? fornecedor.imagem;
+    const imagem = caminhoImagem
+        ? `http://localhost:8000${caminhoImagem}`
         : null;
 
     return (
@@ -342,7 +448,7 @@ function FornecedorCard({ fornecedor, onExcluir, excluindo, dark }) {
                 {imagem ? (
                     <img
                         src={imagem}
-                        alt={fornecedor.Nome}
+                        alt={nome}
                         style={styles.imagem}
                         onError={(e) => {
                             e.currentTarget.style.display = "none";
@@ -361,11 +467,11 @@ function FornecedorCard({ fornecedor, onExcluir, excluindo, dark }) {
                 <div style={styles.cardInfo}>
                     <div>
                         <h3 style={{ ...styles.cardName, ...(dark ? styles.cardNameDark : {}) }}>
-                            {fornecedor.Nome}
+                            {nome}
                         </h3>
 
                         <span style={{ ...styles.cardMeta, ...(dark ? styles.cardMetaDark : {}) }}>
-                            Fornecedor cadastrado
+                            {fornecedor.ativo ? "Fornecedor ativo" : "Fornecedor desativado"}
                         </span>
                     </div>
                 </div>
@@ -374,15 +480,33 @@ function FornecedorCard({ fornecedor, onExcluir, excluindo, dark }) {
             <div style={styles.cardActions}>
                 <button
                     type="button"
-                    style={{ ...styles.deleteButton, ...(dark ? styles.deleteButtonDark : {}) }}
-                    onClick={() => onExcluir(fornecedor)}
-                    disabled={excluindo}
+                    style={{ ...styles.detailsButton, ...(dark ? styles.detailsButtonDark : {}) }}
+                    onClick={(event) => {
+                        event.stopPropagation();
+                        onSelecionar(fornecedor);
+                    }}
                 >
                     <span className="material-symbols-outlined">
-                        delete
+                        inventory_2
                     </span>
 
-                    Excluir
+                    Ver produtos
+                </button>
+                <button
+                    type="button"
+                    style={{
+                        ...styles.statusButton,
+                        ...(fornecedor.ativo
+                            ? styles.deactivateButton
+                            : styles.activateButton),
+                        ...(dark ? styles.statusButtonDark : {})
+                    }}
+                    onClick={(event) => {
+                        event.stopPropagation();
+                        onAlterarStatus(fornecedor, !fornecedor.ativo);
+                    }}
+                >
+                    {fornecedor.ativo ? "Desativar" : "Reativar"}
                 </button>
             </div>
         </article>
@@ -642,31 +766,15 @@ const styles = {
 
     cardActions: {
         display: "flex",
-        justifyContent: "flex-end"
-    },
-
-    deleteButton: {
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        border: "1px solid #fecaca",
-        backgroundColor: "#fff1f2",
-        color: "#b91c1c",
-        padding: "10px 12px",
-        borderRadius: "8px",
-        cursor: "pointer"
-    },
-
-    deleteButtonDark: {
-        backgroundColor: "#3f1721",
-        borderColor: "#7f1d1d",
-        color: "#fecdd3"
+        justifyContent: "flex-end",
+        flexWrap: "wrap",
+        gap: "8px"
     },
 
     overlay: {
         position: "fixed",
         inset: 0,
-        backgroundColor: "rgba(15, 23, 42, 0.45)",
+        backgroundColor: "rgba(15, 23, 42, 0.65)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -674,65 +782,221 @@ const styles = {
         zIndex: 1000
     },
 
-    confirmCard: {
+    tabs: {
+        display: "flex",
+        gap: "8px",
+        marginBottom: "20px",
+        borderBottom: "1px solid #e2e8f0"
+    },
+
+    tabButton: {
+        border: "none",
+        borderBottom: "2px solid transparent",
+        backgroundColor: "transparent",
+        color: "#64748b",
+        padding: "10px 12px",
+        fontWeight: 600,
+        cursor: "pointer"
+    },
+
+    tabButtonDark: {
+        color: "#cbd5e1"
+    },
+
+    tabButtonActive: {
+        color: "#303e51",
+        borderBottomColor: "#303e51"
+    },
+
+    detailsButton: {
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+        border: "1px solid #cbd5e1",
+        backgroundColor: "#ffffff",
+        color: "#334155",
+        padding: "10px 12px",
+        borderRadius: "8px",
+        cursor: "pointer"
+    },
+
+    detailsButtonDark: {
+        backgroundColor: "#1f2937",
+        borderColor: "#4b5563",
+        color: "#f9fafb"
+    },
+
+    statusButton: {
+        border: "1px solid",
+        borderRadius: "8px",
+        padding: "10px 12px",
+        cursor: "pointer",
+        fontWeight: 600
+    },
+
+    statusButtonDark: {
+        filter: "brightness(0.9)"
+    },
+
+    deactivateButton: {
+        borderColor: "#fca5a5",
+        backgroundColor: "#fff1f2",
+        color: "#b91c1c"
+    },
+
+    activateButton: {
+        borderColor: "#86efac",
+        backgroundColor: "#f0fdf4",
+        color: "#166534"
+    },
+
+    detailsCard: {
         backgroundColor: "#ffffff",
         borderRadius: "12px",
         padding: "22px",
         width: "100%",
-        maxWidth: "420px",
-        border: "1px solid #e2e8f0"
+        maxWidth: "680px",
+        maxHeight: "90vh",
+        overflowY: "auto",
+        border: "1px solid #e2e8f0",
+        boxSizing: "border-box"
     },
 
-    confirmCardDark: {
+    detailsCardDark: {
         backgroundColor: "#111827",
         borderColor: "#374151"
     },
 
-    confirmIcon: {
-        width: "48px",
-        height: "48px",
-        borderRadius: "50%",
+    detailsHeader: {
         display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "#fff1f2",
-        color: "#b91c1c",
-        marginBottom: "12px"
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        gap: "16px",
+        marginBottom: "18px"
     },
 
-    confirmIconDark: {
+    detailsTitle: {
+        margin: 0,
+        color: "#111c2d",
+        fontSize: "20px"
+    },
+
+    detailsTitleDark: {
+        color: "#f9fafb"
+    },
+
+    detailsSubtitle: {
+        margin: "6px 0 0",
+        color: "#64748b",
+        fontSize: "14px"
+    },
+
+    detailsSubtitleDark: {
+        color: "#cbd5e1"
+    },
+
+    closeButton: {
+        border: "none",
+        backgroundColor: "transparent",
+        color: "#475569",
+        fontSize: "28px",
+        lineHeight: 1,
+        cursor: "pointer"
+    },
+
+    closeButtonDark: {
+        color: "#e5e7eb"
+    },
+
+    productsList: {
+        display: "flex",
+        flexDirection: "column",
+        gap: "8px",
+        listStyle: "none",
+        padding: 0,
+        margin: "0 0 20px"
+    },
+
+    productRow: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: "16px",
+        padding: "12px",
+        border: "1px solid #e2e8f0",
+        borderRadius: "8px"
+    },
+
+    productRowDark: {
+        backgroundColor: "#1f2937",
+        borderColor: "#374151"
+    },
+
+    productName: {
+        display: "block",
+        color: "#111c2d",
+        fontSize: "14px"
+    },
+
+    productNameDark: {
+        color: "#f9fafb"
+    },
+
+    productMeta: {
+        display: "block",
+        marginTop: "4px",
+        color: "#64748b",
+        fontSize: "13px"
+    },
+
+    productMetaDark: {
+        color: "#cbd5e1"
+    },
+
+    productPrice: {
+        color: "#166534",
+        fontSize: "14px",
+        whiteSpace: "nowrap"
+    },
+
+    productPriceDark: {
+        color: "#86efac"
+    },
+
+    productsEmpty: {
+        padding: "24px",
+        marginBottom: "20px",
+        border: "1px dashed #cbd5e1",
+        borderRadius: "8px",
+        color: "#64748b",
+        textAlign: "center"
+    },
+
+    productsEmptyDark: {
+        borderColor: "#4b5563",
+        color: "#cbd5e1"
+    },
+
+    productsError: {
+        padding: "16px",
+        marginBottom: "20px",
+        borderRadius: "8px",
+        backgroundColor: "#fff1f2",
+        color: "#b91c1c"
+    },
+
+    productsErrorDark: {
         backgroundColor: "#3f1721",
         color: "#fecdd3"
     },
 
-    confirmContent: {
-        display: "flex",
-        flexDirection: "column",
-        gap: "4px",
-        marginBottom: "18px"
-    },
-
-    confirmTitle: {
-        color: "#111c2d",
-        fontSize: "18px"
-    },
-
-    confirmTitleDark: {
-        color: "#f9fafb"
-    },
-
-    confirmText: {
-        color: "#475569"
-    },
-
-    confirmTextDark: {
-        color: "#d1d5db"
-    },
-
-    confirmActions: {
+    detailsActions: {
         display: "flex",
         justifyContent: "flex-end",
-        gap: "12px"
+        flexWrap: "wrap",
+        gap: "10px",
+        paddingTop: "16px",
+        borderTop: "1px solid #e2e8f0"
     },
 
     cancelConfirmButton: {
@@ -748,79 +1012,6 @@ const styles = {
         backgroundColor: "#1f2937",
         borderColor: "#4b5563",
         color: "#f9fafb"
-    },
-
-    confirmDeleteButton: {
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        border: "none",
-        backgroundColor: "#dc2626",
-        color: "#ffffff",
-        borderRadius: "8px",
-        padding: "10px 12px",
-        cursor: "pointer"
-    },
-
-    secretOverlay: {
-        position: "fixed",
-        inset: 0,
-        backgroundColor: "rgba(15, 23, 42, 0.65)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "24px",
-        zIndex: 9999
-    },
-
-    secretCard: {
-        backgroundColor: "#ffffff",
-        borderRadius: "16px",
-        padding: "24px",
-        width: "100%",
-        maxWidth: "400px",
-        textAlign: "center",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.2)"
-    },
-
-    secretCardDark: {
-        backgroundColor: "#1f2937",
-        border: "1px solid #374151"
-    },
-
-    secretImage: {
-        width: "100%",
-        maxHeight: "250px",
-        objectFit: "contain",
-        borderRadius: "10px"
-    },
-
-    secretTitle: {
-        color: "#111c2d",
-        fontSize: "22px",
-        margin: "18px 0 8px"
-    },
-
-    secretTitleDark: {
-        color: "#f9fafb"
-    },
-
-    secretText: {
-        color: "#475569",
-        marginBottom: "20px"
-    },
-
-    secretTextDark: {
-        color: "#d1d5db"
-    },
-
-    secretButton: {
-        backgroundColor: "#303e51",
-        color: "#ffffff",
-        border: "none",
-        borderRadius: "8px",
-        padding: "10px 24px",
-        cursor: "pointer",
-        fontWeight: "600"
     }
+
 };

@@ -1,10 +1,59 @@
 
-import React, { useContext, useRef, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import { useProdutos } from "../hooks/useProdutos";
 import { useVendas } from "../hooks/useVendas";
 import { useNavigate } from "react-router-dom";
 import { ThemeContext } from "../contexts/ThemeContext";
+import { buscarLucroReal } from "../services/vendasService";
+
+const MESES = [
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
+];
+
+function obterDataVenda(venda) {
+  const valor = venda?.DataCad ?? venda?.dataCad ?? venda?.Data ?? venda?.data;
+  if (!valor) return null;
+  if (valor instanceof Date) {
+    return Number.isNaN(valor.getTime())
+      ? null
+      : new Date(valor.getFullYear(), valor.getMonth(), valor.getDate());
+  }
+
+  const texto = String(valor).trim();
+  const dataISOComFuso = texto.match(
+    /^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:?\d{2})$/i
+  );
+  if (dataISOComFuso) {
+    const data = new Date(texto);
+    if (Number.isNaN(data.getTime())) return null;
+    return new Date(data.getFullYear(), data.getMonth(), data.getDate());
+  }
+
+  const dataISO = texto.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (dataISO) {
+    return new Date(
+      Number(dataISO[1]),
+      Number(dataISO[2]) - 1,
+      Number(dataISO[3])
+    );
+  }
+
+  const data = new Date(texto);
+  if (Number.isNaN(data.getTime())) return null;
+  return new Date(data.getFullYear(), data.getMonth(), data.getDate());
+}
 
 export default function Painel() {
   const navigate = useNavigate();
@@ -12,55 +61,224 @@ export default function Painel() {
   const { theme } = useContext(ThemeContext);
   const isDark = theme === "dark";
 
-  const cliquesFoguinho = useRef(0);
-  const [mostrarSegredo, setMostrarSegredo] = useState(false);
+  const { produtos, loading, error } = useProdutos();
+  const [historicoLucro, setHistoricoLucro] = useState([]);
+  const [loadingLucro, setLoadingLucro] = useState(true);
+  const [erroLucro, setErroLucro] = useState("");
 
-  function clicarFoguinho() {
-    cliquesFoguinho.current += 1;
+  useEffect(() => {
+    let mounted = true;
 
-    if (cliquesFoguinho.current === 5) {
-      cliquesFoguinho.current = 0;
-      setMostrarSegredo(true);
-
-      let encontrados = [];
-
+    async function carregarLucroReal() {
       try {
-        encontrados = JSON.parse(
-          localStorage.getItem("easterEggsEncontrados") || "[]"
-        );
-      } catch {
-        encontrados = [];
-      }
+        setLoadingLucro(true);
+        setErroLucro("");
+        const dados = await buscarLucroReal();
 
-      if (!encontrados.includes(5)) {
-        encontrados.push(5);
+        if (!Array.isArray(dados)) {
+          throw new Error("O servidor retornou um histórico de lucro inválido.");
+        }
 
-        localStorage.setItem(
-          "easterEggsEncontrados",
-          JSON.stringify(encontrados)
-        );
-
-        window.dispatchEvent(
-          new CustomEvent("easterEggDesbloqueado", {
-            detail: { id: 5 },
-          })
-        );
+        if (mounted) setHistoricoLucro(dados);
+      } catch (error) {
+        console.error("Erro ao carregar lucro realizado:", error);
+        if (mounted) {
+          setErroLucro(
+            error?.response?.data?.message ||
+              error?.message ||
+              "Não foi possível carregar o lucro realizado."
+          );
+        }
+      } finally {
+        if (mounted) setLoadingLucro(false);
       }
     }
-  }
 
-  const { produtos, loading, error } = useProdutos();
+    carregarLucroReal();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const {
     vendas,
-    valorTotal,
     loading: loadingVendas,
     error: errorVendas,
   } = useVendas();
 
   const vendasLista = Array.isArray(vendas) ? vendas : [];
-  const ultimasVendas = [...vendasLista].slice(-3).reverse();
-  const produtosTotais = Array.isArray(produtos) ? produtos.length : 0;
+  const ultimasVendas = vendasLista.slice(0, 3);
+  const produtosLista = Array.isArray(produtos) ? produtos : [];
+  const produtosTotais = produtosLista.length;
+  const hoje = new Date();
+  const [periodoFaturamento, setPeriodoFaturamento] = useState("todo");
+  const [mesFaturamento, setMesFaturamento] = useState(String(hoje.getMonth()));
+  const [anoFaturamento, setAnoFaturamento] = useState(String(hoje.getFullYear()));
+
+  const formatarMoeda = (valor) =>
+    Number(valor || 0).toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+
+  const anosDisponiveis = [
+    ...new Set([
+      hoje.getFullYear(),
+      ...vendasLista
+        .map(obterDataVenda)
+        .filter(Boolean)
+        .map((data) => data.getFullYear()),
+    ]),
+  ].sort((a, b) => b - a);
+
+  function correspondePeriodoFaturamento(venda) {
+    if (periodoFaturamento === "todo") return true;
+
+    const dataVenda = obterDataVenda(venda);
+    if (!dataVenda) return false;
+
+    if (periodoFaturamento === "semana") {
+      const inicioSemana = new Date(
+        hoje.getFullYear(),
+        hoje.getMonth(),
+        hoje.getDate()
+      );
+      const diasDesdeSegunda = (inicioSemana.getDay() + 6) % 7;
+      inicioSemana.setDate(inicioSemana.getDate() - diasDesdeSegunda);
+      const fimSemana = new Date(inicioSemana);
+      fimSemana.setDate(fimSemana.getDate() + 7);
+      return dataVenda >= inicioSemana && dataVenda < fimSemana;
+    }
+
+    if (periodoFaturamento === "mes") {
+      return (
+        dataVenda.getFullYear() === Number(anoFaturamento) &&
+        dataVenda.getMonth() === Number(mesFaturamento)
+      );
+    }
+
+    return dataVenda.getFullYear() === Number(anoFaturamento);
+  }
+
+  const vendasPeriodo = vendasLista.filter(correspondePeriodoFaturamento);
+  const faturamentoPeriodoCentavos = vendasPeriodo.reduce((total, venda) => {
+    const valor = Number(venda.ValorTotal ?? venda.valorTotal ?? 0);
+    return Number.isFinite(valor)
+      ? total + Math.round(valor * 100)
+      : total;
+  }, 0);
+  const faturamentoPeriodo = faturamentoPeriodoCentavos / 100;
+
+  const descricaoPeriodoFaturamento =
+    periodoFaturamento === "todo"
+      ? "Todo o período"
+      : periodoFaturamento === "semana"
+        ? "Esta semana (segunda a domingo)"
+        : periodoFaturamento === "mes"
+          ? `${MESES[Number(mesFaturamento)]} de ${anoFaturamento}`
+          : `Ano de ${anoFaturamento}`;
+
+  let lucroAcumuladoCentavos = 0;
+  const lucroSerie = historicoLucro
+    .map((item) => {
+      const vendasComCusto = Number(item.VendasComCusto ?? 0);
+      const lucroDia = Number(item.LucroDia ?? 0);
+      if (!Number.isFinite(lucroDia) || !vendasComCusto) return null;
+
+      const lucroDiaCentavos = Math.round(lucroDia * 100);
+      lucroAcumuladoCentavos += lucroDiaCentavos;
+      return {
+        data: String(item.Data ?? ""),
+        lucroDia: lucroDiaCentavos / 100,
+        acumulado: lucroAcumuladoCentavos / 100,
+      };
+    })
+    .filter(Boolean);
+  const vendasSemCustoHistorico = historicoLucro.reduce(
+    (total, item) => total + Number(item.VendasSemCusto ?? 0),
+    0
+  );
+  const lucroRealTotal = lucroSerie.length
+    ? lucroSerie[lucroSerie.length - 1].acumulado
+    : 0;
+
+  const chart = {
+    width: 760,
+    height: 280,
+    left: 90,
+    right: 24,
+    top: 24,
+    bottom: 228,
+  };
+  const chartPlotWidth = chart.width - chart.left - chart.right;
+  const chartPlotHeight = chart.bottom - chart.top;
+  const chartValues = lucroSerie.map((item) => item.acumulado);
+  const chartMinOriginal = chartValues.reduce(
+    (minimo, valor) => Math.min(minimo, valor),
+    0
+  );
+  const chartMaxOriginal = chartValues.reduce(
+    (maximo, valor) => Math.max(maximo, valor),
+    0
+  );
+  const chartMin =
+    chartMinOriginal === chartMaxOriginal
+      ? chartMinOriginal - 1
+      : chartMinOriginal;
+  const chartMax =
+    chartMinOriginal === chartMaxOriginal
+      ? chartMaxOriginal + 1
+      : chartMaxOriginal;
+  const chartRange = chartMax - chartMin;
+  const chartPoints = lucroSerie.map((item, index) => ({
+    ...item,
+    x:
+      chart.left +
+      (lucroSerie.length === 1
+        ? chartPlotWidth / 2
+        : (index / (lucroSerie.length - 1)) * chartPlotWidth),
+    y:
+      chart.top +
+      ((chartMax - item.acumulado) / chartRange) * chartPlotHeight,
+  }));
+  const linePoints = chartPoints.map((point) => `${point.x},${point.y}`).join(" ");
+  const chartTickStep = Math.max(1, Math.ceil((chartPoints.length - 1) / 5));
+  const chartDateTicks = chartPoints.filter(
+    (point, index) =>
+      index === 0 ||
+      index === chartPoints.length - 1 ||
+      index % chartTickStep === 0
+  );
+  const chartGridTicks = Array.from({ length: 5 }, (_, index) => {
+    const value = chartMax - (chartRange * index) / 4;
+    return {
+      value,
+      y: chart.top + (chartPlotHeight * index) / 4,
+    };
+  });
+  const yZero =
+    chart.top + ((chartMax - 0) / chartRange) * chartPlotHeight;
+
+  function formatarDataGrafico(valor) {
+    if (valor instanceof Date && !Number.isNaN(valor.getTime())) {
+      return valor.toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+      });
+    }
+
+    const texto = String(valor);
+    const dataISO = texto.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (dataISO) return `${dataISO[3]}/${dataISO[2]}`;
+
+    const data = new Date(texto);
+    return Number.isNaN(data.getTime())
+      ? texto
+      : data.toLocaleDateString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+        });
+  }
 
   const getDataVencimento = (produto) =>
     produto?.DataVenc ??
@@ -165,37 +383,6 @@ export default function Painel() {
             </div>
           </div>
         </header>
-
-        {/* MODAL DO EASTER EGG */}
-        {mostrarSegredo && (
-          <div style={styles.secretOverlay}>
-            <div
-              style={{
-                ...styles.secretCard,
-                ...(isDark ? styles.secretCardDark : {}),
-              }}
-            >
-              <h2 style={styles.secretTitle}>Easter Eggs Do Nelson</h2>
-
-              <img
-                src="/bryan.jpg"
-                alt="Bryan - O Líder da Codiguitos"
-                style={styles.secretImage}
-              />
-
-              <p style={styles.secretText}>
-                Parabéns! Você encontrou Bryan!!!
-              </p>
-
-              <button
-                onClick={() => setMostrarSegredo(false)}
-                style={styles.secretButton}
-              >
-                Fechar
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* CARDS */}
         <section style={styles.cards}>
@@ -337,42 +524,274 @@ export default function Painel() {
             )}
           </div>
 
-          {/* LUCRO TOTAL */}
+          {/* FATURAMENTO TOTAL */}
           <div
             style={{
               ...styles.largeCard,
               ...(isDark ? styles.largeCardDark : {}),
             }}
           >
-            <div style={styles.cardHeader}>
+            <div style={styles.revenueHeader}>
               <h3
                 style={{
                   ...styles.cardTitle,
                   ...(isDark ? styles.cardTitleDark : {}),
                 }}
               >
-                Lucro total
+                Faturamento total
               </h3>
 
-              <span
-                className="material-symbols-outlined"
-                style={{
-                  ...(isDark ? styles.iconDark : {}),
-                  cursor: "pointer",
-                  userSelect: "none",
-                }}
-                onClick={clicarFoguinho}
-              >
-                local_fire_department
-              </span>
+              <div style={styles.revenueControls}>
+                <label
+                  htmlFor="periodo-faturamento"
+                  style={{
+                    ...styles.periodLabel,
+                    ...(isDark ? styles.periodLabelDark : {}),
+                  }}
+                >
+                  Período
+                </label>
+                <select
+                  id="periodo-faturamento"
+                  value={periodoFaturamento}
+                  onChange={(event) => setPeriodoFaturamento(event.target.value)}
+                  style={{
+                    ...styles.periodSelect,
+                    ...(isDark ? styles.periodSelectDark : {}),
+                  }}
+                >
+                  <option value="todo">Todo</option>
+                  <option value="semana">Semana atual</option>
+                  <option value="mes">Mês</option>
+                  <option value="ano">Ano</option>
+                </select>
+
+                {periodoFaturamento === "mes" && (
+                  <select
+                    aria-label="Mês do faturamento"
+                    value={mesFaturamento}
+                    onChange={(event) => setMesFaturamento(event.target.value)}
+                    style={{
+                      ...styles.periodSelect,
+                      ...(isDark ? styles.periodSelectDark : {}),
+                    }}
+                  >
+                    {MESES.map((mes, index) => (
+                      <option key={mes} value={index}>
+                        {mes}
+                      </option>
+                    ))}
+                  </select>
+                )}
+
+                {(periodoFaturamento === "mes" ||
+                  periodoFaturamento === "ano") && (
+                  <select
+                    aria-label="Ano do faturamento"
+                    value={anoFaturamento}
+                    onChange={(event) => setAnoFaturamento(event.target.value)}
+                    style={{
+                      ...styles.periodSelect,
+                      ...(isDark ? styles.periodSelectDark : {}),
+                    }}
+                  >
+                    {anosDisponiveis.map((ano) => (
+                      <option key={ano} value={ano}>
+                        {ano}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
             </div>
 
             <div style={styles.lucroContainer}>
-              <strong style={styles.lucro}>
-                R$ {(valorTotal || 0).toFixed(2).replace(".", ",")}💸
+              <strong style={{ ...styles.lucro, ...(isDark ? styles.lucroDark : {}) }}>
+                {loadingVendas
+                  ? "Carregando..."
+                  : errorVendas
+                    ? "Indisponível"
+                    : formatarMoeda(faturamentoPeriodo)}
               </strong>
+              <span style={{ ...styles.metricCaption, ...(isDark ? styles.metricCaptionDark : {}) }}>
+                {descricaoPeriodoFaturamento}
+              </span>
+              {!loadingVendas && !errorVendas && (
+                <span style={{ ...styles.metricCaption, ...(isDark ? styles.metricCaptionDark : {}) }}>
+                  {vendasPeriodo.length} venda{vendasPeriodo.length === 1 ? "" : "s"} no período
+                </span>
+              )}
             </div>
           </div>
+        </section>
+
+        <section
+          style={{
+            ...styles.profitCard,
+            ...(isDark ? styles.largeCardDark : {}),
+          }}
+          aria-labelledby="lucro-real-titulo"
+        >
+          <div style={styles.profitHeader}>
+            <div>
+              <h3
+                id="lucro-real-titulo"
+                style={{
+                  ...styles.cardTitle,
+                  ...(isDark ? styles.cardTitleDark : {}),
+                }}
+              >
+                Lucro realizado acumulado
+              </h3>
+            </div>
+            <strong
+              style={{
+                ...styles.profitTotal,
+                ...(isDark ? styles.profitTotalDark : {}),
+                ...(lucroRealTotal < 0 ? styles.profitNegative : {}),
+              }}
+              aria-live="polite"
+            >
+              {loadingLucro
+                ? "Carregando..."
+                : erroLucro
+                  ? "Indisponível"
+                  : formatarMoeda(lucroRealTotal)}
+            </strong>
+          </div>
+
+          {loadingLucro ? (
+            <div
+              style={{
+                ...styles.profitEmpty,
+                ...(isDark ? styles.profitEmptyDark : {}),
+              }}
+            >
+              Carregando histórico de lucro...
+            </div>
+          ) : erroLucro ? (
+            <div
+              style={{
+                ...styles.profitError,
+                ...(isDark ? styles.profitErrorDark : {}),
+              }}
+              role="alert"
+            >
+              {erroLucro}
+              <br />
+              Aplique a migration `BACK-END/migrations/20261101_add_custo_unitario_itens_vendas.sql` para habilitar o registro de custo por item vendido.
+            </div>
+          ) : chartPoints.length > 0 ? (
+            <div
+              style={styles.lineChartContainer}
+              role="img"
+              aria-label={`Gráfico de linha do lucro realizado acumulado por data. Total calculável: ${formatarMoeda(lucroRealTotal)}.`}
+            >
+              <svg
+                viewBox={`0 0 ${chart.width} ${chart.height}`}
+                style={styles.lineChart}
+                preserveAspectRatio="xMidYMid meet"
+              >
+                {chartGridTicks.map((tick, index) => (
+                  <g key={`grid-${index}`}>
+                    <line
+                      x1={chart.left}
+                      x2={chart.width - chart.right}
+                      y1={tick.y}
+                      y2={tick.y}
+                      stroke={isDark ? "#374151" : "#e2e8f0"}
+                      strokeWidth="1"
+                    />
+                    <text
+                      x={chart.left - 10}
+                      y={tick.y + 4}
+                      textAnchor="end"
+                      fill={isDark ? "#cbd5e1" : "#64748b"}
+                      fontSize="11"
+                    >
+                      {formatarMoeda(tick.value)}
+                    </text>
+                  </g>
+                ))}
+                <line
+                  x1={chart.left}
+                  x2={chart.width - chart.right}
+                  y1={yZero}
+                  y2={yZero}
+                  stroke={isDark ? "#94a3b8" : "#64748b"}
+                  strokeDasharray="4 4"
+                  strokeWidth="1.5"
+                />
+                {chartPoints.length > 1 && (
+                  <polyline
+                    points={linePoints}
+                    fill="none"
+                    stroke={lucroRealTotal < 0 ? "#ef4444" : "#16a34a"}
+                    strokeWidth="3"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                  />
+                )}
+                {chartPoints.map((point) => (
+                  <circle
+                    key={`${point.data}-${point.x}`}
+                    cx={point.x}
+                    cy={point.y}
+                    r="4"
+                    fill={lucroRealTotal < 0 ? "#ef4444" : "#16a34a"}
+                  >
+                    <title>
+                      {formatarDataGrafico(point.data)} — lucro do dia:{" "}
+                      {formatarMoeda(point.lucroDia)}; acumulado:{" "}
+                      {formatarMoeda(point.acumulado)}
+                    </title>
+                  </circle>
+                ))}
+                {chartDateTicks.map((point) => (
+                  <text
+                    key={`date-${point.data}`}
+                    x={point.x}
+                    y={chart.height - 18}
+                    textAnchor="middle"
+                    fill={isDark ? "#cbd5e1" : "#64748b"}
+                    fontSize="11"
+                  >
+                    {formatarDataGrafico(point.data)}
+                  </text>
+                ))}
+              </svg>
+            </div>
+          ) : (
+            <div
+              style={{
+                ...styles.profitEmpty,
+                ...(isDark ? styles.profitEmptyDark : {}),
+              }}
+            >
+                Ainda não há vendas com custo histórico registrado para calcular o lucro realizado.
+            </div>
+          )}
+          {vendasSemCustoHistorico > 0 && !loadingLucro && !erroLucro && (
+            <div
+                style={{
+                  ...styles.profitWarning,
+                  ...(isDark ? styles.profitWarningDark : {}),
+                }}
+                role="status"
+            >
+                {vendasSemCustoHistorico === 1
+                  ? "1 venda antiga não possui custo histórico registrado e não foi incluída no cálculo."
+                  : `${vendasSemCustoHistorico} vendas antigas não possuem custo histórico registrado e não foram incluídas no cálculo.`}
+            </div>
+          )}
+          <p
+            style={{
+                ...styles.profitFootnote,
+              ...(isDark ? styles.profitFootnoteDark : {}),
+            }}
+          >
+            Lucro bruto acumulado das vendas com custo unitário registrado; não inclui impostos ou outras despesas.
+          </p>
         </section>
       </main>
     </div>
@@ -525,7 +944,7 @@ const styles = {
 
   cards: {
     display: "grid",
-    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
     gap: "24px",
     marginBottom: "24px",
   },
@@ -624,7 +1043,7 @@ const styles = {
 
   bottom: {
     display: "grid",
-    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
     gap: "24px",
   },
 
@@ -647,6 +1066,49 @@ const styles = {
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: "20px",
+  },
+
+  revenueHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: "14px",
+    marginBottom: "12px",
+  },
+
+  revenueControls: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    flexWrap: "wrap",
+    gap: "8px",
+  },
+
+  periodLabel: {
+    color: "#64748b",
+    fontSize: "13px",
+    fontWeight: 600,
+  },
+
+  periodLabelDark: {
+    color: "#cbd5e1",
+  },
+
+  periodSelect: {
+    maxWidth: "100%",
+    border: "1px solid #cbd5e1",
+    borderRadius: "8px",
+    backgroundColor: "#ffffff",
+    color: "#243447",
+    padding: "8px 10px",
+    fontSize: "13px",
+  },
+
+  periodSelectDark: {
+    borderColor: "#4b5563",
+    backgroundColor: "#111827",
+    color: "#f9fafb",
   },
 
   cardTitle: {
@@ -746,65 +1208,132 @@ const styles = {
     color: "#06c100",
   },
 
+  lucroDark: {
+    color: "#86efac",
+  },
+
   lucroContainer: {
     minHeight: "170px",
     display: "flex",
+    flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
+    gap: "10px",
   },
 
-  secretOverlay: {
-    position: "fixed",
-    inset: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 9999,
-    padding: "24px",
-  },
-
-  secretCard: {
-    backgroundColor: "#ffffff",
-    width: "100%",
-    maxWidth: "400px",
-    padding: "24px",
-    borderRadius: "16px",
+  metricCaption: {
+    color: "#718096",
+    fontSize: "13px",
     textAlign: "center",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
   },
 
-  secretCardDark: {
-    backgroundColor: "#1f2937",
-    color: "#f9fafb",
+  metricCaptionDark: {
+    color: "#cbd5e1",
   },
 
-  secretTitle: {
-    fontSize: "22px",
-    fontWeight: "700",
-    marginBottom: "20px",
-  },
-
-  secretImage: {
-    width: "100%",
-    maxHeight: "250px",
-    objectFit: "contain",
+  profitCard: {
+    marginTop: "24px",
+    padding: "24px",
+    backgroundColor: "#f9f9ff",
+    border: "1px solid #e2e8f0",
     borderRadius: "10px",
+    boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
   },
 
-  secretText: {
-    fontSize: "16px",
-    fontWeight: "600",
-    margin: "20px 0",
+  profitHeader: {
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: "16px",
+    marginBottom: "24px",
   },
 
-  secretButton: {
-    backgroundColor: "#303e51",
-    color: "#ffffff",
-    border: "none",
+  profitDescription: {
+    margin: "8px 0 0",
+    color: "#718096",
+    fontSize: "14px",
+  },
+
+  profitDescriptionDark: {
+    color: "#cbd5e1",
+  },
+
+  profitTotal: {
+    color: "#047857",
+    fontSize: "24px",
+    whiteSpace: "nowrap",
+  },
+
+  profitTotalDark: {
+    color: "#86efac",
+  },
+
+  profitNegative: {
+    color: "#dc2626",
+  },
+
+  lineChartContainer: {
+    width: "100%",
+    overflowX: "auto",
+  },
+
+  lineChart: {
+    display: "block",
+    width: "100%",
+    minWidth: "540px",
+    height: "auto",
+  },
+
+  profitEmpty: {
+    padding: "28px 16px",
+    border: "1px dashed #cbd5e1",
     borderRadius: "8px",
-    padding: "10px 24px",
-    fontWeight: "600",
-    cursor: "pointer",
+    color: "#64748b",
+    textAlign: "center",
   },
+
+  profitEmptyDark: {
+    borderColor: "#4b5563",
+    color: "#cbd5e1",
+  },
+
+  profitError: {
+    padding: "16px",
+    borderRadius: "8px",
+    backgroundColor: "#fff1f2",
+    color: "#9f1239",
+    lineHeight: 1.6,
+  },
+
+  profitErrorDark: {
+    backgroundColor: "#3f1721",
+    color: "#fecdd3",
+  },
+
+  profitWarning: {
+    marginTop: "14px",
+    padding: "12px 14px",
+    borderRadius: "8px",
+    backgroundColor: "#fffbeb",
+    color: "#92400e",
+    fontSize: "13px",
+    lineHeight: 1.5,
+  },
+
+  profitWarningDark: {
+    backgroundColor: "#422006",
+    color: "#fde68a",
+  },
+
+  profitFootnote: {
+    margin: "18px 0 0",
+    color: "#718096",
+    fontSize: "12px",
+  },
+
+  profitFootnoteDark: {
+    color: "#cbd5e1",
+  },
+
 };

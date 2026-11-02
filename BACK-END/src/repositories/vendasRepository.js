@@ -1,5 +1,23 @@
 import { connection } from "../config/Database.js";
 
+function obterCustoUnitario(produto, idProduto) {
+    const custo = Number(produto?.Custo);
+
+    if (
+        produto?.Custo === null ||
+        produto?.Custo === undefined ||
+        produto?.Custo === "" ||
+        !Number.isFinite(custo) ||
+        custo < 0
+    ) {
+        throw new Error(
+            `O produto ${idProduto} precisa ter um custo válido antes de ser vendido.`
+        );
+    }
+
+    return custo;
+}
+
 // CRUD - Create, Read, Update, Delete
 const vendasRepository = {
 
@@ -26,7 +44,7 @@ const vendasRepository = {
 
                 // Bloqueia a linha do produto para leitura/atualização (evita race condition)
                 const [produtoRows] = await conn.execute(
-                    `SELECT Id, Preco, Quantidade, Status, DataVenc 
+                    `SELECT Id, Preco, Custo, Quantidade, Status, DataVenc
                      FROM Produtos
                      WHERE Id = ?
                      FOR UPDATE`,
@@ -83,9 +101,14 @@ const vendasRepository = {
                 }
 
                 const preco = Number(produto.Preco);
+                const custoUnitario = obterCustoUnitario(
+                    produto,
+                    item.idProduto
+                );
 
                 // Armazena o valor unitário no item para uso posterior
                 item.valor = preco;
+                item.custoUnitario = custoUnitario;
                 valorTotal += preco * Number(item.qtd);
             }
 
@@ -109,13 +132,14 @@ const vendasRepository = {
 
                 await conn.execute(
                     `INSERT INTO Itens_vendas
-                        (IdVenda, IdProduto, Qtd, Valor)
-                     VALUES (?, ?, ?, ?)`,
+                        (IdVenda, IdProduto, Qtd, Valor, CustoUnitario)
+                     VALUES (?, ?, ?, ?, ?)`,
                     [
                         vendaId,
                         item.idProduto,
                         item.qtd,
-                        item.valor
+                        item.valor,
+                        item.custoUnitario
                     ]
                 );
 
@@ -209,7 +233,7 @@ const vendasRepository = {
                 }
 
                 const [produtoRows] = await conn.execute(
-                    `SELECT Id, Preco, Quantidade, Status, DataVenc
+                    `SELECT Id, Preco, Custo, Quantidade, Status, DataVenc
                      FROM Produtos
                      WHERE Id = ?
                      FOR UPDATE`,
@@ -263,8 +287,13 @@ const vendasRepository = {
                 }
 
                 const preco = Number(produto.Preco);
+                const custoUnitario = obterCustoUnitario(
+                    produto,
+                    item.idProduto
+                );
 
                 item.valor = preco;
+                item.custoUnitario = custoUnitario;
                 valorTotal += preco * Number(item.qtd);
             }
 
@@ -295,13 +324,14 @@ const vendasRepository = {
 
                 await conn.execute(
                     `INSERT INTO Itens_vendas
-                        (IdVenda, IdProduto, Qtd, Valor)
-                     VALUES (?, ?, ?, ?)`,
+                        (IdVenda, IdProduto, Qtd, Valor, CustoUnitario)
+                     VALUES (?, ?, ?, ?, ?)`,
                     [
                         id,
                         item.idProduto,
                         item.qtd,
-                        item.valor
+                        item.valor,
+                        item.custoUnitario
                     ]
                 );
 
@@ -513,6 +543,64 @@ const vendasRepository = {
         return rows;
     },
 
+    selecionarLucroReal: async () => {
+        const [rows] = await connection.execute(`
+            SELECT
+                DATE(vendas.DataCad) AS Data,
+                SUM(
+                    CASE
+                        WHEN vendas.temCustoCompleto = 1 THEN vendas.Lucro
+                        ELSE 0
+                    END
+                ) AS LucroDia,
+                SUM(
+                    CASE
+                        WHEN vendas.temCustoCompleto = 1 THEN 1
+                        ELSE 0
+                    END
+                ) AS VendasComCusto,
+                SUM(
+                    CASE
+                        WHEN vendas.temCustoCompleto = 0 THEN 1
+                        ELSE 0
+                    END
+                ) AS VendasSemCusto
+            FROM (
+                SELECT
+                    v.Id,
+                    v.DataCad,
+                    COALESCE(
+                        SUM(
+                            CASE
+                                WHEN iv.CustoUnitario IS NOT NULL
+                                    THEN (iv.Valor - iv.CustoUnitario) * iv.Qtd
+                                ELSE 0
+                            END
+                        ),
+                        0
+                    ) AS Lucro,
+                    CASE
+                        WHEN COUNT(iv.Id) > 0
+                            AND SUM(
+                                CASE
+                                    WHEN iv.CustoUnitario IS NULL THEN 1
+                                    ELSE 0
+                                END
+                            ) = 0
+                            THEN 1
+                        ELSE 0
+                    END AS temCustoCompleto
+                FROM Vendas v
+                LEFT JOIN Itens_vendas iv ON iv.IdVenda = v.Id
+                GROUP BY v.Id, v.DataCad
+            ) vendas
+            GROUP BY DATE(vendas.DataCad)
+            ORDER BY DATE(vendas.DataCad) ASC
+        `);
+
+        return rows;
+    },
+
 
    selecionarId: async (id) => {
 
@@ -525,7 +613,8 @@ const vendasRepository = {
             Vendas.IdVendedor,
             Vendedores.Nome AS NomeVendedor,
             Vendas.ValorTotal,
-            Vendas.DataCad
+            Vendas.DataCad,
+            Vendas.formaPagamento
         FROM Vendas
         INNER JOIN Vendedores
             ON Vendedores.Id = Vendas.IdVendedor
@@ -583,7 +672,7 @@ const vendasRepository = {
 
             // Bloqueia o produto para verificar disponibilidade
             const [produtoRows] = await conn.execute(
-                `SELECT Id, Preco, Quantidade, Status, DataVenc
+                `SELECT Id, Preco, Custo, Quantidade, Status, DataVenc
                  FROM Produtos
                  WHERE Id = ?
                  FOR UPDATE`,
@@ -637,17 +726,19 @@ const vendasRepository = {
             }
 
             const valor = Number(produto.Preco);
+            const custoUnitario = obterCustoUnitario(produto, produtoId);
 
             // Insere o novo item
             const [result] = await conn.execute(
                 `INSERT INTO Itens_vendas
-                    (IdVenda, IdProduto, Qtd, Valor)
-                 VALUES (?, ?, ?, ?)`,
+                    (IdVenda, IdProduto, Qtd, Valor, CustoUnitario)
+                 VALUES (?, ?, ?, ?, ?)`,
                 [
                     vendaId,
                     produtoId,
                     quantidade,
-                    valor
+                    valor,
+                    custoUnitario
                 ]
             );
 
@@ -738,7 +829,7 @@ const vendasRepository = {
 
             // Bloqueia o produto para verificar estoque e data de vencimento
             const [produtoRows] = await conn.execute(
-                `SELECT Id, Preco, Quantidade, Status, DataVenc
+                `SELECT Id, Preco, Custo, Quantidade, Status, DataVenc
                  FROM Produtos
                  WHERE Id = ?
                  FOR UPDATE`,

@@ -213,6 +213,18 @@ const vendaController = {
             });
         }
     },
+    selecionarLucroReal: async (req, res) => {
+        try {
+            const result = await vendasRepository.selecionarLucroReal();
+            return res.status(200).json(result);
+        } catch (error) {
+            console.error("Erro ao calcular lucro realizado:", error);
+            return res.status(500).json({
+                message: "Erro ao buscar o histórico de lucro realizado.",
+                errorMessage: error.message
+            });
+        }
+    },
 // Read - GET by ID____________________________________________________________________
     selecionarId: async (req, res) => {
        

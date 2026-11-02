@@ -90,6 +90,7 @@ class ProdutosRepository {
             idFornecedor,
             nome,
             preco,
+            custo,
             quantidade,
             status,
             imagem,
@@ -104,12 +105,13 @@ class ProdutosRepository {
 
         const [resultado] = await connection.execute(
             `INSERT INTO Produtos
-            (IdFornecedor, Nome, Preco, Quantidade, Status, Imagem, DataVenc)
-            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            (IdFornecedor, Nome, Preco, Custo, Quantidade, Status, Imagem, DataVenc)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 idFornecedor,
                 nome,
                 preco,
+                custo,
                 quantidade,
                 statusFinal,
                 imagem,
@@ -125,6 +127,7 @@ class ProdutosRepository {
             idFornecedor,
             nome,
             preco,
+            custo,
             quantidade,
             status,
             imagem,
@@ -143,6 +146,7 @@ class ProdutosRepository {
              SET IdFornecedor = ?,
                  Nome = ?,
                  Preco = ?,
+                 Custo = ?,
                  Quantidade = ?,
                  Status = ?,
                  Imagem = ?,
@@ -152,6 +156,7 @@ class ProdutosRepository {
                 idFornecedor,
                 nome,
                 preco,
+                custo,
                 quantidade,
                 statusFinal,
                 imagem,
@@ -161,6 +166,75 @@ class ProdutosRepository {
         );
 
         return resultado;
+    }
+
+    async ajustarEstoque(idProduto, operacao, quantidade) {
+        const connectionTransaction = await connection.getConnection();
+
+        try {
+            await connectionTransaction.beginTransaction();
+
+            const [produtos] = await connectionTransaction.execute(
+                `SELECT Id, Quantidade, DataVenc
+                 FROM Produtos
+                 WHERE Id = ?
+                 FOR UPDATE`,
+                [idProduto]
+            );
+
+            if (produtos.length === 0) {
+                await connectionTransaction.rollback();
+                return null;
+            }
+
+            const produtoAtual = produtos[0];
+            const quantidadeAtual = Number(produtoAtual.Quantidade);
+            const novaQuantidade =
+                operacao === "entrada"
+                    ? quantidadeAtual + quantidade
+                    : quantidadeAtual - quantidade;
+
+            if (novaQuantidade < 0) {
+                const error = new Error(
+                    "A retirada não pode ser maior que o estoque disponível."
+                );
+                error.statusCode = 400;
+                throw error;
+            }
+
+            if (novaQuantidade > 999999) {
+                const error = new Error(
+                    "A quantidade em estoque não pode ultrapassar 999.999 unidades."
+                );
+                error.statusCode = 400;
+                throw error;
+            }
+
+            const status = this.calcularStatusProduto({
+                Quantidade: novaQuantidade,
+                DataVenc: produtoAtual.DataVenc
+            });
+
+            await connectionTransaction.execute(
+                `UPDATE Produtos
+                 SET Quantidade = ?,
+                     Status = ?
+                 WHERE Id = ?`,
+                [novaQuantidade, status, idProduto]
+            );
+
+            await connectionTransaction.commit();
+
+            return {
+                quantidade: novaQuantidade,
+                status
+            };
+        } catch (error) {
+            await connectionTransaction.rollback();
+            throw error;
+        } finally {
+            connectionTransaction.release();
+        }
     }
 
     async deletar(id) {

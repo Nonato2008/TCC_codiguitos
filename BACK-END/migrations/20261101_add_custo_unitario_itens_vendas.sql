@@ -1,0 +1,2 @@
+ALTER TABLE Itens_vendas
+ADD COLUMN CustoUnitario DECIMAL(10,2) NULL;

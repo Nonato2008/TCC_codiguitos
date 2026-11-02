@@ -5,7 +5,7 @@ const vendedoresRepository = {
     // Read - GET by ID____________________________________________________________________
     selecionarId: async (id) => {
         const sql =
-            `SELECT * FROM vendedores WHERE Id = ?`
+            `SELECT * FROM Vendedores WHERE Id = ?`
             ;
 
         const values = [id]
@@ -17,8 +17,8 @@ const vendedoresRepository = {
     selecionar: async () => {
         const [rows] = await connection.execute(`
             SELECT *
-            FROM vendedores
-            ORDER BY vendedores.Id    
+            FROM Vendedores
+            ORDER BY Vendedores.Id
         `);
         return rows;
     },
@@ -49,7 +49,7 @@ const vendedoresRepository = {
         const sql = `
         UPDATE Vendedores
             SET
-            idProprietario = ?,
+            IdProprietario = ?,
             Nome = ?
             WHERE Id = ?
     `;

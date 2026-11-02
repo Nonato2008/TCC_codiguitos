@@ -11,6 +11,16 @@ export const buscarVendas = async () => {
     }
 };
 
+export const buscarLucroReal = async () => {
+    try {
+        const response = await codiguitos_api.get("/vendas/lucro-real");
+        return response.data;
+    } catch (error) {
+        console.error("Erro ao buscar histórico de lucro realizado:", error);
+        throw error;
+    }
+};
+
 export const buscarVendaId = async (id) => {
     try {
         const response = await codiguitos_api.get(`/vendas/${id}`);

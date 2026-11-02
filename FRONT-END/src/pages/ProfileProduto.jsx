@@ -65,6 +65,13 @@ export default function ProfileProduto() {
   const getNome = (p) => p?.Nome ?? p?.nome ?? "";
   const getPreco = (p) =>
     Number(p?.Preco ?? p?.preco ?? p?.Valor ?? p?.valor ?? 0);
+  const getCusto = (p) => {
+    const custo = p?.Custo ?? p?.custo;
+    if (custo === undefined || custo === null || custo === "") return null;
+
+    const valor = Number(custo);
+    return Number.isFinite(valor) ? valor : null;
+  };
   const getQuantidade = (p) =>
     Number(p?.Quantidade ?? p?.quantidade ?? p?.Estoque ?? p?.estoque ?? 0);
   const getDataVenc = (p) =>
@@ -132,6 +139,8 @@ export default function ProfileProduto() {
 
   const nome = getNome(produto);
   const preco = getPreco(produto);
+  const custo = getCusto(produto);
+  const lucroUnitario = custo === null ? null : preco - custo;
   const quantidade = getQuantidade(produto);
   const dataVenc = getDataVenc(produto);
   const imagem = produto.imagem || produto.Imagem || produto.imagemUrl || null;
@@ -218,6 +227,68 @@ export default function ProfileProduto() {
                 }}
               >
                 {produto.Id ?? produto.id}
+              </strong>
+            </div>
+
+            <div style={styles.infoItem}>
+              <span
+                style={{
+                  ...styles.label,
+                  ...(isDark ? styles.labelDark : {}),
+                }}
+              >
+                Custo Unitário
+              </span>
+
+              <strong
+                style={{
+                  ...styles.value,
+                  ...(isDark ? styles.valueDark : {}),
+                }}
+              >
+                {custo === null
+                  ? "Não informado"
+                  : custo.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })}
+              </strong>
+            </div>
+
+            <div style={styles.infoItem}>
+              <span
+                style={{
+                  ...styles.label,
+                  ...(isDark ? styles.labelDark : {}),
+                }}
+              >
+                {lucroUnitario === null
+                  ? "Lucro por Unidade"
+                  : lucroUnitario < 0
+                    ? "Prejuízo por Unidade"
+                    : "Lucro por Unidade"}
+              </span>
+
+              <strong
+                style={{
+                  ...styles.totalValue,
+                  color: lucroUnitario === null
+                    ? isDark
+                      ? "#d1d5db"
+                      : "#64748b"
+                    : lucroUnitario < 0
+                    ? "#b91c1c"
+                    : isDark
+                      ? "#bbf7d0"
+                      : "#047857",
+                }}
+              >
+                {lucroUnitario === null
+                  ? "Não calculado (custo ausente)"
+                  : lucroUnitario.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })}
               </strong>
             </div>
 
@@ -360,6 +431,47 @@ export default function ProfileProduto() {
               style: "currency",
               currency: "BRL",
             })}
+          </strong>
+        </section>
+
+        <section
+          style={{
+            ...styles.summary,
+            ...styles.profitSummary,
+            ...(isDark ? styles.summaryDark : {}),
+          }}
+        >
+          <div>
+            <span
+              style={{
+                ...styles.summaryLabel,
+                ...(isDark ? styles.summaryLabelDark : {}),
+              }}
+            >
+              Lucro potencial do estoque
+            </span>
+          </div>
+
+          <strong
+            style={{
+              ...styles.summaryValue,
+              color: lucroUnitario === null
+                ? isDark
+                  ? "#d1d5db"
+                  : "#64748b"
+                : lucroUnitario * quantidade < 0
+                  ? "#b91c1c"
+                  : isDark
+                    ? "#bbf7d0"
+                    : "#047857",
+            }}
+          >
+            {lucroUnitario === null
+              ? "Não calculado (custo ausente)"
+              : (lucroUnitario * quantidade).toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                })}
           </strong>
         </section>
       </main>
@@ -520,6 +632,11 @@ const styles = {
     justifyContent: "space-between",
     alignItems: "center",
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
+  },
+
+  profitSummary: {
+    marginTop: "16px",
+    border: "1px solid #86efac",
   },
 
   summaryDark: {

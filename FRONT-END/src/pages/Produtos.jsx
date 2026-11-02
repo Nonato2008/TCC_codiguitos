@@ -1,6 +1,6 @@
 
 import { Link, useNavigate } from "react-router-dom";
-import React, { useEffect, useState, useContext, useMemo, useRef } from "react";
+import React, { useEffect, useState, useContext, useMemo } from "react";
 import Sidebar from "../components/Sidebar";
 import { useProdutos } from "../hooks/useProdutos";
 import { ThemeContext } from "../contexts/ThemeContext";
@@ -14,45 +14,8 @@ export default function Produtos() {
   const isDark = theme === "dark";
 
   const [fornecedores, setFornecedores] = useState([]);
-  const [dataFiltro, setDataFiltro] = useState("");
   const [busca, setBusca] = useState("");
-
-  const [mostrarSegredo, setMostrarSegredo] = useState(false);
-  const cliquesQuantidade = useRef(0);
-
-  function clicarQuantidade() {
-  cliquesQuantidade.current += 1;
-
-  if (cliquesQuantidade.current === 5) {
-    cliquesQuantidade.current = 0;
-    setMostrarSegredo(true);
-
-    let encontrados = [];
-
-    try {
-      encontrados = JSON.parse(
-        localStorage.getItem("easterEggsEncontrados") || "[]"
-      );
-    } catch {
-      encontrados = [];
-    }
-
-    if (!encontrados.includes(3)) {
-      encontrados.push(3);
-
-      localStorage.setItem(
-        "easterEggsEncontrados",
-        JSON.stringify(encontrados)
-      );
-
-      window.dispatchEvent(
-        new CustomEvent("easterEggDesbloqueado", {
-          detail: { id: 3 },
-        })
-      );
-    }
-  }
-}
+  const [quantidadeMinima, setQuantidadeMinima] = useState("");
 
   useEffect(() => {
     const carregarFornecedores = async () => {
@@ -60,7 +23,7 @@ export default function Produtos() {
         const dados = await buscarFornecedores();
         setFornecedores(dados || []);
       } catch (error) {
-        console.error("Erro ao buscar vendedores:", error);
+        console.error("Erro ao buscar fornecedores:", error);
       }
     };
 
@@ -114,6 +77,14 @@ export default function Produtos() {
   const getPreco = (p) =>
     Number(p?.Preco ?? p?.preco ?? p?.Valor ?? p?.valor ?? 0);
 
+  const getCusto = (p) => {
+    const custo = p?.Custo ?? p?.custo;
+    if (custo === undefined || custo === null || custo === "") return null;
+
+    const valor = Number(custo);
+    return Number.isFinite(valor) ? valor : null;
+  };
+
   const getQuantidade = (p) =>
     Number(p?.Quantidade ?? p?.quantidade ?? p?.Estoque ?? p?.estoque ?? 0);
 
@@ -124,7 +95,8 @@ export default function Produtos() {
     p?.DataVencimento ??
     p?.dataVenc;
 
-  const getIdFornecedorFromProduct = (p) => p?.idFornecedor;
+  const getIdFornecedorFromProduct = (p) =>
+    p?.IdFornecedor ?? p?.idFornecedor ?? p?.id_fornecedor;
 
   const hoje = new Date();
 
@@ -146,6 +118,10 @@ export default function Produtos() {
       id: getId(p),
       nome: getNome(p),
       preco: getPreco(p),
+      custo: getCusto(p),
+      lucroUnitario: getCusto(p) === null
+        ? null
+        : getPreco(p) - getCusto(p),
       quantidade: getQuantidade(p),
       dataVenc: getDataVenc(p),
       fornecedorNome: encontrarNomeFornecedor(
@@ -158,16 +134,11 @@ export default function Produtos() {
   );
 
   const produtosFiltrados = produtosEnriquecidos.filter((item) => {
-    if (dataFiltro) {
-      const dataProduto =
-        item.produto.dataCad ??
-        item.produto.DataCad ??
-        item.produto.dataVenc ??
-        item.produto.DataVenc;
-
-      const dataProdutoFormatada = formatarDataLocal(dataProduto);
-
-      if (dataProdutoFormatada !== dataFiltro) return false;
+    if (
+      quantidadeMinima !== "" &&
+      item.quantidade <= Number(quantidadeMinima)
+    ) {
+      return false;
     }
 
     if (!busca) return true;
@@ -207,7 +178,7 @@ export default function Produtos() {
               </p>
             </div>
 
-            <div style={styles.headerRight}>
+            <div style={styles.headerActions}>
               <div
                 style={{ ...styles.total, ...(isDark ? styles.totalDark : {}) }}
               >
@@ -261,7 +232,7 @@ export default function Produtos() {
               </p>
             </div>
 
-            <div style={styles.headerRight}>
+            <div style={styles.headerActions}>
               <div
                 style={{ ...styles.total, ...(isDark ? styles.totalDark : {}) }}
               >
@@ -316,56 +287,16 @@ export default function Produtos() {
             </p>
           </div>
 
-          <div style={styles.headerRight}>
+          <div style={styles.headerActions}>
             <div
-              onClick={clicarQuantidade}
               style={{
                 ...styles.total,
                 ...(isDark ? styles.totalDark : {}),
-                cursor: "pointer",
-                userSelect: "none",
               }}
             >
               {produtosFiltrados.length}{" "}
               {produtosFiltrados.length === 1 ? "produto" : "produtos"}
             </div>
-
-            <input
-              type="text"
-              placeholder="Buscar por nome, id ou fornecedor..."
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              style={{
-                ...styles.dateInput,
-                ...(isDark ? styles.dateInputDark : {}),
-                minWidth: "260px",
-              }}
-              aria-label="Buscar produtos"
-            />
-
-            <input
-              type="date"
-              value={dataFiltro}
-              onChange={(event) => setDataFiltro(event.target.value)}
-              style={{
-                ...styles.dateInput,
-                ...(isDark ? styles.dateInputDark : {}),
-              }}
-              aria-label="Filtrar produtos por data"
-            />
-
-            {dataFiltro && (
-              <button
-                type="button"
-                onClick={() => setDataFiltro("")}
-                style={{
-                  ...styles.clearFilterButton,
-                  ...(isDark ? styles.clearFilterButtonDark : {}),
-                }}
-              >
-                Limpar
-              </button>
-            )}
 
             <Link to="/produtos/cadastrar" style={{ textDecoration: "none" }}>
               <button
@@ -380,6 +311,98 @@ export default function Produtos() {
           </div>
         </header>
 
+        <section
+          style={{
+            ...styles.filtersCard,
+            ...(isDark ? styles.filtersCardDark : {}),
+          }}
+          aria-label="Filtros de produtos"
+        >
+          <div style={styles.filtersHeader}>
+            <div>
+              <h2
+                style={{
+                  ...styles.filtersTitle,
+                  ...(isDark ? styles.filtersTitleDark : {}),
+                }}
+              >
+                Pesquisar e filtrar
+              </h2>
+              <p
+                style={{
+                  ...styles.filtersDescription,
+                  ...(isDark ? styles.filtersDescriptionDark : {}),
+                }}
+              >
+                Busque pelo produto, código ou fornecedor e filtre pelo estoque.
+              </p>
+            </div>
+
+            {(busca || quantidadeMinima !== "") && (
+              <button
+                type="button"
+                onClick={() => {
+                  setBusca("");
+                  setQuantidadeMinima("");
+                }}
+                style={{
+                  ...styles.clearFilterButton,
+                  ...(isDark ? styles.clearFilterButtonDark : {}),
+                }}
+              >
+                Limpar filtros
+              </button>
+            )}
+          </div>
+
+          <div style={styles.filtersGrid}>
+            <label
+              htmlFor="busca-produtos"
+              style={{
+                ...styles.filterField,
+                ...(isDark ? styles.filterFieldDark : {}),
+              }}
+            >
+              <span>Pesquisar produtos</span>
+              <input
+                id="busca-produtos"
+                type="search"
+                placeholder="Nome, código ou fornecedor"
+                value={busca}
+                onChange={(event) => setBusca(event.target.value)}
+                style={{
+                  ...styles.filterInput,
+                  ...(isDark ? styles.filterInputDark : {}),
+                }}
+              />
+            </label>
+
+            <label
+              htmlFor="quantidade-minima-produtos"
+              style={{
+                ...styles.filterField,
+                ...(isDark ? styles.filterFieldDark : {}),
+              }}
+            >
+              <span>Quantidade maior que</span>
+              <input
+                id="quantidade-minima-produtos"
+                type="number"
+                min="0"
+                step="1"
+                inputMode="numeric"
+                placeholder="Ex.: 10"
+                value={quantidadeMinima}
+                onChange={(event) => setQuantidadeMinima(event.target.value)}
+                style={{
+                  ...styles.filterInput,
+                  ...(isDark ? styles.filterInputDark : {}),
+                }}
+              />
+            </label>
+          </div>
+        </section>
+
         <section style={styles.content}>
           {produtosFiltrados.length === 0 ? (
             <div
@@ -390,8 +413,8 @@ export default function Produtos() {
               </span>
 
               <p style={{ ...(isDark ? styles.textDark : {}) }}>
-                {dataFiltro
-                  ? "Nenhum produto encontrado para a data selecionada."
+                {busca || quantidadeMinima !== ""
+                  ? "Nenhum produto encontrado para os filtros selecionados."
                   : "Nenhum produto encontrado."}
               </p>
             </div>
@@ -480,7 +503,6 @@ export default function Produtos() {
                     >
                       {item.nome}
                     </h3>
-
                     <div
                       style={{
                         display: "flex",
@@ -515,6 +537,39 @@ export default function Produtos() {
 
                     <div
                       style={{
+                        marginBottom: 8,
+                        fontSize: 13,
+                        color: isDark ? "#cbd5e1" : "#55616a",
+                      }}
+                    >
+                      Custo unitário:{" "}
+                      {item.custo === null
+                        ? "Não informado"
+                        : item.custo.toLocaleString("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          })}
+                      <div
+                        style={{
+                          marginTop: 4,
+                          color: item.lucroUnitario !== null && item.lucroUnitario < 0
+                            ? "#b91c1c"
+                            : isDark
+                              ? "#86efac"
+                              : "#047857",
+                        }}
+                      >
+                        {item.lucroUnitario === null
+                          ? "Lucro não calculado (custo ausente)"
+                          : `${item.lucroUnitario < 0 ? "Prejuízo" : "Lucro"} por unidade: ${item.lucroUnitario.toLocaleString(
+                              "pt-BR",
+                              { style: "currency", currency: "BRL" }
+                            )}`}
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
                         fontSize: 13,
                         color: isDark ? "#cbd5e1" : "#55616a",
                       }}
@@ -530,6 +585,7 @@ export default function Produtos() {
                           : "—"}
                       </div>
                     </div>
+
                   </article>
                 );
               })}
@@ -537,53 +593,6 @@ export default function Produtos() {
           )}
         </section>
 
-        {mostrarSegredo && (
-          <div
-            style={styles.secretOverlay}
-            onClick={() => setMostrarSegredo(false)}
-          >
-            <div
-              style={{
-                ...styles.secretCard,
-                ...(isDark ? styles.secretCardDark : {}),
-              }}
-              onClick={(event) => event.stopPropagation()}
-            >
-              <img
-                src="/jhonny.jpg"
-                alt="Jhonny - Fritador Supremo"
-                style={styles.secretImage}
-              />
-
-              <h3
-                style={{
-                  ...styles.secretTitle,
-                  ...(isDark ? styles.secretTitleDark : {}),
-                }}
-              >
-                Easter Eggs Do Nelson
-              </h3>
-
-              <p
-                style={{
-                  ...styles.secretText,
-                  ...(isDark ? styles.secretTextDark : {}),
-                }}
-              >
-                Parabéns! Você encontrou Jhonny!!!
-              </p>
-
-              <button
-                type="button"
-                style={styles.secretButton}
-                onClick={() => setMostrarSegredo(false)}
-              >
-                Fechar
-              </button>
-            </div>
-          </div>
-          
-        )}
       </main>
     </div>
   );
@@ -618,10 +627,12 @@ const styles = {
     alignItems: "center",
   },
 
-  headerRight: {
+  headerActions: {
     display: "flex",
     alignItems: "center",
     gap: 12,
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
   },
 
   title: {
@@ -677,6 +688,91 @@ const styles = {
     backgroundColor: "#2563eb",
   },
 
+  filtersCard: {
+    maxWidth: "1150px",
+    margin: "0 0 20px",
+    padding: "18px 20px",
+    backgroundColor: "#ffffff",
+    border: "1px solid #e2e8f0",
+    borderRadius: "12px",
+    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+    boxSizing: "border-box",
+  },
+
+  filtersCardDark: {
+    backgroundColor: "#1f2937",
+    borderColor: "#4b5563",
+  },
+
+  filtersHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: "12px",
+    marginBottom: "16px",
+  },
+
+  filtersTitle: {
+    margin: 0,
+    color: "#243447",
+    fontSize: "16px",
+    fontWeight: 700,
+  },
+
+  filtersTitleDark: {
+    color: "#f9fafb",
+  },
+
+  filtersDescription: {
+    margin: "4px 0 0",
+    color: "#718096",
+    fontSize: "13px",
+  },
+
+  filtersDescriptionDark: {
+    color: "#cbd5e1",
+  },
+
+  filtersGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: "14px",
+  },
+
+  filterField: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "7px",
+    color: "#475569",
+    fontSize: "13px",
+    fontWeight: 600,
+    minWidth: 0,
+  },
+
+  filterFieldDark: {
+    color: "#e5e7eb",
+  },
+
+  filterInput: {
+    width: "100%",
+    boxSizing: "border-box",
+    border: "1px solid #cbd5e1",
+    borderRadius: "8px",
+    padding: "10px 12px",
+    backgroundColor: "#ffffff",
+    color: "#243447",
+    fontSize: "14px",
+    fontFamily: "Inter, sans-serif",
+    outline: "none",
+  },
+
+  filterInputDark: {
+    backgroundColor: "#1f2937",
+    borderColor: "#4b5563",
+    color: "#f9fafb",
+  },
+
   content: {
     width: "100%",
     maxWidth: "1150px",
@@ -718,23 +814,6 @@ const styles = {
     color: "#e5e7eb",
   },
 
-  dateInput: {
-    border: "1px solid #cbd5e1",
-    borderRadius: "8px",
-    padding: "9px 10px",
-    backgroundColor: "#ffffff",
-    color: "#243447",
-    fontSize: "14px",
-    fontFamily: "Inter, sans-serif",
-    outline: "none",
-  },
-
-  dateInputDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#4b5563",
-    color: "#f9fafb",
-  },
-
   clearFilterButton: {
     border: "1px solid #cbd5e1",
     borderRadius: "8px",
@@ -752,65 +831,4 @@ const styles = {
     color: "#f9fafb",
   },
 
-  secretOverlay: {
-    position: "fixed",
-    inset: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.75)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 9999,
-    padding: 20,
-  },
-
-  secretCard: {
-    backgroundColor: "#ffffff",
-    padding: 25,
-    borderRadius: 12,
-    width: "100%",
-    maxWidth: 450,
-    textAlign: "center",
-    boxShadow: "0 10px 30px rgba(0, 0, 0, 0.3)",
-  },
-
-  secretCardDark: {
-    backgroundColor: "#1f2937",
-  },
-
-  secretImage: {
-    width: "100%",
-    maxHeight: 300,
-    objectFit: "contain",
-    borderRadius: 8,
-  },
-
-  secretTitle: {
-    color: "#243447",
-    fontSize: 22,
-    marginBottom: 10,
-  },
-
-  secretTitleDark: {
-    color: "#f9fafb",
-  },
-
-  secretText: {
-    color: "#55616a",
-    fontSize: 15,
-    marginBottom: 20,
-  },
-
-  secretTextDark: {
-    color: "#d1d5db",
-  },
-
-  secretButton: {
-    border: "none",
-    backgroundColor: "#303e51",
-    color: "#ffffff",
-    padding: "10px 25px",
-    borderRadius: 8,
-    fontWeight: 600,
-    cursor: "pointer",
-  },
 };
