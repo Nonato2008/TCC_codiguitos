@@ -269,7 +269,7 @@ const styles = {
   container: {
     minHeight: "100vh",
     width: "100%",
-    backgroundColor: "#f8fafc",
+    backgroundColor: "var(--surface)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -280,14 +280,14 @@ const styles = {
   },
 
   containerDark: {
-    backgroundColor: "#0f172a",
+    backgroundColor: "var(--app-background)",
   },
 
   card: {
     width: "420px",
     maxWidth: "100%",
-    backgroundColor: "#ffffff",
-    border: "1px solid #e2e8f0",
+    backgroundColor: "var(--surface)",
+    border: "1px solid var(--border-color)",
     borderRadius: "16px",
     padding: "40px",
     boxShadow: "0 10px 30px rgba(0, 0, 0, 0.06)",
@@ -296,8 +296,8 @@ const styles = {
   },
 
   cardDark: {
-    backgroundColor: "#111827",
-    borderColor: "#374151",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
     boxShadow: "0 10px 30px rgba(0, 0, 0, 0.35)",
   },
 
@@ -312,11 +312,11 @@ const styles = {
     height: "80px",
     borderRadius: "14px",
     overflow: "hidden",
-    border: "1px solid #e2e8f0",
+    border: "1px solid var(--border-color)",
   },
 
   logoDark: {
-    borderColor: "#4b5563",
+    borderColor: "var(--border-color)",
   },
 
   logoImage: {
@@ -385,17 +385,17 @@ const styles = {
     width: "100%",
     boxSizing: "border-box",
     borderRadius: "10px",
-    border: "1px solid #d7dfeb",
+    border: "1px solid var(--border-color)",
     padding: "12px 14px",
     fontSize: "14px",
-    backgroundColor: "#ffffff",
+    backgroundColor: "var(--surface)",
     color: "#111827",
     outline: "none",
   },
 
   inputDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#4b5563",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
     color: "#f9fafb",
   },
 
@@ -404,7 +404,7 @@ const styles = {
     border: "none",
     borderRadius: "10px",
     padding: "12px 16px",
-    backgroundColor: "#303e51",
+    backgroundColor: "var(--accent-color)",
     color: "#ffffff",
     fontSize: "15px",
     fontWeight: 700,
@@ -412,7 +412,7 @@ const styles = {
   },
 
   buttonDark: {
-    backgroundColor: "#2563eb",
+    backgroundColor: "var(--accent-color)",
   },
 
   buttonDisabled: {

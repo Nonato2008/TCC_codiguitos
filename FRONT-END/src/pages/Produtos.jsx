@@ -442,10 +442,12 @@ export default function Produtos() {
                     key={item.id}
                     onClick={() => navigate(`/produtos/${item.id}`)}
                     style={{
-                      background: isDark ? "#0b1220" : "#fff",
+                      backgroundColor: "var(--surface-muted)",
+                      color: "var(--text-primary)",
                       padding: 16,
                       borderRadius: 8,
-                      border: "1px solid #e6edf3",
+                      border: "1px solid var(--border-color)",
+                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
                       cursor: "pointer",
                       transition: "all 0.2s ease",
                     }}
@@ -467,7 +469,7 @@ export default function Produtos() {
                         overflow: "hidden",
                         borderRadius: 8,
                         marginBottom: 10,
-                        background: "#f3f6fa",
+                        backgroundColor: "var(--surface)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -601,22 +603,22 @@ export default function Produtos() {
 const styles = {
   layout: {
     minHeight: "100vh",
-    backgroundColor: "#f5f6f8",
+    backgroundColor: "var(--surface)",
   },
 
   layoutDark: {
-    backgroundColor: "#0f172a",
+    backgroundColor: "var(--app-background)",
   },
 
   page: {
-    marginLeft: "363px",
+    marginLeft: "256px",
     minHeight: "100vh",
     padding: "30px 25px",
     boxSizing: "border-box",
   },
 
   pageDark: {
-    backgroundColor: "#111827",
+    backgroundColor: "var(--surface)",
   },
 
   header: {
@@ -658,10 +660,10 @@ const styles = {
   },
 
   total: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "var(--surface)",
     padding: "10px 18px",
     borderRadius: "10px",
-    border: "1px solid #e2e8f0",
+    border: "1px solid var(--border-color)",
     color: "#243447",
     fontWeight: "600",
     fontSize: "15px",
@@ -669,14 +671,14 @@ const styles = {
   },
 
   totalDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#4b5563",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
     color: "#f9fafb",
   },
 
   primaryButton: {
     border: "none",
-    backgroundColor: "#303e51",
+    backgroundColor: "var(--accent-color)",
     color: "#fff",
     padding: "10px 14px",
     borderRadius: "10px",
@@ -685,23 +687,23 @@ const styles = {
   },
 
   primaryButtonDark: {
-    backgroundColor: "#2563eb",
+    backgroundColor: "var(--accent-color)",
   },
 
   filtersCard: {
     maxWidth: "1150px",
     margin: "0 0 20px",
     padding: "18px 20px",
-    backgroundColor: "#ffffff",
-    border: "1px solid #e2e8f0",
+    backgroundColor: "var(--surface)",
+    border: "1px solid var(--border-color)",
     borderRadius: "12px",
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
     boxSizing: "border-box",
   },
 
   filtersCardDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#4b5563",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
   },
 
   filtersHeader: {
@@ -757,10 +759,10 @@ const styles = {
   filterInput: {
     width: "100%",
     boxSizing: "border-box",
-    border: "1px solid #cbd5e1",
+    border: "1px solid var(--border-color)",
     borderRadius: "8px",
     padding: "10px 12px",
-    backgroundColor: "#ffffff",
+    backgroundColor: "var(--surface)",
     color: "#243447",
     fontSize: "14px",
     fontFamily: "Inter, sans-serif",
@@ -768,8 +770,8 @@ const styles = {
   },
 
   filterInputDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#4b5563",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
     color: "#f9fafb",
   },
 
@@ -785,7 +787,7 @@ const styles = {
   },
 
   empty: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "var(--surface)",
     borderRadius: "12px",
     padding: "50px",
     textAlign: "center",
@@ -794,7 +796,7 @@ const styles = {
   },
 
   emptyDark: {
-    backgroundColor: "#1f2937",
+    backgroundColor: "var(--surface)",
     color: "#d1d5db",
   },
 
@@ -815,10 +817,10 @@ const styles = {
   },
 
   clearFilterButton: {
-    border: "1px solid #cbd5e1",
+    border: "1px solid var(--border-color)",
     borderRadius: "8px",
     padding: "9px 10px",
-    backgroundColor: "#f8fafc",
+    backgroundColor: "var(--surface)",
     color: "#243447",
     fontWeight: 600,
     fontSize: "13px",
@@ -826,8 +828,8 @@ const styles = {
   },
 
   clearFilterButtonDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#4b5563",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
     color: "#f9fafb",
   },
 

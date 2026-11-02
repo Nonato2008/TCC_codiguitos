@@ -309,6 +309,7 @@ export default function GerenciamentoEstoque() {
                 ...styles.tabButton,
                 ...(isDark ? styles.tabButtonDark : {}),
                 ...(abaProdutos === "ativos" ? styles.tabButtonActive : {}),
+                ...(isDark && abaProdutos === "ativos" ? styles.tabButtonActiveDark : {}),
               }}
             >
               Ativos ({totalProdutosAtivos})
@@ -321,6 +322,7 @@ export default function GerenciamentoEstoque() {
                 ...styles.tabButton,
                 ...(isDark ? styles.tabButtonDark : {}),
                 ...(abaProdutos === "desativados" ? styles.tabButtonActive : {}),
+                ...(isDark && abaProdutos === "desativados" ? styles.tabButtonActiveDark : {}),
               }}
             >
               Desativados ({totalProdutosDesativados})
@@ -645,11 +647,11 @@ const styles = {
   layout: { 
     display: "flex", 
     minHeight: "100vh", 
-    backgroundColor: "#f3f5f9" 
+    backgroundColor: "var(--surface)"
   },
 
   layoutDark: { 
-    backgroundColor: "#0f172a" 
+    backgroundColor: "var(--app-background)"
   },
 
   page: { 
@@ -660,7 +662,7 @@ const styles = {
   },
 
   pageDark: { 
-    backgroundColor: "#111827", 
+    backgroundColor: "var(--surface)",
     color: "#f3f4f6" 
   },
 
@@ -692,7 +694,7 @@ const styles = {
     display: "flex",
     gap: "8px",
     marginBottom: "20px",
-    borderBottom: "1px solid #e2e8f0",
+    borderBottom: "1px solid var(--border-color)",
   },
 
   tabButton: {
@@ -706,27 +708,32 @@ const styles = {
   },
 
   tabButtonDark: {
-    color: "#cbd5e1",
+    color: "#ffffff",
   },
 
   tabButtonActive: {
-    color: "#303e51",
-    borderBottomColor: "#303e51",
+    color: "var(--accent-color)",
+    borderBottomColor: "var(--accent-color)",
+  },
+
+  tabButtonActiveDark: {
+    color: "#ffffff",
+    borderBottomColor: "#ffffff",
   },
 
   filtersCard: {
     marginBottom: "20px",
     padding: "18px 20px",
-    backgroundColor: "#ffffff",
-    border: "1px solid #e2e8f0",
+    backgroundColor: "var(--surface)",
+    border: "1px solid var(--border-color)",
     borderRadius: "12px",
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
     boxSizing: "border-box",
   },
 
   filtersCardDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#4b5563",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
   },
 
   filtersHeader: {
@@ -760,10 +767,10 @@ const styles = {
   },
 
   clearFiltersButton: {
-    border: "1px solid #cbd5e1",
+    border: "1px solid var(--border-color)",
     borderRadius: "8px",
     padding: "9px 10px",
-    backgroundColor: "#f8fafc",
+    backgroundColor: "var(--surface)",
     color: "#243447",
     fontWeight: 600,
     fontSize: "13px",
@@ -771,8 +778,8 @@ const styles = {
   },
 
   clearFiltersButtonDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#4b5563",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
     color: "#f9fafb",
   },
 
@@ -799,33 +806,33 @@ const styles = {
   filterInput: {
     width: "100%",
     boxSizing: "border-box",
-    border: "1px solid #cbd5e1",
+    border: "1px solid var(--border-color)",
     borderRadius: "8px",
     padding: "10px 12px",
-    backgroundColor: "#ffffff",
+    backgroundColor: "var(--surface)",
     color: "#243447",
     fontSize: "14px",
     fontFamily: "Inter, sans-serif",
   },
 
   filterInputDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#4b5563",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
     color: "#f9fafb",
   },
 
   emptyState: { 
-    backgroundColor: "#ffffff", 
+    backgroundColor: "var(--surface)",
     color: "#475569", 
     borderRadius: "10px", 
     padding: "18px", 
-    border: "1px solid #e2e8f0" 
+    border: "1px solid var(--border-color)"
   },
 
   emptyStateDark: { 
-    backgroundColor: "#1f2937", 
+    backgroundColor: "var(--surface)",
     color: "#e5e7eb", 
-    borderColor: "#374151" 
+    borderColor: "var(--border-color)"
   },
 
   emptyStateError: { 
@@ -849,16 +856,16 @@ const styles = {
   },
 
   card: { 
-    backgroundColor: "#ffffff", 
-    border: "1px solid #e2e8f0", 
+    backgroundColor: "var(--surface)",
+    border: "1px solid var(--border-color)",
     borderRadius: "12px", 
     padding: "18px", 
     boxShadow: "0 2px 8px rgba(0,0,0,0.04)" 
   },
 
   cardDark: { 
-    backgroundColor: "#111827", 
-    borderColor: "#374151" 
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)"
   },
 
   productContent: { 
@@ -871,7 +878,7 @@ const styles = {
     height: "120px", 
     borderRadius: "10px", 
     overflow: "hidden", 
-    backgroundColor: "#f8fafc", 
+    backgroundColor: "var(--surface)",
     display: "flex", 
     alignItems: "center", 
     justifyContent: "center", 
@@ -1039,12 +1046,12 @@ const styles = {
     alignItems: "center",
     gap: "8px",
     padding: "12px",
-    border: "1px solid #e2e8f0",
+    border: "1px solid var(--border-color)",
     borderRadius: "10px",
   },
 
   stockAdjustmentDark: {
-    borderColor: "#374151",
+    borderColor: "var(--border-color)",
   },
 
   operationButtons: {
@@ -1055,9 +1062,9 @@ const styles = {
 
   operationButton: {
     flex: 1,
-    border: "1px solid #cbd5e1",
+    border: "1px solid var(--border-color)",
     borderRadius: "8px",
-    backgroundColor: "#ffffff",
+    backgroundColor: "var(--surface)",
     color: "#334155",
     padding: "9px 10px",
     cursor: "pointer",
@@ -1065,8 +1072,8 @@ const styles = {
   },
 
   operationButtonDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#4b5563",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
     color: "#e5e7eb",
   },
 
@@ -1086,15 +1093,15 @@ const styles = {
     width: "90px", 
     textAlign: "center", 
     borderRadius: "8px",
-     border: "1px solid #d7dfeb", 
+     border: "1px solid var(--border-color)",
      padding: "8px 10px", 
-     backgroundColor: "#ffffff", 
+     backgroundColor: "var(--surface)",
      color: "#111827" 
     },
 
   inputDark: { 
-    backgroundColor: "#1f2937", 
-    borderColor: "#4b5563", 
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
     color: "#f9fafb" 
   },
 
@@ -1120,7 +1127,7 @@ const styles = {
     gridColumn: "1 / -1",
     border: "none",
     borderRadius: "8px",
-    backgroundColor: "#303e51",
+    backgroundColor: "var(--accent-color)",
     color: "#ffffff",
     padding: "10px 12px",
     cursor: "pointer",
@@ -1137,8 +1144,8 @@ const styles = {
   },
 
   toggleButton: { 
-    border: "1px solid #d1d5db", 
-    backgroundColor: "#ffffff", 
+    border: "1px solid var(--border-color)",
+    backgroundColor: "var(--surface)",
     color: "#111827", 
     borderRadius: "8px", 
     padding: "8px 12px", 
@@ -1146,8 +1153,8 @@ const styles = {
   },
 
   toggleButtonDark: { 
-    backgroundColor: "#1f2937", 
-    borderColor: "#4b5563", 
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
     color: "#f9fafb" 
   },
 };

@@ -237,8 +237,8 @@ const styles = {
         top: 0,
         width: "256px",
         height: "100vh",
-        backgroundColor: "#f9f9ff",
-        borderRight: "1px solid #e2e8f0",
+        backgroundColor: "var(--sidebar-background)",
+        borderRight: "1px solid var(--border-color)",
         padding: "16px",
         display: "flex",
         flexDirection: "column",
@@ -248,8 +248,8 @@ const styles = {
     },
 
     sidebarDark: {
-        backgroundColor: "#111827",
-        borderRight: "1px solid #374151"
+        backgroundColor: "var(--sidebar-background)",
+        borderRight: "1px solid var(--border-color)"
     },
 
     logoContainer: {
@@ -264,12 +264,12 @@ const styles = {
         height: "48px",
         borderRadius: "8px",
         overflow: "hidden",
-        border: "1px solid #e2e8f0",
+        border: "1px solid var(--border-color)",
         flexShrink: 0
     },
 
     logoDark: {
-        borderColor: "#4b5563"
+        borderColor: "var(--border-color)"
     },
 
     logoImage: {
@@ -307,22 +307,22 @@ const styles = {
         gap: "10px",
         padding: "10px",
         marginBottom: "20px",
-        backgroundColor: "#ffffff",
-        border: "1px solid #e2e8f0",
+        backgroundColor: "var(--surface)",
+        border: "1px solid var(--border-color)",
         borderRadius: "10px",
         transition: "all 0.3s ease"
     },
 
     usuarioContainerDark: {
-        backgroundColor: "#1f2937",
-        borderColor: "#374151"
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)"
     },
 
     usuarioIcon: {
         width: "34px",
         height: "34px",
         borderRadius: "50%",
-        backgroundColor: "#303e51",
+        backgroundColor: "var(--accent-color)",
         color: "#ffffff",
         display: "flex",
         alignItems: "center",
@@ -393,17 +393,17 @@ const styles = {
     },
 
     menuItemActive: {
-        backgroundColor: "#303e51",
+        backgroundColor: "var(--accent-color)",
         color: "#ffffff"
     },
 
     menuItemActiveDark: {
-        backgroundColor: "#1f2937",
-        color: "#f9fafb"
+        backgroundColor: "var(--accent-color)",
+        color: "#ffffff"
     },
 
     bottomMenu: {
-        borderTop: "1px solid #e2e8f0",
+        borderTop: "1px solid var(--border-color)",
         paddingTop: "12px",
         display: "flex",
         flexDirection: "column",
@@ -411,13 +411,13 @@ const styles = {
     },
 
     bottomMenuDark: {
-        borderTopColor: "#374151"
+        borderTopColor: "var(--border-color)"
     },
 
     themeButton: {
         width: "100%",
-        border: "1px solid #d1d5db",
-        backgroundColor: "#ffffff",
+        border: "1px solid var(--border-color)",
+        backgroundColor: "var(--surface)",
         color: "#111827",
         display: "flex",
         alignItems: "center",
@@ -433,8 +433,8 @@ const styles = {
     },
 
     themeButtonDark: {
-        backgroundColor: "#1f2937",
-        borderColor: "#4b5563",
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)",
         color: "#f9fafb"
     },
 

@@ -482,11 +482,11 @@ export default function ProfileProduto() {
 const styles = {
   layout: {
     minHeight: "100vh",
-    backgroundColor: "#f5f6f8",
+    backgroundColor: "var(--surface)",
   },
 
   layoutDark: {
-    backgroundColor: "#0f172a",
+    backgroundColor: "var(--app-background)",
   },
 
   page: {
@@ -497,7 +497,7 @@ const styles = {
   },
 
   pageDark: {
-    backgroundColor: "#111827",
+    backgroundColor: "var(--surface)",
     color: "#f3f4f6",
   },
 
@@ -510,7 +510,7 @@ const styles = {
     padding: "7px 13px",
     border: "1px solid #ddd",
     borderRadius: "7px",
-    backgroundColor: "#fff",
+    backgroundColor: "var(--surface)",
     color: "#333",
     cursor: "pointer",
     fontSize: "14px",
@@ -518,8 +518,8 @@ const styles = {
   },
 
   backButtonDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#4b5563",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
     color: "#f9fafb",
   },
 
@@ -536,7 +536,7 @@ const styles = {
 
   infoCard: {
     maxWidth: "1150px",
-    backgroundColor: "#ffffff",
+    backgroundColor: "var(--surface)",
     borderRadius: "12px",
     padding: "30px",
     marginBottom: "20px",
@@ -547,7 +547,7 @@ const styles = {
   },
 
   infoCardDark: {
-    backgroundColor: "#1f2937",
+    backgroundColor: "var(--surface)",
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
   },
 
@@ -566,7 +566,7 @@ const styles = {
   noImage: {
     width: "100%",
     height: 200,
-    backgroundColor: "#f3f6fa",
+    backgroundColor: "var(--surface-muted)",
     borderRadius: 8,
     display: "flex",
     alignItems: "center",
@@ -575,8 +575,8 @@ const styles = {
   },
 
   noImageDark: {
-    backgroundColor: "#0b1220",
-    borderColor: "#4b5563",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
   },
 
   infoContent: {
@@ -625,7 +625,7 @@ const styles = {
 
   summary: {
     maxWidth: "1150px",
-    backgroundColor: "#ffffff",
+    backgroundColor: "var(--surface)",
     borderRadius: "12px",
     padding: "30px",
     display: "flex",
@@ -640,7 +640,7 @@ const styles = {
   },
 
   summaryDark: {
-    backgroundColor: "#1f2937",
+    backgroundColor: "var(--surface)",
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
   },
 

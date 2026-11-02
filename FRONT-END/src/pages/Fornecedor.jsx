@@ -218,6 +218,9 @@ export default function Fornecedor() {
                             ...(isDark ? styles.tabButtonDark : {}),
                             ...(abaFornecedores === "ativos"
                                 ? styles.tabButtonActive
+                                : {}),
+                            ...(isDark && abaFornecedores === "ativos"
+                                ? styles.tabButtonActiveDark
                                 : {})
                         }}
                     >
@@ -232,6 +235,9 @@ export default function Fornecedor() {
                             ...(isDark ? styles.tabButtonDark : {}),
                             ...(abaFornecedores === "desativados"
                                 ? styles.tabButtonActive
+                                : {}),
+                            ...(isDark && abaFornecedores === "desativados"
+                                ? styles.tabButtonActiveDark
                                 : {})
                         }}
                     >
@@ -517,11 +523,11 @@ const styles = {
     layout: {
         display: "flex",
         minHeight: "100vh",
-        backgroundColor: "#f3f5f9"
+        backgroundColor: "var(--surface)"
     },
 
     layoutDark: {
-        backgroundColor: "#0f172a"
+        backgroundColor: "var(--app-background)"
     },
 
     page: {
@@ -533,7 +539,7 @@ const styles = {
     },
 
     pageDark: {
-        backgroundColor: "#111827",
+        backgroundColor: "var(--surface)",
         color: "#f3f4f6"
     },
 
@@ -579,15 +585,15 @@ const styles = {
         width: "42px",
         height: "42px",
         borderRadius: "10px",
-        border: "1px solid #e2e8f0",
-        backgroundColor: "#f9f9ff",
+        border: "1px solid var(--border-color)",
+        backgroundColor: "var(--surface)",
         color: "#303e51",
         cursor: "pointer"
     },
 
     cadastrarButtonDark: {
-        backgroundColor: "#1f2937",
-        borderColor: "#4b5563",
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)",
         color: "#f9fafb"
     },
 
@@ -595,8 +601,8 @@ const styles = {
         display: "flex",
         alignItems: "center",
         gap: "8px",
-        backgroundColor: "#ffffff",
-        border: "1px solid #e2e8f0",
+        backgroundColor: "var(--surface)",
+        border: "1px solid var(--border-color)",
         borderRadius: "10px",
         padding: "10px 14px",
         color: "#243447",
@@ -604,8 +610,8 @@ const styles = {
     },
 
     totalDark: {
-        backgroundColor: "#1f2937",
-        borderColor: "#4b5563",
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)",
         color: "#f9fafb"
     },
 
@@ -615,16 +621,16 @@ const styles = {
         alignItems: "center",
         justifyContent: "center",
         gap: "10px",
-        backgroundColor: "#f9f9ff",
-        border: "1px solid #e2e8f0",
+        backgroundColor: "var(--surface)",
+        border: "1px solid var(--border-color)",
         borderRadius: "10px",
         color: "#44474c",
         fontWeight: "600"
     },
 
     loadingBoxDark: {
-        backgroundColor: "#1f2937",
-        borderColor: "#374151",
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)",
         color: "#f9fafb"
     },
 
@@ -648,8 +654,8 @@ const styles = {
     },
 
     emptyCard: {
-        backgroundColor: "#f9f9ff",
-        border: "1px solid #e2e8f0",
+        backgroundColor: "var(--surface)",
+        border: "1px solid var(--border-color)",
         borderRadius: "12px",
         padding: "50px 24px",
         textAlign: "center",
@@ -657,8 +663,8 @@ const styles = {
     },
 
     emptyCardDark: {
-        backgroundColor: "#1f2937",
-        borderColor: "#374151",
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)",
         color: "#d1d5db"
     },
 
@@ -688,16 +694,16 @@ const styles = {
     },
 
     card: {
-        backgroundColor: "#f9f9ff",
-        border: "1px solid #e2e8f0",
+        backgroundColor: "var(--surface)",
+        border: "1px solid var(--border-color)",
         borderRadius: "12px",
         padding: "18px",
         boxShadow: "0 1px 2px rgba(0,0,0,0.03)"
     },
 
     cardDark: {
-        backgroundColor: "#1f2937",
-        borderColor: "#374151"
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)"
     },
 
     cardImageContainer: {
@@ -705,7 +711,7 @@ const styles = {
         height: "180px",
         borderRadius: "10px",
         overflow: "hidden",
-        backgroundColor: "#eef2f7",
+        backgroundColor: "var(--surface-muted)",
         marginBottom: "16px"
     },
 
@@ -786,7 +792,7 @@ const styles = {
         display: "flex",
         gap: "8px",
         marginBottom: "20px",
-        borderBottom: "1px solid #e2e8f0"
+        borderBottom: "1px solid var(--border-color)"
     },
 
     tabButton: {
@@ -800,20 +806,25 @@ const styles = {
     },
 
     tabButtonDark: {
-        color: "#cbd5e1"
+        color: "#ffffff"
     },
 
     tabButtonActive: {
-        color: "#303e51",
-        borderBottomColor: "#303e51"
+        color: "var(--accent-color)",
+        borderBottomColor: "var(--accent-color)"
+    },
+
+    tabButtonActiveDark: {
+        color: "#ffffff",
+        borderBottomColor: "#ffffff"
     },
 
     detailsButton: {
         display: "flex",
         alignItems: "center",
         gap: "8px",
-        border: "1px solid #cbd5e1",
-        backgroundColor: "#ffffff",
+        border: "1px solid var(--border-color)",
+        backgroundColor: "var(--surface)",
         color: "#334155",
         padding: "10px 12px",
         borderRadius: "8px",
@@ -821,8 +832,8 @@ const styles = {
     },
 
     detailsButtonDark: {
-        backgroundColor: "#1f2937",
-        borderColor: "#4b5563",
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)",
         color: "#f9fafb"
     },
 
@@ -851,20 +862,20 @@ const styles = {
     },
 
     detailsCard: {
-        backgroundColor: "#ffffff",
+        backgroundColor: "var(--surface)",
         borderRadius: "12px",
         padding: "22px",
         width: "100%",
         maxWidth: "680px",
         maxHeight: "90vh",
         overflowY: "auto",
-        border: "1px solid #e2e8f0",
+        border: "1px solid var(--border-color)",
         boxSizing: "border-box"
     },
 
     detailsCardDark: {
-        backgroundColor: "#111827",
-        borderColor: "#374151"
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)"
     },
 
     detailsHeader: {
@@ -923,13 +934,13 @@ const styles = {
         alignItems: "center",
         gap: "16px",
         padding: "12px",
-        border: "1px solid #e2e8f0",
+        border: "1px solid var(--border-color)",
         borderRadius: "8px"
     },
 
     productRowDark: {
-        backgroundColor: "#1f2937",
-        borderColor: "#374151"
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)"
     },
 
     productName: {
@@ -966,14 +977,14 @@ const styles = {
     productsEmpty: {
         padding: "24px",
         marginBottom: "20px",
-        border: "1px dashed #cbd5e1",
+        border: "1px dashed var(--border-color)",
         borderRadius: "8px",
         color: "#64748b",
         textAlign: "center"
     },
 
     productsEmptyDark: {
-        borderColor: "#4b5563",
+        borderColor: "var(--border-color)",
         color: "#cbd5e1"
     },
 
@@ -996,12 +1007,12 @@ const styles = {
         flexWrap: "wrap",
         gap: "10px",
         paddingTop: "16px",
-        borderTop: "1px solid #e2e8f0"
+        borderTop: "1px solid var(--border-color)"
     },
 
     cancelConfirmButton: {
-        border: "1px solid #d1d5db",
-        backgroundColor: "#ffffff",
+        border: "1px solid var(--border-color)",
+        backgroundColor: "var(--surface)",
         color: "#374151",
         borderRadius: "8px",
         padding: "10px 12px",
@@ -1009,8 +1020,8 @@ const styles = {
     },
 
     cancelConfirmButtonDark: {
-        backgroundColor: "#1f2937",
-        borderColor: "#4b5563",
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)",
         color: "#f9fafb"
     }
 

@@ -53,17 +53,17 @@ const styles = {
   input: {
     width: "100%",
     boxSizing: "border-box",
-    border: "1px solid #d7dfeb",
+    border: "1px solid var(--border-color)",
     borderRadius: "10px",
     padding: "12px 14px",
     fontSize: "14px",
     outline: "none",
-    backgroundColor: "#ffffff",
+    backgroundColor: "var(--surface)",
     color: "#111827",
   },
   inputDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#4b5563",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
     color: "#f9fafb",
   },
 };

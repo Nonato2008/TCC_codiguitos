@@ -851,12 +851,12 @@ const styles = {
   layout: {
     display: "flex",
     minHeight: "100vh",
-    backgroundColor: "#f3f5f9",
+    backgroundColor: "var(--surface)",
     transition: "background-color 0.3s ease, color 0.3s ease",
   },
 
   layoutDark: {
-    backgroundColor: "#0f172a",
+    backgroundColor: "var(--app-background)",
   },
 
   page: {
@@ -869,7 +869,7 @@ const styles = {
   },
 
   pageDark: {
-    backgroundColor: "#111827",
+    backgroundColor: "var(--surface)",
     color: "#f3f4f6",
   },
 
@@ -878,16 +878,16 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#f9f9ff",
-    border: "1px solid #e2e8f0",
+    backgroundColor: "var(--surface)",
+    border: "1px solid var(--border-color)",
     borderRadius: "10px",
     color: "#44474c",
     fontWeight: "600",
   },
 
   loadingBoxDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#374151",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
     color: "#f3f4f6",
   },
 
@@ -950,9 +950,9 @@ const styles = {
   },
 
   card: {
-    backgroundColor: "#f9f9ff",
+    backgroundColor: "var(--surface)",
     padding: "24px",
-    border: "1px solid #e2e8f0",
+    border: "1px solid var(--border-color)",
     borderRadius: "10px",
     minHeight: "155px",
     boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
@@ -960,8 +960,8 @@ const styles = {
   },
 
   cardDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#374151",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
   },
 
   errorCard: {
@@ -988,7 +988,7 @@ const styles = {
     width: "40px",
     height: "40px",
     borderRadius: "8px",
-    backgroundColor: "#d5e3fc",
+    backgroundColor: "var(--surface-muted)",
     color: "#303e51",
     display: "flex",
     alignItems: "center",
@@ -1048,8 +1048,8 @@ const styles = {
   },
 
   largeCard: {
-    backgroundColor: "#f9f9ff",
-    border: "1px solid #e2e8f0",
+    backgroundColor: "var(--surface)",
+    border: "1px solid var(--border-color)",
     borderRadius: "10px",
     padding: "24px",
     minHeight: "260px",
@@ -1057,8 +1057,8 @@ const styles = {
   },
 
   largeCardDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#374151",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
   },
 
   cardHeader: {
@@ -1097,17 +1097,17 @@ const styles = {
 
   periodSelect: {
     maxWidth: "100%",
-    border: "1px solid #cbd5e1",
+    border: "1px solid var(--border-color)",
     borderRadius: "8px",
-    backgroundColor: "#ffffff",
+    backgroundColor: "var(--surface)",
     color: "#243447",
     padding: "8px 10px",
     fontSize: "13px",
   },
 
   periodSelectDark: {
-    borderColor: "#4b5563",
-    backgroundColor: "#111827",
+    borderColor: "var(--border-color)",
+    backgroundColor: "var(--surface)",
     color: "#f9fafb",
   },
 
@@ -1159,14 +1159,14 @@ const styles = {
     alignItems: "center",
     justifyContent: "space-between",
     padding: "14px 16px",
-    border: "1px solid #e2e8f0",
+    border: "1px solid var(--border-color)",
     borderRadius: "8px",
-    backgroundColor: "#ffffff",
+    backgroundColor: "var(--surface)",
   },
 
   vendaItemDark: {
-    borderColor: "#4b5563",
-    backgroundColor: "#111827",
+    borderColor: "var(--border-color)",
+    backgroundColor: "var(--surface)",
   },
 
   vendaInfo: {
@@ -1234,8 +1234,8 @@ const styles = {
   profitCard: {
     marginTop: "24px",
     padding: "24px",
-    backgroundColor: "#f9f9ff",
-    border: "1px solid #e2e8f0",
+    backgroundColor: "var(--surface)",
+    border: "1px solid var(--border-color)",
     borderRadius: "10px",
     boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
   },
@@ -1287,14 +1287,14 @@ const styles = {
 
   profitEmpty: {
     padding: "28px 16px",
-    border: "1px dashed #cbd5e1",
+    border: "1px dashed var(--border-color)",
     borderRadius: "8px",
     color: "#64748b",
     textAlign: "center",
   },
 
   profitEmptyDark: {
-    borderColor: "#4b5563",
+    borderColor: "var(--border-color)",
     color: "#cbd5e1",
   },
 

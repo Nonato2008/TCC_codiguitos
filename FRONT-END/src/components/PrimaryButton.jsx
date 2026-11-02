@@ -21,7 +21,7 @@ export default function PrimaryButton({
 const styles = {
   primaryButton: {
     border: "none",
-    backgroundColor: "#303e51",
+    backgroundColor: "var(--accent-color)",
     color: "#ffffff",
     padding: "12px 20px",
     borderRadius: "10px",
@@ -29,6 +29,6 @@ const styles = {
     cursor: "pointer",
   },
   primaryButtonDark: {
-    backgroundColor: "#1d4ed8",
+    backgroundColor: "var(--accent-color)",
   },
 };

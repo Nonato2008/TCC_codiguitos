@@ -232,18 +232,18 @@ const styles = {
         width: "100%",
         boxSizing: "border-box",
         padding: "13px 14px",
-        border: "1px solid #cbd5e1",
+        border: "1px solid var(--border-color)",
         borderRadius: "8px",
         outline: "none",
         fontSize: "14px",
         fontFamily: "Inter, sans-serif",
-        backgroundColor: "#ffffff",
+        backgroundColor: "var(--surface)",
         color: "#303e51"
     },
 
     inputDark: {
-        backgroundColor: "#1f2937",
-        borderColor: "#4b5563",
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)",
         color: "#f9fafb"
     },
 
@@ -253,7 +253,7 @@ const styles = {
         padding: "14px",
         marginTop: "4px",
         border: "none",
-        backgroundColor: "#303e51",
+        backgroundColor: "var(--accent-color)",
         color: "#ffffff",
         borderRadius: "8px",
         fontSize: "15px",
@@ -262,7 +262,7 @@ const styles = {
     },
 
     buttonDark: {
-        backgroundColor: "#2563eb"
+        backgroundColor: "var(--accent-color)"
     },
 
     buttonDisabled: {

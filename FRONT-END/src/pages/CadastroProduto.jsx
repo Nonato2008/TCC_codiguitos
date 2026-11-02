@@ -570,11 +570,11 @@ const styles = {
     layout: {
         display: "flex",
         minHeight: "100vh",
-        backgroundColor: "#f3f5f9",
+        backgroundColor: "var(--surface)",
     },
 
     layoutDark: {
-        backgroundColor: "#0f172a",
+        backgroundColor: "var(--app-background)",
     },
 
     page: {
@@ -586,7 +586,7 @@ const styles = {
     },
 
     pageDark: {
-        backgroundColor: "#111827",
+        backgroundColor: "var(--surface)",
         color: "#f3f4f6",
     },
 
@@ -615,8 +615,8 @@ const styles = {
     },
 
     card: {
-        backgroundColor: "#ffffff",
-        border: "1px solid #e2e8f0",
+        backgroundColor: "var(--surface)",
+        border: "1px solid var(--border-color)",
         borderRadius: "12px",
         padding: "24px",
         boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
@@ -624,8 +624,8 @@ const styles = {
     },
 
     cardDark: {
-        backgroundColor: "#111827",
-        borderColor: "#374151",
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)",
     },
 
     form: {
@@ -663,16 +663,16 @@ const styles = {
     fileInput: {
         width: "100%",
         boxSizing: "border-box",
-        border: "1px dashed #cbd5e1",
+        border: "1px dashed var(--border-color)",
         borderRadius: "10px",
         padding: "12px",
-        backgroundColor: "#f8fafc",
+        backgroundColor: "var(--surface)",
         color: "#111827",
     },
 
     fileInputDark: {
-        backgroundColor: "#1f2937",
-        borderColor: "#4b5563",
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)",
         color: "#f9fafb",
     },
 
@@ -713,27 +713,27 @@ const styles = {
     nota: {
         marginTop: "32px",
         padding: "24px",
-        border: "2px solid #e2e8f0",
+        border: "2px solid var(--border-color)",
         borderRadius: "12px",
-        backgroundColor: "#f8fafc",
+        backgroundColor: "var(--surface)",
     },
 
     notaDark: {
-        backgroundColor: "#1f2937",
-        borderColor: "#4b5563",
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)",
     },
 
     notaHeader: {
         display: "flex",
         justifyContent: "space-between",
         alignItems: "flex-start",
-        borderBottom: "1px solid #e2e8f0",
+        borderBottom: "1px solid var(--border-color)",
         paddingBottom: "16px",
         marginBottom: "16px",
     },
 
     notaHeaderDark: {
-        borderBottomColor: "#4b5563",
+        borderBottomColor: "var(--border-color)",
     },
 
     notaTitle: {
@@ -774,7 +774,7 @@ const styles = {
         display: "flex",
         justifyContent: "space-between",
         padding: "12px 0",
-        borderBottom: "1px solid #e2e8f0",
+        borderBottom: "1px solid var(--border-color)",
         color: "#475569",
     },
 
@@ -814,17 +814,17 @@ const styles = {
     select: {
         width: "100%",
         boxSizing: "border-box",
-        border: "1px solid #cbd5e1",
+        border: "1px solid var(--border-color)",
         borderRadius: "8px",
         padding: "12px",
-        backgroundColor: "#f8fafc",
+        backgroundColor: "var(--surface)",
         color: "#111827",
         fontSize: "16px",
     },
     
     selectDark: {
-        backgroundColor: "#1f2937",
-        borderColor: "#374151",
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)",
         color: "#f9fafb",
     },
 };
