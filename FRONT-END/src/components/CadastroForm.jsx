@@ -267,13 +267,13 @@ const styles = {
         textAlign: "center",
         fontSize: "20px",
         fontWeight: "700",
-        color: "#303e51",
+        color: "#6d0009",
         marginTop: 0,
         marginBottom: "24px"
     },
 
     formTitleDark: {
-        color: "#f9fafb"
+        color: "#000000"
     },
 
     form: {
@@ -291,7 +291,7 @@ const styles = {
     label: {
         fontSize: "14px",
         fontWeight: "600",
-        color: "#303e51"
+        color: "#67021f"
     },
 
     labelDark: {
@@ -302,13 +302,13 @@ const styles = {
         width: "100%",
         boxSizing: "border-box",
         padding: "13px 14px",
-        border: "1px solid #cbd5e1",
+        border: "1px solid #c00023",
         borderRadius: "8px",
         outline: "none",
         fontSize: "14px",
         fontFamily: "Inter, sans-serif",
-        backgroundColor: "#ffffff",
-        color: "#303e51"
+        backgroundColor: "#ffffff1a",
+        color: "#c1001db9"
     },
 
     inputDark: {
@@ -323,7 +323,7 @@ const styles = {
         padding: "14px",
         marginTop: "4px",
         border: "none",
-        backgroundColor: "#303e51",
+        backgroundColor: "#9C1515",
         color: "#ffffff",
         borderRadius: "8px",
         fontSize: "15px",
@@ -346,7 +346,7 @@ const styles = {
         alignItems: "center",
         gap: "6px",
         marginTop: "22px",
-        color: "#44474c",
+        color: "#ad002b",
         fontSize: "14px"
     },
 
@@ -355,7 +355,7 @@ const styles = {
     },
 
     registerLink: {
-        color: "#303e51",
+        color: "#681111",
         fontWeight: "700",
         textDecoration: "none",
         border: "none",

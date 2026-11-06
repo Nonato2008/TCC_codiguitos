@@ -289,7 +289,7 @@ const styles = {
     },
 
     sidebarDark: {
-        backgroundColor: "#111827",
+        backgroundColor: "#111827", 
         borderRight: "1px solid #374151"
     },
 

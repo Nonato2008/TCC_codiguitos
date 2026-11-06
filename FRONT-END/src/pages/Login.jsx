@@ -108,8 +108,8 @@ const styles = {
     },
 
     cardDark: {
-        backgroundColor: "#111827",
-        borderColor: "#374151",
+        backgroundColor: "#271115",
+        borderColor: "#660014",
         boxShadow: "0 10px 30px rgba(0, 0, 0, 0.35)"
     },
 
@@ -128,7 +128,7 @@ const styles = {
     },
 
     logoDark: {
-        borderColor: "#4b5563"
+        borderColor: "#690c0c"
     },
 
     logoImage: {
@@ -142,7 +142,7 @@ const styles = {
         textAlign: "center",
         fontSize: "28px",
         fontWeight: "700",
-        color: "#303e51",
+        color: "#ae082c",
         margin: 0
     },
 
@@ -152,7 +152,7 @@ const styles = {
 
     subtitle: {
         textAlign: "center",
-        color: "#44474c",
+        color: "#46191e",
         fontSize: "14px",
         lineHeight: "1.5",
         marginTop: "8px",
@@ -165,7 +165,7 @@ const styles = {
 
     footer: {
         textAlign: "center",
-        color: "#777b82",
+        color: "#5e0715",
         fontSize: "12px",
         marginTop: "28px",
         marginBottom: 0
