@@ -81,7 +81,7 @@ const styles = {
     container: {
         minHeight: "100vh",
         width: "100%",
-        backgroundColor: "#f8fafc",
+        backgroundColor: "var(--surface)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -92,14 +92,14 @@ const styles = {
     },
 
     containerDark: {
-        backgroundColor: "#0f172a"
+        backgroundColor: "var(--app-background)"
     },
 
     card: {
         width: "420px",
         maxWidth: "100%",
-        backgroundColor: "#ffffff",
-        border: "1px solid #e2e8f0",
+        backgroundColor: "var(--surface)",
+        border: "1px solid var(--border-color)",
         borderRadius: "16px",
         padding: "40px",
         boxShadow: "0 10px 30px rgba(0, 0, 0, 0.06)",
@@ -108,8 +108,8 @@ const styles = {
     },
 
     cardDark: {
-        backgroundColor: "#271115",
-        borderColor: "#660014",
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)",
         boxShadow: "0 10px 30px rgba(0, 0, 0, 0.35)"
     },
 
@@ -124,11 +124,11 @@ const styles = {
         height: "80px",
         borderRadius: "14px",
         overflow: "hidden",
-        border: "1px solid #e2e8f0"
+        border: "1px solid var(--border-color)"
     },
 
     logoDark: {
-        borderColor: "#690c0c"
+        borderColor: "var(--border-color)"
     },
 
     logoImage: {

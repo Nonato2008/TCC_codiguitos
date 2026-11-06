@@ -44,6 +44,9 @@ export async function atualizarProduto(id, dados) {
     formData.append("idFornecedor", String(dados.idFornecedor ?? 1));
     formData.append("nome", String(dados.nome ?? ""));
     formData.append("preco", String(Number(dados.preco ?? 1)));
+    if (dados.custo !== undefined && dados.custo !== null) {
+      formData.append("custo", String(Number(dados.custo)));
+    }
     formData.append("quantidade", String(Number(dados.quantidade ?? 0)));
 
     const dataVencNormalizada = normalizarDataVenc(dados.dataVenc);
@@ -67,6 +70,20 @@ export async function atualizarProduto(id, dados) {
     return true;
   } catch (error) {
     console.error("Erro ao atualizar produto:", error);
+    throw error;
+  }
+}
+
+export async function ajustarQuantidadeEstoque(id, dados) {
+  try {
+    const response = await codiguitos_api.patch(
+      `/produtos/${id}/estoque`,
+      dados
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao ajustar quantidade em estoque:", error);
     throw error;
   }
 }

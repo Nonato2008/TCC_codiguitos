@@ -1,8 +1,8 @@
+
 import React, { useContext } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { ThemeContext } from "../contexts/ThemeContext";
 
-// Estrutura do menu: cada item tem nome, ícone, rota e quais perfis podem acessar
 const menu = [
     {
         nome: "Painel",
@@ -37,30 +37,26 @@ const menu = [
 ];
 
 export default function Sidebar() {
-
     const navigate = useNavigate();
 
     const { theme, toggleTheme } = useContext(ThemeContext);
     const isDark = theme === "dark";
 
-    // Lê o usuário do localStorage (pode vir null ou malformado)
     const usuarioSalvo = localStorage.getItem("usuario");
 
     let usuario = null;
 
     try {
         usuario = usuarioSalvo ? JSON.parse(usuarioSalvo) : null;
-    } catch (error) {
+    } catch {
         usuario = null;
     }
 
-    // Nome do usuário (aceita "nome" ou "Nome")
     const nomeUsuario =
         usuario?.nome ||
         usuario?.Nome ||
         "Usuário";
 
-    // Perfil do usuário — aceita várias chaves possíveis vindas da API
     const perfilOriginal =
         usuario?.perfil ||
         usuario?.Perfil ||
@@ -70,61 +66,48 @@ export default function Sidebar() {
         usuario?.Role ||
         "VENDEDOR";
 
-    // Normaliza o perfil: trim, upper, remove acentos
-    // Ex: "Proprietário" -> "PROPRIETARIO"
-    const perfilNormalizado =
-        String(perfilOriginal)
-            .trim()
-            .toUpperCase()
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "");
+    const perfilNormalizado = String(perfilOriginal)
+        .trim()
+        .toUpperCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
 
-    // Nome amigável para exibir na UI
     const perfilUsuario =
         perfilNormalizado === "PROPRIETARIO"
             ? "Proprietário"
             : "Vendedor";
 
-    // Filtra o menu com base no perfil normalizado
-    const menuPermitido =
-        menu.filter((item) =>
-            item.acesso.includes(perfilNormalizado)
-        );
+    const menuPermitido = menu.filter((item) =>
+        item.acesso.includes(perfilNormalizado)
+    );
 
-    // Logout: remove usuário e volta para o login
     function sair() {
         localStorage.removeItem("usuario");
         navigate("/login");
     }
 
     return (
-
         <aside
             style={{
                 ...styles.sidebar,
                 ...(isDark ? styles.sidebarDark : {})
             }}
         >
-
             <div style={styles.logoContainer}>
-
                 <div
                     style={{
                         ...styles.logo,
                         ...(isDark ? styles.logoDark : {})
                     }}
                 >
-
                     <img
                         src="/logo.png"
                         alt="Adega do Nelson"
                         style={styles.logoImage}
                     />
-
                 </div>
 
                 <div>
-
                     <h1
                         style={{
                             ...styles.logoTitle,
@@ -142,34 +125,27 @@ export default function Sidebar() {
                     >
                         Melhores Bebidas
                     </p>
-
                 </div>
-
             </div>
 
-            {/* Cartão do usuário logado (nome + perfil) */}
             <div
                 style={{
                     ...styles.usuarioContainer,
                     ...(isDark ? styles.usuarioContainerDark : {})
                 }}
             >
-
                 <div
                     style={{
                         ...styles.usuarioIcon,
                         ...(isDark ? styles.usuarioIconDark : {})
                     }}
                 >
-
                     <span className="material-symbols-outlined">
                         person
                     </span>
-
                 </div>
 
                 <div style={styles.usuarioInfo}>
-
                     <span
                         style={{
                             ...styles.usuarioNome,
@@ -187,16 +163,11 @@ export default function Sidebar() {
                     >
                         {perfilUsuario}
                     </span>
-
                 </div>
-
             </div>
 
-            {/* Menu — renderiza só os itens permitidos para o perfil */}
             <nav style={styles.navigation}>
-
                 {menuPermitido.map((item) => (
-
                     <NavLink
                         key={item.rota}
                         to={item.rota}
@@ -204,32 +175,26 @@ export default function Sidebar() {
                             ...styles.menuItem,
                             ...(isDark ? styles.menuItemDark : {}),
                             ...(isActive ? styles.menuItemActive : {}),
-                            ...(isActive && isDark ? styles.menuItemActiveDark : {})
+                            ...(isActive && isDark
+                                ? styles.menuItemActiveDark
+                                : {})
                         })}
                     >
-
                         <span className="material-symbols-outlined">
                             {item.icone}
                         </span>
 
-                        <span>
-                            {item.nome}
-                        </span>
-
+                        <span>{item.nome}</span>
                     </NavLink>
-
                 ))}
-
             </nav>
 
-            {/* Rodapé: alternar tema + sair */}
             <div
                 style={{
                     ...styles.bottomMenu,
                     ...(isDark ? styles.bottomMenuDark : {})
                 }}
             >
-
                 <button
                     type="button"
                     onClick={toggleTheme}
@@ -238,13 +203,11 @@ export default function Sidebar() {
                         ...(isDark ? styles.themeButtonDark : {})
                     }}
                 >
-
                     <span className="material-symbols-outlined">
                         {isDark ? "light_mode" : "dark_mode"}
                     </span>
 
                     {isDark ? "Modo claro" : "Modo escuro"}
-
                 </button>
 
                 <button
@@ -255,15 +218,12 @@ export default function Sidebar() {
                     }}
                     onClick={sair}
                 >
-
                     <span className="material-symbols-outlined">
                         logout
                     </span>
 
                     Sair
-
                 </button>
-
             </div>
 
         </aside>
@@ -271,15 +231,14 @@ export default function Sidebar() {
 }
 
 const styles = {
-
     sidebar: {
         position: "fixed",
         left: 0,
         top: 0,
         width: "256px",
         height: "100vh",
-        backgroundColor: "#f9f9ff",
-        borderRight: "1px solid #e2e8f0",
+        backgroundColor: "var(--sidebar-background)",
+        borderRight: "1px solid var(--border-color)",
         padding: "16px",
         display: "flex",
         flexDirection: "column",
@@ -289,8 +248,8 @@ const styles = {
     },
 
     sidebarDark: {
-        backgroundColor: "#111827", 
-        borderRight: "1px solid #374151"
+        backgroundColor: "var(--sidebar-background)",
+        borderRight: "1px solid var(--border-color)"
     },
 
     logoContainer: {
@@ -305,12 +264,12 @@ const styles = {
         height: "48px",
         borderRadius: "8px",
         overflow: "hidden",
-        border: "1px solid #e2e8f0",
+        border: "1px solid var(--border-color)",
         flexShrink: 0
     },
 
     logoDark: {
-        borderColor: "#4b5563"
+        borderColor: "var(--border-color)"
     },
 
     logoImage: {
@@ -348,22 +307,22 @@ const styles = {
         gap: "10px",
         padding: "10px",
         marginBottom: "20px",
-        backgroundColor: "#ffffff",
-        border: "1px solid #e2e8f0",
+        backgroundColor: "var(--surface)",
+        border: "1px solid var(--border-color)",
         borderRadius: "10px",
         transition: "all 0.3s ease"
     },
 
     usuarioContainerDark: {
-        backgroundColor: "#1f2937",
-        borderColor: "#374151"
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)"
     },
 
     usuarioIcon: {
         width: "34px",
         height: "34px",
         borderRadius: "50%",
-        backgroundColor: "#303e51",
+        backgroundColor: "var(--accent-color)",
         color: "#ffffff",
         display: "flex",
         alignItems: "center",
@@ -434,17 +393,17 @@ const styles = {
     },
 
     menuItemActive: {
-        backgroundColor: "#303e51",
+        backgroundColor: "var(--accent-color)",
         color: "#ffffff"
     },
 
     menuItemActiveDark: {
-        backgroundColor: "#1f2937",
-        color: "#f9fafb"
+        backgroundColor: "var(--accent-color)",
+        color: "#ffffff"
     },
 
     bottomMenu: {
-        borderTop: "1px solid #e2e8f0",
+        borderTop: "1px solid var(--border-color)",
         paddingTop: "12px",
         display: "flex",
         flexDirection: "column",
@@ -452,13 +411,13 @@ const styles = {
     },
 
     bottomMenuDark: {
-        borderTopColor: "#374151"
+        borderTopColor: "var(--border-color)"
     },
 
     themeButton: {
         width: "100%",
-        border: "1px solid #d1d5db",
-        backgroundColor: "#ffffff",
+        border: "1px solid var(--border-color)",
+        backgroundColor: "var(--surface)",
         color: "#111827",
         display: "flex",
         alignItems: "center",
@@ -474,8 +433,8 @@ const styles = {
     },
 
     themeButtonDark: {
-        backgroundColor: "#1f2937",
-        borderColor: "#4b5563",
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)",
         color: "#f9fafb"
     },
 
@@ -498,5 +457,6 @@ const styles = {
 
     bottomItemDark: {
         color: "#e5e7eb"
-    }
+    },
+
 };

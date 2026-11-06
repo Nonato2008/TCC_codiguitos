@@ -236,11 +236,13 @@ const styles = {
   layout: {
     display: "flex",
     minHeight: "100vh",
-    backgroundColor: "#f3f5f9",
+    backgroundColor: "var(--surface)",
   },
+
   layoutDark: {
-    backgroundColor: "#0f172a",
+    backgroundColor: "var(--app-background)",
   },
+
   page: {
     marginLeft: "256px",
     width: "calc(100% - 256px)",
@@ -248,16 +250,19 @@ const styles = {
     boxSizing: "border-box",
     fontFamily: "Inter, sans-serif",
   },
+
   pageDark: {
-    backgroundColor: "#111827",
+    backgroundColor: "var(--surface)",
     color: "#f3f4f6",
   },
+
   header: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "flex-end",
     marginBottom: "40px",
   },
+
   title: {
     fontFamily: "Montserrat, sans-serif",
     fontSize: "32px",
@@ -265,94 +270,109 @@ const styles = {
     margin: 0,
     color: "#111c2d",
   },
+
   titleDark: {
     color: "#f9fafb",
   },
+
   subtitle: {
     color: "#44474c",
     marginTop: "5px",
     marginBottom: 0,
   },
+
   subtitleDark: {
     color: "#d1d5db",
   },
+
   voltarButton: {
     display: "flex",
     alignItems: "center",
     gap: "8px",
     padding: "10px 16px",
-    border: "1px solid #e2e8f0",
+    border: "1px solid var(--border-color)",
     borderRadius: "8px",
-    backgroundColor: "#f9f9ff",
+    backgroundColor: "var(--surface)",
     color: "#303e51",
     fontSize: "14px",
     fontWeight: "600",
     cursor: "pointer",
     fontFamily: "Inter, sans-serif",
   },
+
   voltarButtonDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#4b5563",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
     color: "#f9fafb",
   },
+
   formCard: {
     maxWidth: "700px",
-    backgroundColor: "#f9f9ff",
-    border: "1px solid #e2e8f0",
+    backgroundColor: "var(--surface)",
+    border: "1px solid var(--border-color)",
     borderRadius: "10px",
     padding: "30px",
     boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
   },
+
   formCardDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#374151",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
   },
+
   formGroup: {
     display: "flex",
     flexDirection: "column",
     gap: "8px",
     marginBottom: "24px",
   },
+
   label: {
     fontSize: "14px",
     fontWeight: "600",
     color: "#303e51",
   },
+
   labelDark: {
     color: "#e5e7eb",
   },
+
   input: {
     width: "100%",
     boxSizing: "border-box",
     padding: "13px 14px",
     border: "1px solid #cfd5df",
     borderRadius: "8px",
-    backgroundColor: "#ffffff",
+    backgroundColor: "var(--surface)",
     color: "#111c2d",
     fontSize: "14px",
     outline: "none",
     fontFamily: "Inter, sans-serif",
   },
+
   inputDark: {
-    backgroundColor: "#111827",
-    borderColor: "#4b5563",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
     color: "#f9fafb",
   },
+
   fileInput: {
     width: "100%",
     boxSizing: "border-box",
     padding: "12px",
     border: "1px dashed #b8c0cc",
     borderRadius: "8px",
-    backgroundColor: "#ffffff",
+    backgroundColor: "var(--surface)",
     cursor: "pointer",
     fontFamily: "Inter, sans-serif",
   },
+
   fileInputDark: {
-    backgroundColor: "#111827",
-    borderColor: "#4b5563",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
     color: "#f9fafb",
   },
+
   fileInfo: {
     display: "flex",
     alignItems: "center",
@@ -360,13 +380,15 @@ const styles = {
     color: "#44474c",
     fontSize: "13px",
     padding: "10px",
-    backgroundColor: "#eef2f7",
+    backgroundColor: "var(--surface-muted)",
     borderRadius: "6px",
   },
+
   fileInfoDark: {
-    backgroundColor: "#111827",
+    backgroundColor: "var(--surface)",
     color: "#d1d5db",
   },
+
   errorBox: {
     display: "flex",
     alignItems: "center",
@@ -380,11 +402,13 @@ const styles = {
     fontSize: "14px",
     fontWeight: "600",
   },
+
   errorBoxDark: {
     backgroundColor: "#3f1721",
     borderColor: "#7f1d1d",
     color: "#fecdd3",
   },
+
   successBox: {
     display: "flex",
     alignItems: "center",
@@ -398,34 +422,39 @@ const styles = {
     fontSize: "14px",
     fontWeight: "600",
   },
+
   successBoxDark: {
     backgroundColor: "#052e16",
     borderColor: "#14532d",
     color: "#bbf7d0",
   },
+
   actions: {
     display: "flex",
     justifyContent: "flex-end",
     gap: "12px",
     paddingTop: "10px",
-    borderTop: "1px solid #e2e8f0",
+    borderTop: "1px solid var(--border-color)",
   },
+
   cancelButton: {
     padding: "11px 18px",
-    border: "1px solid #d1d5db",
+    border: "1px solid var(--border-color)",
     borderRadius: "8px",
-    backgroundColor: "#ffffff",
+    backgroundColor: "var(--surface)",
     color: "#44474c",
     fontSize: "14px",
     fontWeight: "600",
     cursor: "pointer",
     fontFamily: "Inter, sans-serif",
   },
+
   cancelButtonDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#4b5563",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
     color: "#f9fafb",
   },
+
   saveButton: {
     display: "flex",
     alignItems: "center",
@@ -433,19 +462,20 @@ const styles = {
     padding: "11px 18px",
     border: "none",
     borderRadius: "8px",
-    backgroundColor: "#303e51",
+    backgroundColor: "var(--accent-color)",
     color: "#ffffff",
     fontSize: "14px",
     fontWeight: "600",
     cursor: "pointer",
     fontFamily: "Inter, sans-serif",
   },
+
   saveButtonDark: {
-    backgroundColor: "#2563eb",
+    backgroundColor: "var(--accent-color)",
   },
+  
   disabledButton: {
     opacity: 0.6,
     cursor: "not-allowed",
   },
-
 };

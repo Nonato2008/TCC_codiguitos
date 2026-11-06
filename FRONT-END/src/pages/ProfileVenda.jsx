@@ -309,22 +309,22 @@ const styles = {
 
     layout: {
         minHeight: "100vh",
-        backgroundColor: "#f5f6f8",
+        backgroundColor: "var(--surface)",
     },
 
     layoutDark: {
-        backgroundColor: "#0f172a",
+        backgroundColor: "var(--app-background)",
     },
 
     page: {
-        marginLeft: "363px",
+        marginLeft: "256px",
         minHeight: "100vh",
         padding: "25px 25px",
         boxSizing: "border-box",
     },
 
     pageDark: {
-        backgroundColor: "#111827",
+        backgroundColor: "var(--surface)",
         color: "#f3f4f6",
     },
 
@@ -337,7 +337,7 @@ const styles = {
         padding: "7px 13px",
         border: "1px solid #ddd",
         borderRadius: "7px",
-        backgroundColor: "#fff",
+        backgroundColor: "var(--surface)",
         color: "#333",
         cursor: "pointer",
         fontSize: "14px",
@@ -345,8 +345,8 @@ const styles = {
     },
 
     backButtonDark: {
-        backgroundColor: "#1f2937",
-        borderColor: "#4b5563",
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)",
         color: "#f9fafb",
     },
 
@@ -374,7 +374,7 @@ const styles = {
         display: "grid",
         gridTemplateColumns: "repeat(4, 1fr)",
         gap: "15px",
-        backgroundColor: "#fff",
+        backgroundColor: "var(--surface)",
         borderRadius: "10px",
         padding: "18px 20px",
         marginBottom: "18px",
@@ -383,7 +383,7 @@ const styles = {
     },
 
     infoCardDark: {
-        backgroundColor: "#1f2937",
+        backgroundColor: "var(--surface)",
         boxShadow: "0 2px 7px rgba(0, 0, 0, 0.2)",
     },
 
@@ -423,7 +423,7 @@ const styles = {
     productsCard: {
         width: "100%",
         maxWidth: "1150px",
-        backgroundColor: "#fff",
+        backgroundColor: "var(--surface)",
         borderRadius: "10px",
         padding: "20px",
         boxShadow: "0 2px 7px rgba(0, 0, 0, 0.05)",
@@ -431,7 +431,7 @@ const styles = {
     },
 
     productsCardDark: {
-        backgroundColor: "#1f2937",
+        backgroundColor: "var(--surface)",
         boxShadow: "0 2px 7px rgba(0, 0, 0, 0.2)",
     },
 
@@ -473,15 +473,15 @@ const styles = {
     th: {
         textAlign: "left",
         padding: "11px 12px",
-        backgroundColor: "#f8f9fa",
+        backgroundColor: "var(--surface-muted)",
         borderBottom: "2px solid #ddd",
         color: "#444",
         fontSize: "13px",
     },
 
     thDark: {
-        backgroundColor: "#111827",
-        borderBottomColor: "#4b5563",
+        backgroundColor: "var(--surface)",
+        borderBottomColor: "var(--border-color)",
         color: "#e5e7eb",
     },
 
@@ -493,7 +493,7 @@ const styles = {
     },
 
     tdDark: {
-        borderBottomColor: "#4b5563",
+        borderBottomColor: "var(--border-color)",
         color: "#f9fafb",
     },
 
@@ -512,7 +512,7 @@ const styles = {
         maxWidth: "1150px",
         marginTop: "18px",
         padding: "17px 20px",
-        backgroundColor: "#fff",
+        backgroundColor: "var(--surface)",
         borderRadius: "10px",
         display: "flex",
         justifyContent: "space-between",
@@ -522,7 +522,7 @@ const styles = {
     },
 
     summaryDark: {
-        backgroundColor: "#1f2937",
+        backgroundColor: "var(--surface)",
         boxShadow: "0 2px 7px rgba(0, 0, 0, 0.2)",
     },
 

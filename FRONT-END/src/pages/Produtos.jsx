@@ -1,3 +1,4 @@
+
 import { Link, useNavigate } from "react-router-dom";
 import React, { useEffect, useState, useContext, useMemo } from "react";
 import Sidebar from "../components/Sidebar";
@@ -6,122 +7,144 @@ import { ThemeContext } from "../contexts/ThemeContext";
 import { buscarFornecedores } from "../services/fornecedoresService";
 
 export default function Produtos() {
-  // Hook que carrega a lista de vendas
   const { produtos, loading, error } = useProdutos();
-
   const navigate = useNavigate();
 
   const { theme } = useContext(ThemeContext);
   const isDark = theme === "dark";
 
-  // Lista de fornecedores (para mostrar o nome a partir do IdVendedor)
   const [fornecedores, setFornecedores] = useState([]);
-
-  // Filtro de data (input do tipo date)
-  const [dataFiltro, setDataFiltro] = useState("");
-  // Busca livre por nome / id / fornecedor
   const [busca, setBusca] = useState("");
+  const [quantidadeMinima, setQuantidadeMinima] = useState("");
 
-  // Busca os fornecedores uma única vez ao montar o componente
   useEffect(() => {
     const carregarFornecedores = async () => {
       try {
         const dados = await buscarFornecedores();
         setFornecedores(dados || []);
       } catch (error) {
-        console.error("Erro ao buscar vendedores:", error);
+        console.error("Erro ao buscar fornecedores:", error);
       }
     };
 
     carregarFornecedores();
   }, []);
 
-  // Cria um mapa em memória para lookup rápido por id
   const fornecedoresPorId = useMemo(() => {
     const map = new Map();
+
     (Array.isArray(fornecedores) ? fornecedores : []).forEach((f) => {
       const id = f.Id ?? f.id ?? f.idFornecedor ?? f.IdFornecedor;
-      if (id !== undefined && id !== null) map.set(String(id), f);
+
+      if (id !== undefined && id !== null) {
+        map.set(String(id), f);
+      }
     });
+
     return map;
   }, [fornecedores]);
 
-  // Retorna o nome do fornecedor a partir do id (aceita Id ou id)
   const encontrarNomeFornecedor = (id) => {
     if (id === undefined || id === null || id === "") return "";
+
     const f = fornecedoresPorId.get(String(id));
+
     return f ? (f.Nome ?? f.nome ?? "") : `Fornecedor #${id}`;
   };
 
-  // Retorna o objeto completo do fornecedor ou null
   const obterFornecedorPorId = (id) => {
     if (id === undefined || id === null || id === "") return null;
+
     return fornecedoresPorId.get(String(id)) || null;
   };
 
-  // Converte uma data para o formato YYYY-MM-DD respeitando o fuso local
-  // (usado para comparar com o valor do input type="date")
   const formatarDataLocal = (data) => {
     const dataLocal = new Date(data);
+
     if (Number.isNaN(dataLocal.getTime())) return "";
 
     const offset = dataLocal.getTimezoneOffset();
     const localDate = new Date(dataLocal.getTime() - offset * 60000);
+
     return localDate.toISOString().slice(0, 10);
   };
 
-  // Helpers para normalizar campos do produto (aceita variações de Pascal/camelCase)
-  const getId = (p) => p?.Id ?? p?.id ?? p?.IdProduto ?? p?.idProduto ?? p?.id;
+  const getId = (p) =>
+    p?.Id ?? p?.id ?? p?.IdProduto ?? p?.idProduto ?? p?.id;
+
   const getNome = (p) => p?.Nome ?? p?.nome ?? "";
+
   const getPreco = (p) =>
     Number(p?.Preco ?? p?.preco ?? p?.Valor ?? p?.valor ?? 0);
+
+  const getCusto = (p) => {
+    const custo = p?.Custo ?? p?.custo;
+    if (custo === undefined || custo === null || custo === "") return null;
+
+    const valor = Number(custo);
+    return Number.isFinite(valor) ? valor : null;
+  };
+
   const getQuantidade = (p) =>
     Number(p?.Quantidade ?? p?.quantidade ?? p?.Estoque ?? p?.estoque ?? 0);
+
   const getDataVenc = (p) =>
     p?.DataVenc ??
     p?.dataVenc ??
     p?.dataVencimento ??
     p?.DataVencimento ??
     p?.dataVenc;
-  const getIdFornecedorFromProduct = (p) => p?.idFornecedor;
+
+  const getIdFornecedorFromProduct = (p) =>
+    p?.IdFornecedor ?? p?.idFornecedor ?? p?.id_fornecedor;
 
   const hoje = new Date();
+
   const isExpired = (p) => {
     const dv = getDataVenc(p);
+
     if (!dv) return false;
+
     const d = new Date(dv);
+
     if (Number.isNaN(d.getTime())) return false;
+
     return d < new Date(hoje.toDateString());
   };
 
-  // Filtra os produtos pela data selecionada (data de cadastro ou vencimento) e pelo termo de busca
   const produtosEnriquecidos = (Array.isArray(produtos) ? produtos : []).map(
     (p) => ({
       produto: p,
       id: getId(p),
       nome: getNome(p),
       preco: getPreco(p),
+      custo: getCusto(p),
+      lucroUnitario: getCusto(p) === null
+        ? null
+        : getPreco(p) - getCusto(p),
       quantidade: getQuantidade(p),
       dataVenc: getDataVenc(p),
-      fornecedorNome: encontrarNomeFornecedor(getIdFornecedorFromProduct(p)),
-      fornecedorObj: obterFornecedorPorId(getIdFornecedorFromProduct(p)),
-    }),
+      fornecedorNome: encontrarNomeFornecedor(
+        getIdFornecedorFromProduct(p)
+      ),
+      fornecedorObj: obterFornecedorPorId(
+        getIdFornecedorFromProduct(p)
+      ),
+    })
   );
 
   const produtosFiltrados = produtosEnriquecidos.filter((item) => {
-    if (dataFiltro) {
-      const dataProduto =
-        item.produto.dataCad ??
-        item.produto.DataCad ??
-        item.produto.dataVenc ??
-        item.produto.DataVenc;
-      const dataProdutoFormatada = formatarDataLocal(dataProduto);
-      if (dataProdutoFormatada !== dataFiltro) return false;
+    if (
+      quantidadeMinima !== "" &&
+      item.quantidade <= Number(quantidadeMinima)
+    ) {
+      return false;
     }
 
     if (!busca) return true;
 
     const termo = String(busca).trim().toLowerCase();
+
     if (!termo) return true;
 
     return (
@@ -131,7 +154,6 @@ export default function Produtos() {
     );
   });
 
-  // Estado de carregamento
   if (loading) {
     return (
       <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
@@ -145,6 +167,7 @@ export default function Produtos() {
               >
                 Produtos
               </h1>
+
               <p
                 style={{
                   ...styles.subtitle,
@@ -155,12 +178,13 @@ export default function Produtos() {
               </p>
             </div>
 
-            <div style={styles.headerRight}>
+            <div style={styles.headerActions}>
               <div
                 style={{ ...styles.total, ...(isDark ? styles.totalDark : {}) }}
               >
                 0 produtos
               </div>
+
               <Link to="/produtos/cadastrar" style={{ textDecoration: "none" }}>
                 <button
                   style={{
@@ -184,7 +208,6 @@ export default function Produtos() {
     );
   }
 
-  // Estado de erro
   if (error) {
     return (
       <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
@@ -198,6 +221,7 @@ export default function Produtos() {
               >
                 Produtos
               </h1>
+
               <p
                 style={{
                   ...styles.subtitle,
@@ -208,12 +232,13 @@ export default function Produtos() {
               </p>
             </div>
 
-            <div style={styles.headerRight}>
+            <div style={styles.headerActions}>
               <div
                 style={{ ...styles.total, ...(isDark ? styles.totalDark : {}) }}
               >
                 0 produtos
               </div>
+
               <Link to="/produtos/cadastrar" style={{ textDecoration: "none" }}>
                 <button
                   style={{
@@ -251,6 +276,7 @@ export default function Produtos() {
             >
               Produtos
             </h1>
+
             <p
               style={{
                 ...styles.subtitle,
@@ -261,54 +287,16 @@ export default function Produtos() {
             </p>
           </div>
 
-          <div style={styles.headerRight}>
-            {/* Contador dinâmico (muda conforme o filtro) */}
+          <div style={styles.headerActions}>
             <div
-              style={{ ...styles.total, ...(isDark ? styles.totalDark : {}) }}
+              style={{
+                ...styles.total,
+                ...(isDark ? styles.totalDark : {}),
+              }}
             >
               {produtosFiltrados.length}{" "}
               {produtosFiltrados.length === 1 ? "produto" : "produtos"}
             </div>
-
-            {/* Busca por nome / id / fornecedor */}
-            <input
-              type="text"
-              placeholder="Buscar por nome, id ou fornecedor..."
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              style={{
-                ...styles.dateInput,
-                ...(isDark ? styles.dateInputDark : {}),
-                minWidth: "260px",
-              }}
-              aria-label="Buscar produtos"
-            />
-
-            {/* Filtro por data */}
-            <input
-              type="date"
-              value={dataFiltro}
-              onChange={(event) => setDataFiltro(event.target.value)}
-              style={{
-                ...styles.dateInput,
-                ...(isDark ? styles.dateInputDark : {}),
-              }}
-              aria-label="Filtrar produtos por data"
-            />
-
-            {/* Botão "Limpar" só aparece se houver filtro ativo */}
-            {dataFiltro && (
-              <button
-                type="button"
-                onClick={() => setDataFiltro("")}
-                style={{
-                  ...styles.clearFilterButton,
-                  ...(isDark ? styles.clearFilterButtonDark : {}),
-                }}
-              >
-                Limpar
-              </button>
-            )}
 
             <Link to="/produtos/cadastrar" style={{ textDecoration: "none" }}>
               <button
@@ -323,15 +311,110 @@ export default function Produtos() {
           </div>
         </header>
 
+        <section
+          style={{
+            ...styles.filtersCard,
+            ...(isDark ? styles.filtersCardDark : {}),
+          }}
+          aria-label="Filtros de produtos"
+        >
+          <div style={styles.filtersHeader}>
+            <div>
+              <h2
+                style={{
+                  ...styles.filtersTitle,
+                  ...(isDark ? styles.filtersTitleDark : {}),
+                }}
+              >
+                Pesquisar e filtrar
+              </h2>
+              <p
+                style={{
+                  ...styles.filtersDescription,
+                  ...(isDark ? styles.filtersDescriptionDark : {}),
+                }}
+              >
+                Busque pelo produto, código ou fornecedor e filtre pelo estoque.
+              </p>
+            </div>
+
+            {(busca || quantidadeMinima !== "") && (
+              <button
+                type="button"
+                onClick={() => {
+                  setBusca("");
+                  setQuantidadeMinima("");
+                }}
+                style={{
+                  ...styles.clearFilterButton,
+                  ...(isDark ? styles.clearFilterButtonDark : {}),
+                }}
+              >
+                Limpar filtros
+              </button>
+            )}
+          </div>
+
+          <div style={styles.filtersGrid}>
+            <label
+              htmlFor="busca-produtos"
+              style={{
+                ...styles.filterField,
+                ...(isDark ? styles.filterFieldDark : {}),
+              }}
+            >
+              <span>Pesquisar produtos</span>
+              <input
+                id="busca-produtos"
+                type="search"
+                placeholder="Nome, código ou fornecedor"
+                value={busca}
+                onChange={(event) => setBusca(event.target.value)}
+                style={{
+                  ...styles.filterInput,
+                  ...(isDark ? styles.filterInputDark : {}),
+                }}
+              />
+            </label>
+
+            <label
+              htmlFor="quantidade-minima-produtos"
+              style={{
+                ...styles.filterField,
+                ...(isDark ? styles.filterFieldDark : {}),
+              }}
+            >
+              <span>Quantidade maior que</span>
+              <input
+                id="quantidade-minima-produtos"
+                type="number"
+                min="0"
+                step="1"
+                inputMode="numeric"
+                placeholder="Ex.: 10"
+                value={quantidadeMinima}
+                onChange={(event) => setQuantidadeMinima(event.target.value)}
+                style={{
+                  ...styles.filterInput,
+                  ...(isDark ? styles.filterInputDark : {}),
+                }}
+              />
+            </label>
+          </div>
+        </section>
+
         <section style={styles.content}>
           {produtosFiltrados.length === 0 ? (
             <div
               style={{ ...styles.empty, ...(isDark ? styles.emptyDark : {}) }}
             >
-              <span className="material-symbols-outlined">inventory_2</span>
+              <span className="material-symbols-outlined">
+                inventory_2
+              </span>
+
               <p style={{ ...(isDark ? styles.textDark : {}) }}>
-                {dataFiltro
-                  ? "Nenhum produto encontrado para a data selecionada."
+                {busca || quantidadeMinima !== ""
+                  ? "Nenhum produto encontrado para os filtros selecionados."
                   : "Nenhum produto encontrado."}
               </p>
             </div>
@@ -349,16 +432,22 @@ export default function Produtos() {
                   item.produto.Imagem ||
                   item.produto.imagemUrl ||
                   null;
-                const imageUrl = img ? `http://localhost:8000${img}` : null;
+
+                const imageUrl = img
+                  ? `http://localhost:8000${img}`
+                  : null;
+
                 return (
                   <article
                     key={item.id}
                     onClick={() => navigate(`/produtos/${item.id}`)}
                     style={{
-                      background: isDark ? "#0b1220" : "#fff",
+                      backgroundColor: "var(--surface-muted)",
+                      color: "var(--text-primary)",
                       padding: 16,
                       borderRadius: 8,
-                      border: "1px solid #e6edf3",
+                      border: "1px solid var(--border-color)",
+                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
                       cursor: "pointer",
                       transition: "all 0.2s ease",
                     }}
@@ -366,6 +455,7 @@ export default function Produtos() {
                       e.currentTarget.style.boxShadow = isDark
                         ? "0 8px 16px rgba(0, 0, 0, 0.4)"
                         : "0 8px 16px rgba(0, 0, 0, 0.1)";
+
                       e.currentTarget.style.transform = "translateY(-2px)";
                     }}
                     onMouseLeave={(e) => {
@@ -379,7 +469,7 @@ export default function Produtos() {
                         overflow: "hidden",
                         borderRadius: 8,
                         marginBottom: 10,
-                        background: "#f3f6fa",
+                        backgroundColor: "var(--surface)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -392,7 +482,8 @@ export default function Produtos() {
                           style={{
                             width: "100%",
                             height: "100%",
-                            objectFit: "cover",
+                            objectFit: "contain",
+                            objectPosition: "center",
                           }}
                         />
                       ) : (
@@ -423,12 +514,15 @@ export default function Produtos() {
                         marginBottom: 8,
                       }}
                     >
-                      <strong style={{ color: isDark ? "#bbf7d0" : "#047857" }}>
+                      <strong
+                        style={{ color: isDark ? "#bbf7d0" : "#047857" }}
+                      >
                         {item.preco.toLocaleString("pt-BR", {
                           style: "currency",
                           currency: "BRL",
                         })}
                       </strong>
+
                       <span
                         style={{
                           color:
@@ -445,22 +539,62 @@ export default function Produtos() {
 
                     <div
                       style={{
+                        marginBottom: 8,
                         fontSize: 13,
                         color: isDark ? "#cbd5e1" : "#55616a",
                       }}
                     >
-                      <div>Fornecedor: {item.fornecedorNome || "—"}</div>
-                      <div>
-                        Vencimento:{" "}
-                        {item.dataVenc ? formatarDataLocal(item.dataVenc) : "—"}
+                      Custo unitário:{" "}
+                      {item.custo === null
+                        ? "Não informado"
+                        : item.custo.toLocaleString("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          })}
+                      <div
+                        style={{
+                          marginTop: 4,
+                          color: item.lucroUnitario !== null && item.lucroUnitario < 0
+                            ? "#b91c1c"
+                            : isDark
+                              ? "#86efac"
+                              : "#047857",
+                        }}
+                      >
+                        {item.lucroUnitario === null
+                          ? "Lucro não calculado (custo ausente)"
+                          : `${item.lucroUnitario < 0 ? "Prejuízo" : "Lucro"} por unidade: ${item.lucroUnitario.toLocaleString(
+                              "pt-BR",
+                              { style: "currency", currency: "BRL" }
+                            )}`}
                       </div>
                     </div>
+
+                    <div
+                      style={{
+                        fontSize: 13,
+                        color: isDark ? "#cbd5e1" : "#55616a",
+                      }}
+                    >
+                      <div>
+                        Fornecedor: {item.fornecedorNome || "—"}
+                      </div>
+
+                      <div>
+                        Vencimento:{" "}
+                        {item.dataVenc
+                          ? formatarDataLocal(item.dataVenc)
+                          : "—"}
+                      </div>
+                    </div>
+
                   </article>
                 );
               })}
             </div>
           )}
         </section>
+
       </main>
     </div>
   );
@@ -469,20 +603,24 @@ export default function Produtos() {
 const styles = {
   layout: {
     minHeight: "100vh",
-    backgroundColor: "#f5f6f8",
+    backgroundColor: "var(--surface)",
   },
+
   layoutDark: {
-    backgroundColor: "#0f172a",
+    backgroundColor: "var(--app-background)",
   },
+
   page: {
-    marginLeft: "363px",
+    marginLeft: "256px",
     minHeight: "100vh",
     padding: "30px 25px",
     boxSizing: "border-box",
   },
+
   pageDark: {
-    backgroundColor: "#111827",
+    backgroundColor: "var(--surface)",
   },
+
   header: {
     maxWidth: "1150px",
     margin: "0 0 25px 0",
@@ -490,118 +628,209 @@ const styles = {
     justifyContent: "space-between",
     alignItems: "center",
   },
-  headerRight: {
+
+  headerActions: {
     display: "flex",
     alignItems: "center",
     gap: 12,
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
   },
+
   title: {
     margin: 0,
     fontSize: "32px",
     fontWeight: "700",
     color: "#243447",
   },
+
   titleDark: {
     color: "#f9fafb",
   },
+
   subtitle: {
     marginTop: "7px",
     marginBottom: 0,
     fontSize: "15px",
     color: "#718096",
   },
+
   subtitleDark: {
     color: "#d1d5db",
   },
+
   total: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "var(--surface)",
     padding: "10px 18px",
     borderRadius: "10px",
-    border: "1px solid #e2e8f0",
+    border: "1px solid var(--border-color)",
     color: "#243447",
     fontWeight: "600",
     fontSize: "15px",
     boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
   },
+
   totalDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#4b5563",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
     color: "#f9fafb",
   },
+
   primaryButton: {
     border: "none",
-    backgroundColor: "#303e51",
+    backgroundColor: "var(--accent-color)",
     color: "#fff",
     padding: "10px 14px",
     borderRadius: "10px",
     fontWeight: 600,
     cursor: "pointer",
   },
+
   primaryButtonDark: {
-    backgroundColor: "#2563eb",
+    backgroundColor: "var(--accent-color)",
   },
+
+  filtersCard: {
+    maxWidth: "1150px",
+    margin: "0 0 20px",
+    padding: "18px 20px",
+    backgroundColor: "var(--surface)",
+    border: "1px solid var(--border-color)",
+    borderRadius: "12px",
+    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+    boxSizing: "border-box",
+  },
+
+  filtersCardDark: {
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
+  },
+
+  filtersHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: "12px",
+    marginBottom: "16px",
+  },
+
+  filtersTitle: {
+    margin: 0,
+    color: "#243447",
+    fontSize: "16px",
+    fontWeight: 700,
+  },
+
+  filtersTitleDark: {
+    color: "#f9fafb",
+  },
+
+  filtersDescription: {
+    margin: "4px 0 0",
+    color: "#718096",
+    fontSize: "13px",
+  },
+
+  filtersDescriptionDark: {
+    color: "#cbd5e1",
+  },
+
+  filtersGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: "14px",
+  },
+
+  filterField: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "7px",
+    color: "#475569",
+    fontSize: "13px",
+    fontWeight: 600,
+    minWidth: 0,
+  },
+
+  filterFieldDark: {
+    color: "#e5e7eb",
+  },
+
+  filterInput: {
+    width: "100%",
+    boxSizing: "border-box",
+    border: "1px solid var(--border-color)",
+    borderRadius: "8px",
+    padding: "10px 12px",
+    backgroundColor: "var(--surface)",
+    color: "#243447",
+    fontSize: "14px",
+    fontFamily: "Inter, sans-serif",
+    outline: "none",
+  },
+
+  filterInputDark: {
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
+    color: "#f9fafb",
+  },
+
   content: {
     width: "100%",
     maxWidth: "1150px",
     margin: "0",
   },
+
   centerContent: {
     maxWidth: "1150px",
     margin: "0",
   },
+
   empty: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "var(--surface)",
     borderRadius: "12px",
     padding: "50px",
     textAlign: "center",
     color: "#718096",
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
   },
+
   emptyDark: {
-    backgroundColor: "#1f2937",
+    backgroundColor: "var(--surface)",
     color: "#d1d5db",
   },
+
   error: {
     backgroundColor: "#ffe5e5",
     color: "#b00020",
     padding: "20px",
     borderRadius: "10px",
   },
+
   errorDark: {
     backgroundColor: "#3f1721",
     color: "#fecdd3",
   },
+
   textDark: {
     color: "#e5e7eb",
   },
-  dateInput: {
-    border: "1px solid #cbd5e1",
-    borderRadius: "8px",
-    padding: "9px 10px",
-    backgroundColor: "#ffffff",
-    color: "#243447",
-    fontSize: "14px",
-    fontFamily: "Inter, sans-serif",
-    outline: "none",
-  },
-  dateInputDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#4b5563",
-    color: "#f9fafb",
-  },
+
   clearFilterButton: {
-    border: "1px solid #cbd5e1",
+    border: "1px solid var(--border-color)",
     borderRadius: "8px",
     padding: "9px 10px",
-    backgroundColor: "#f8fafc",
+    backgroundColor: "var(--surface)",
     color: "#243447",
     fontWeight: 600,
     fontSize: "13px",
     cursor: "pointer",
   },
+
   clearFilterButtonDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#4b5563",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
     color: "#f9fafb",
   },
+
 };

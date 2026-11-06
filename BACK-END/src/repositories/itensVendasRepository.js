@@ -7,7 +7,7 @@ const itensVendasRepository = {
 
         const sql = `
             SELECT *
-            FROM itens_vendas
+            FROM Itens_vendas
             WHERE Id = ?
         `;
 

@@ -3,6 +3,7 @@ export class Produtos {
     #idFornecedor;
     #nome;
     #preco;
+    #custo;
     #quantidade;
     #status;
     #imagem;
@@ -13,6 +14,7 @@ export class Produtos {
         pIdFornecedor,
         pNome,
         pPreco,
+        pCusto,
         pQuantidade,
         pStatus,
         pImagem,
@@ -23,6 +25,7 @@ export class Produtos {
         this.idFornecedor = pIdFornecedor;
         this.nome = pNome;
         this.preco = pPreco;
+        this.custo = pCusto;
         this.quantidade = pQuantidade;
         this.status = pStatus;
         this.imagem = pImagem;
@@ -65,6 +68,14 @@ export class Produtos {
     set preco(value) {
         this.#validarPreco(value);
         this.#preco = Number(value);
+    }
+
+    get custo() {
+        return this.#custo;
+    }
+    set custo(value) {
+        this.#validarCusto(value);
+        this.#custo = Number(value);
     }
 
     get quantidade() {
@@ -155,6 +166,22 @@ export class Produtos {
         }
     }
 
+    #validarCusto(value) {
+        if (
+            value === null ||
+            value === undefined ||
+            value === "" ||
+            !Number.isFinite(Number(value)) ||
+            Number(value) < 0
+        ) {
+            throw new Error("O custo deve ser um valor maior ou igual a zero.");
+        }
+
+        if (Number(value) > 9999999.99) {
+            throw new Error("O custo deve ser de até R$ 9.999.999,99.");
+        }
+    }
+
     #validarQuantidade(value) {
         if (isNaN(Number(value)) || Number(value) < 0) {
             throw new Error("A quantidade deve ser um número maior ou igual a zero.");
@@ -201,10 +228,29 @@ export class Produtos {
     // Factory Methods
 
     static criar(dados) {
-        return new Produtos(dados.idFornecedor, dados.nome, dados.preco, dados.quantidade, dados.status, dados.imagem, dados.dataVenc);
+        return new Produtos(
+            dados.idFornecedor,
+            dados.nome,
+            dados.preco,
+            dados.custo,
+            dados.quantidade,
+            dados.status,
+            dados.imagem,
+            dados.dataVenc
+        );
     }
 
     static alterar(dados, id) {
-        return new Produtos(dados.idFornecedor, dados.nome, dados.preco, dados.quantidade, dados.status, dados.imagem, dados.dataVenc, id);
+        return new Produtos(
+            dados.idFornecedor,
+            dados.nome,
+            dados.preco,
+            dados.custo,
+            dados.quantidade,
+            dados.status,
+            dados.imagem,
+            dados.dataVenc,
+            id
+        );
     }
 }

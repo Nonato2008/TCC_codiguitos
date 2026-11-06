@@ -5,6 +5,7 @@ import uploadImage from '../middlewares/uploadImagem.middleware.js';
 const produtosRoutes = Router();
 
 produtosRoutes.post('/', uploadImage, produtoController.inserir);
+produtosRoutes.patch('/:id/estoque', produtoController.ajustarEstoque);
 produtosRoutes.put('/:id', uploadImage, produtoController.alterar);
 produtosRoutes.delete('/:id', produtoController.deletar);
 produtosRoutes.get('/', produtoController.selecionar);

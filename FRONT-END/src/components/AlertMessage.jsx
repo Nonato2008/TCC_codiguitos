@@ -31,7 +31,7 @@ const styles = {
     fontWeight: 500,
   },
   alertDark: {
-    borderColor: "#4b5563",
+    borderColor: "var(--border-color)",
   },
   // Sobrescreve cor de fundo, texto e borda para o caso de sucesso (verde)
   success: {

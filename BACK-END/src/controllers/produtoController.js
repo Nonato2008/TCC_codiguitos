@@ -84,6 +84,7 @@ const produtoController = {
                 idFornecedor,
                 nome,
                 preco,
+                custo,
                 quantidade,
                 dataVenc
             } = req.body;
@@ -118,6 +119,7 @@ const produtoController = {
                 idFornecedor,
                 nome,
                 preco,
+                custo,
                 quantidade,
                 status,
                 imagem,
@@ -171,6 +173,9 @@ const produtoController = {
                     preco:
                         Number(preco),
 
+                    custo:
+                        Number(custo),
+
                     quantidade:
                         Number(quantidade),
 
@@ -203,6 +208,20 @@ const produtoController = {
                 return res.status(400).json({
                     message: "Preço fora do limite permitido. Informe um valor até R$ 9.999.999,99 e verifique também o limite de 45 caracteres no nome do produto."
                 });
+            }
+
+            if (
+                mensagem.includes("out of range value for column 'custo'") ||
+                mensagem.includes("out of range value for column \"custo\"") ||
+                mensagem.includes("custo excede o limite permitido")
+            ) {
+                return res.status(400).json({
+                    message: "Custo fora do limite permitido. Informe um valor entre R$ 0,00 e R$ 9.999.999,99."
+                });
+            }
+
+            if (mensagem.includes("o custo deve ser")) {
+                return res.status(400).json({ message: error.message });
             }
 
             if (
@@ -242,6 +261,7 @@ const produtoController = {
                 idFornecedor,
                 nome,
                 preco,
+                custo,
                 quantidade,
                 dataVenc,
                 imagem: imagemInformada
@@ -284,6 +304,14 @@ const produtoController = {
                     1
                 );
 
+            const custoFinal =
+                Number(
+                    custo ??
+                    produtoAtual?.Custo ??
+                    produtoAtual?.custo ??
+                    0
+                );
+
             const idFornecedorFinal =
                 Number(
                     idFornecedor ??
@@ -315,6 +343,9 @@ const produtoController = {
                 preco:
                     precoFinal,
 
+                custo:
+                    custoFinal,
+
                 quantidade:
                     quantidadeFinal,
 
@@ -343,6 +374,12 @@ const produtoController = {
 
             console.error(error);
 
+            if ((error?.message || "").toLowerCase().includes("custo")) {
+                return res.status(400).json({
+                    message: error.message
+                });
+            }
+
             res.status(500).json({
 
                 message:
@@ -355,6 +392,61 @@ const produtoController = {
 
         }
 
+    },
+
+    ajustarEstoque: async (req, res) => {
+        const id = Number(req.params.id);
+        const { operacao, quantidade } = req.body ?? {};
+
+        if (!Number.isSafeInteger(id) || id <= 0) {
+            return res.status(400).json({
+                message: "ID do produto inválido."
+            });
+        }
+
+        if (!["entrada", "saida"].includes(operacao)) {
+            return res.status(400).json({
+                message: "Selecione uma operação válida para o estoque."
+            });
+        }
+
+        if (
+            !Number.isSafeInteger(quantidade) ||
+            quantidade <= 0 ||
+            quantidade > 999999
+        ) {
+            return res.status(400).json({
+                message: "Informe uma quantidade inteira entre 1 e 999.999."
+            });
+        }
+
+        try {
+            const resultado = await produtosRepository.ajustarEstoque(
+                id,
+                operacao,
+                quantidade
+            );
+
+            if (!resultado) {
+                return res.status(404).json({
+                    message: "Produto não encontrado."
+                });
+            }
+
+            return res.status(200).json({
+                message: "Estoque atualizado com sucesso.",
+                ...resultado
+            });
+        } catch (error) {
+            console.error(error);
+
+            return res.status(error.statusCode || 500).json({
+                message: error.statusCode
+                    ? error.message
+                    : "Erro ao atualizar o estoque.",
+                errorMessage: error.statusCode ? undefined : error.message
+            });
+        }
     },
 
     deletar: async (req, res) => {

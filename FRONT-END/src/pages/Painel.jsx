@@ -1,38 +1,237 @@
-import React, { useContext } from "react";
+
+import React, { useContext, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import { useProdutos } from "../hooks/useProdutos";
 import { useVendas } from "../hooks/useVendas";
 import { useNavigate } from "react-router-dom";
 import { ThemeContext } from "../contexts/ThemeContext";
 
-export default function Painel() {
+const MESES = [
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
+];
 
+function obterDataVenda(venda) {
+  const valor = venda?.DataCad ?? venda?.dataCad ?? venda?.Data ?? venda?.data;
+  if (!valor) return null;
+  if (valor instanceof Date) {
+    return Number.isNaN(valor.getTime())
+      ? null
+      : new Date(valor.getFullYear(), valor.getMonth(), valor.getDate());
+  }
+
+  const texto = String(valor).trim();
+  const dataISOComFuso = texto.match(
+    /^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:?\d{2})$/i
+  );
+  if (dataISOComFuso) {
+    const data = new Date(texto);
+    if (Number.isNaN(data.getTime())) return null;
+    return new Date(data.getFullYear(), data.getMonth(), data.getDate());
+  }
+
+  const dataISO = texto.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (dataISO) {
+    return new Date(
+      Number(dataISO[1]),
+      Number(dataISO[2]) - 1,
+      Number(dataISO[3])
+    );
+  }
+
+  const data = new Date(texto);
+  if (Number.isNaN(data.getTime())) return null;
+  return new Date(data.getFullYear(), data.getMonth(), data.getDate());
+}
+
+export default function Painel() {
   const navigate = useNavigate();
 
   const { theme } = useContext(ThemeContext);
   const isDark = theme === "dark";
 
-  // Hook que carrega os produtos (usado para os cards de resumo)
   const { produtos, loading, error } = useProdutos();
 
-  // Hook que carrega as vendas e o valor total (lucro)
   const {
     vendas,
-    valorTotal,
     loading: loadingVendas,
     error: errorVendas,
   } = useVendas();
 
-  // Garante que `vendas` seja sempre um array válido
   const vendasLista = Array.isArray(vendas) ? vendas : [];
+  const ultimasVendas = vendasLista.slice(0, 3);
+  const produtosLista = Array.isArray(produtos) ? produtos : [];
+  const produtosTotais = produtosLista.length;
+  const hoje = new Date();
+  const [periodoFaturamento, setPeriodoFaturamento] = useState("todo");
+  const [mesFaturamento, setMesFaturamento] = useState(String(hoje.getMonth()));
+  const [anoFaturamento, setAnoFaturamento] = useState(String(hoje.getFullYear()));
 
-  // Pega as 3 últimas vendas e inverte para mostrar as mais recentes primeiro
-  const ultimasVendas = [...vendasLista].slice(-3).reverse();
+  const formatarMoeda = (valor) =>
+    Number(valor || 0).toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
 
-  // Total de produtos cadastrados
-  const produtosTotais = Array.isArray(produtos) ? produtos.length : 0;
+  const anosDisponiveis = [
+    ...new Set([
+      hoje.getFullYear(),
+      ...vendasLista
+        .map(obterDataVenda)
+        .filter(Boolean)
+        .map((data) => data.getFullYear()),
+    ]),
+  ].sort((a, b) => b - a);
 
-  // Função para obter a data de vencimento de um produto
+  function correspondePeriodoFaturamento(venda) {
+    if (periodoFaturamento === "todo") return true;
+
+    const dataVenda = obterDataVenda(venda);
+    if (!dataVenda) return false;
+
+    if (periodoFaturamento === "semana") {
+      const inicioSemana = new Date(
+        hoje.getFullYear(),
+        hoje.getMonth(),
+        hoje.getDate()
+      );
+      const diasDesdeSegunda = (inicioSemana.getDay() + 6) % 7;
+      inicioSemana.setDate(inicioSemana.getDate() - diasDesdeSegunda);
+      const fimSemana = new Date(inicioSemana);
+      fimSemana.setDate(fimSemana.getDate() + 7);
+      return dataVenda >= inicioSemana && dataVenda < fimSemana;
+    }
+
+    if (periodoFaturamento === "mes") {
+      return (
+        dataVenda.getFullYear() === Number(anoFaturamento) &&
+        dataVenda.getMonth() === Number(mesFaturamento)
+      );
+    }
+
+    return dataVenda.getFullYear() === Number(anoFaturamento);
+  }
+
+  const vendasPeriodo = vendasLista.filter(correspondePeriodoFaturamento);
+  const faturamentoPeriodoCentavos = vendasPeriodo.reduce((total, venda) => {
+    const valor = Number(venda.ValorTotal ?? venda.valorTotal ?? 0);
+    return Number.isFinite(valor)
+      ? total + Math.round(valor * 100)
+      : total;
+  }, 0);
+  const faturamentoPeriodo = faturamentoPeriodoCentavos / 100;
+
+  const descricaoPeriodoFaturamento =
+    periodoFaturamento === "todo"
+      ? "Todo o período"
+      : periodoFaturamento === "semana"
+        ? "Esta semana (segunda a domingo)"
+        : periodoFaturamento === "mes"
+          ? `${MESES[Number(mesFaturamento)]} de ${anoFaturamento}`
+          : `Ano de ${anoFaturamento}`;
+
+  const vendasPorDiaCentavos = vendasLista.reduce((totais, venda) => {
+    const data = obterDataVenda(venda);
+    const valor = Number(venda.ValorTotal ?? venda.valorTotal ?? 0);
+    if (!data || !Number.isFinite(valor)) return totais;
+
+    const chaveData = [
+      data.getFullYear(),
+      String(data.getMonth() + 1).padStart(2, "0"),
+      String(data.getDate()).padStart(2, "0"),
+    ].join("-");
+    totais.set(
+      chaveData,
+      (totais.get(chaveData) ?? 0) + Math.round(valor * 100)
+    );
+    return totais;
+  }, new Map());
+  const vendasDiarias = [...vendasPorDiaCentavos.entries()]
+    .sort(([dataA], [dataB]) => dataA.localeCompare(dataB))
+    .map(([data, valorCentavos]) => ({
+      data,
+      valor: valorCentavos / 100,
+    }));
+  const faturamentoGrafico = vendasDiarias.reduce(
+    (total, item) => total + item.valor,
+    0
+  );
+
+  const chart = {
+    width: 760,
+    height: 280,
+    left: 90,
+    right: 24,
+    top: 24,
+    bottom: 228,
+  };
+  const chartPlotWidth = chart.width - chart.left - chart.right;
+  const chartPlotHeight = chart.bottom - chart.top;
+  const chartMaxOriginal = vendasDiarias.reduce(
+    (maximo, item) => Math.max(maximo, item.valor),
+    0
+  );
+  const chartMax = chartMaxOriginal === 0 ? 1 : chartMaxOriginal;
+  const chartRange = chartMax;
+  const chartPoints = vendasDiarias.map((item, index) => ({
+    ...item,
+    x:
+      chart.left +
+      (vendasDiarias.length === 1
+        ? chartPlotWidth / 2
+        : (index / (vendasDiarias.length - 1)) * chartPlotWidth),
+    y:
+      chart.top +
+      ((chartMax - item.valor) / chartRange) * chartPlotHeight,
+  }));
+  const linePoints = chartPoints.map((point) => `${point.x},${point.y}`).join(" ");
+  const chartTickStep = Math.max(1, Math.ceil((chartPoints.length - 1) / 5));
+  const chartDateTicks = chartPoints.filter(
+    (point, index) =>
+      index === 0 ||
+      index === chartPoints.length - 1 ||
+      index % chartTickStep === 0
+  );
+  const chartGridTicks = Array.from({ length: 5 }, (_, index) => {
+    const value = chartMax - (chartRange * index) / 4;
+    return {
+      value,
+      y: chart.top + (chartPlotHeight * index) / 4,
+    };
+  });
+  const yZero = chart.bottom;
+
+  function formatarDataGrafico(valor) {
+    if (valor instanceof Date && !Number.isNaN(valor.getTime())) {
+      return valor.toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+      });
+    }
+
+    const texto = String(valor);
+    const dataISO = texto.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (dataISO) return `${dataISO[3]}/${dataISO[2]}`;
+
+    const data = new Date(texto);
+    return Number.isNaN(data.getTime())
+      ? texto
+      : data.toLocaleDateString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+        });
+  }
+
   const getDataVencimento = (produto) =>
     produto?.DataVenc ??
     produto?.dataVenc ??
@@ -41,9 +240,9 @@ export default function Painel() {
     produto?.data_venc ??
     null;
 
-  // Função para verificar se um produto está vencido
   const isProdutoVencido = (produto) => {
     const status = String(produto?.Status ?? "").trim().toLowerCase();
+
     if (status === "vencido") return true;
 
     const dataVencimento = getDataVencimento(produto);
@@ -58,27 +257,29 @@ export default function Painel() {
     return data < hoje;
   };
 
-  // Conta produtos com status "esgotado"
   const produtosEsgotados = Array.isArray(produtos)
     ? produtos.filter((produto) => {
-      const status = String(produto.Status ?? "").toLowerCase();
-      return status === "esgotado";
-    }).length
+        const status = String(produto.Status ?? "").toLowerCase();
+        return status === "esgotado";
+      }).length
     : 0;
 
-  // Conta produtos vencidos pela data de vencimento ou pelo status do produto
   const produtosVencimento = Array.isArray(produtos)
     ? produtos.filter(isProdutoVencido).length
     : 0;
 
-  // Estado de carregamento dos produtos
   if (loading) {
     return (
       <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
         <Sidebar />
 
         <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
-          <div style={{ ...styles.loadingBox, ...(isDark ? styles.loadingBoxDark : {}) }}>
+          <div
+            style={{
+              ...styles.loadingBox,
+              ...(isDark ? styles.loadingBoxDark : {}),
+            }}
+          >
             Carregando resumo do painel...
           </div>
         </main>
@@ -86,14 +287,20 @@ export default function Painel() {
     );
   }
 
-  // Estado de erro dos produtos
   if (error) {
     return (
       <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
         <Sidebar />
 
         <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
-          <div style={{ ...styles.errorBox, ...(isDark ? styles.errorBoxDark : {}) }}>{error}</div>
+          <div
+            style={{
+              ...styles.errorBox,
+              ...(isDark ? styles.errorBoxDark : {}),
+            }}
+          >
+            {error}
+          </div>
         </main>
       </div>
     );
@@ -108,8 +315,21 @@ export default function Painel() {
         <header style={styles.header}>
           <div style={styles.headerRow}>
             <div>
-              <h2 style={{ ...styles.title, ...(isDark ? styles.titleDark : {}) }}>Visão Geral</h2>
-              <p style={{ ...styles.subtitle, ...(isDark ? styles.subtitleDark : {}) }}>
+              <h2
+                style={{
+                  ...styles.title,
+                  ...(isDark ? styles.titleDark : {}),
+                }}
+              >
+                Visão Geral
+              </h2>
+
+              <p
+                style={{
+                  ...styles.subtitle,
+                  ...(isDark ? styles.subtitleDark : {}),
+                }}
+              >
                 Resumo operacional da loja.
               </p>
             </div>
@@ -145,22 +365,40 @@ export default function Painel() {
         {/* PARTE INFERIOR */}
         <section style={styles.bottom}>
           {/* VENDAS RECENTES */}
-          <div style={{ ...styles.largeCard, ...(isDark ? styles.largeCardDark : {}) }}>
+          <div
+            style={{
+              ...styles.largeCard,
+              ...(isDark ? styles.largeCardDark : {}),
+            }}
+          >
             <div style={styles.cardHeader}>
-              <h3 style={{ ...styles.cardTitle, ...(isDark ? styles.cardTitleDark : {}) }}>
+              <h3
+                style={{
+                  ...styles.cardTitle,
+                  ...(isDark ? styles.cardTitleDark : {}),
+                }}
+              >
                 Vendas Recentes
               </h3>
 
               <button
                 onClick={() => navigate("/vendas")}
-                style={{ ...styles.linkButton, ...(isDark ? styles.linkButtonDark : {}) }}
+                style={{
+                  ...styles.linkButton,
+                  ...(isDark ? styles.linkButtonDark : {}),
+                }}
               >
                 Ver todas
               </button>
             </div>
 
             {loadingVendas ? (
-              <div style={{ ...styles.empty, ...(isDark ? styles.emptyDark : {}) }}>
+              <div
+                style={{
+                  ...styles.empty,
+                  ...(isDark ? styles.emptyDark : {}),
+                }}
+              >
                 <span className="material-symbols-outlined">
                   progress_activity
                 </span>
@@ -168,7 +406,12 @@ export default function Painel() {
                 <span>Carregando vendas...</span>
               </div>
             ) : errorVendas ? (
-              <div style={{ ...styles.empty, ...(isDark ? styles.emptyDark : {}) }}>
+              <div
+                style={{
+                  ...styles.empty,
+                  ...(isDark ? styles.emptyDark : {}),
+                }}
+              >
                 <span className="material-symbols-outlined">error</span>
 
                 <span>{errorVendas}</span>
@@ -176,18 +419,39 @@ export default function Painel() {
             ) : vendasLista.length > 0 ? (
               <div style={styles.vendasLista}>
                 {ultimasVendas.map((venda) => (
-                  <div key={venda.Id} style={{ ...styles.vendaItem, ...(isDark ? styles.vendaItemDark : {}) }}>
+                  <div
+                    key={venda.Id}
+                    style={{
+                      ...styles.vendaItem,
+                      ...(isDark ? styles.vendaItemDark : {}),
+                    }}
+                  >
                     <div style={styles.vendaInfo}>
-                      <strong style={{ ...styles.vendaTitulo, ...(isDark ? styles.vendaTituloDark : {}) }}>
+                      <strong
+                        style={{
+                          ...styles.vendaTitulo,
+                          ...(isDark ? styles.vendaTituloDark : {}),
+                        }}
+                      >
                         Venda #{venda.Id}
                       </strong>
 
-                      <span style={{ ...styles.vendaVendedor, ...(isDark ? styles.vendaVendedorDark : {}) }}>
+                      <span
+                        style={{
+                          ...styles.vendaVendedor,
+                          ...(isDark ? styles.vendaVendedorDark : {}),
+                        }}
+                      >
                         Vendedor #{venda.IdVendedor}
                       </span>
                     </div>
 
-                    <strong style={{ ...styles.vendaValor, ...(isDark ? styles.vendaValorDark : {}) }}>
+                    <strong
+                      style={{
+                        ...styles.vendaValor,
+                        ...(isDark ? styles.vendaValorDark : {}),
+                      }}
+                    >
                       R${" "}
                       {Number(venda.ValorTotal || 0)
                         .toFixed(2)
@@ -197,38 +461,278 @@ export default function Painel() {
                 ))}
               </div>
             ) : (
-              <div style={{ ...styles.empty, ...(isDark ? styles.emptyDark : {}) }}>
-                <span className="material-symbols-outlined">point_of_sale</span>
+              <div
+                style={{
+                  ...styles.empty,
+                  ...(isDark ? styles.emptyDark : {}),
+                }}
+              >
+                <span className="material-symbols-outlined">
+                  point_of_sale
+                </span>
 
                 <span>Nenhuma venda encontrada.</span>
               </div>
             )}
           </div>
 
-          {/* LUCRO TOTAL */}
-          <div style={{ ...styles.largeCard, ...(isDark ? styles.largeCardDark : {}) }}>
-            <div style={styles.cardHeader}>
-              <h3 style={{ ...styles.cardTitle, ...(isDark ? styles.cardTitleDark : {}) }}>Lucro total</h3>
+          {/* FATURAMENTO TOTAL */}
+          <div
+            style={{
+              ...styles.largeCard,
+              ...(isDark ? styles.largeCardDark : {}),
+            }}
+          >
+            <div style={styles.revenueHeader}>
+              <h3
+                style={{
+                  ...styles.cardTitle,
+                  ...(isDark ? styles.cardTitleDark : {}),
+                }}
+              >
+                Faturamento total
+              </h3>
 
-              <span className="material-symbols-outlined" style={isDark ? styles.iconDark : {}}>
-                local_fire_department
-              </span>
+              <div style={styles.revenueControls}>
+                <label
+                  htmlFor="periodo-faturamento"
+                  style={{
+                    ...styles.periodLabel,
+                    ...(isDark ? styles.periodLabelDark : {}),
+                  }}
+                >
+                  Período
+                </label>
+                <select
+                  id="periodo-faturamento"
+                  value={periodoFaturamento}
+                  onChange={(event) => setPeriodoFaturamento(event.target.value)}
+                  style={{
+                    ...styles.periodSelect,
+                    ...(isDark ? styles.periodSelectDark : {}),
+                  }}
+                >
+                  <option value="todo">Todo</option>
+                  <option value="semana">Semana atual</option>
+                  <option value="mes">Mês</option>
+                  <option value="ano">Ano</option>
+                </select>
+
+                {periodoFaturamento === "mes" && (
+                  <select
+                    aria-label="Mês do faturamento"
+                    value={mesFaturamento}
+                    onChange={(event) => setMesFaturamento(event.target.value)}
+                    style={{
+                      ...styles.periodSelect,
+                      ...(isDark ? styles.periodSelectDark : {}),
+                    }}
+                  >
+                    {MESES.map((mes, index) => (
+                      <option key={mes} value={index}>
+                        {mes}
+                      </option>
+                    ))}
+                  </select>
+                )}
+
+                {(periodoFaturamento === "mes" ||
+                  periodoFaturamento === "ano") && (
+                  <select
+                    aria-label="Ano do faturamento"
+                    value={anoFaturamento}
+                    onChange={(event) => setAnoFaturamento(event.target.value)}
+                    style={{
+                      ...styles.periodSelect,
+                      ...(isDark ? styles.periodSelectDark : {}),
+                    }}
+                  >
+                    {anosDisponiveis.map((ano) => (
+                      <option key={ano} value={ano}>
+                        {ano}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
             </div>
 
             <div style={styles.lucroContainer}>
-              <strong style={styles.lucro}>
-                R$ {(valorTotal || 0).toFixed(2).replace(".", ",")}💸
+              <strong style={{ ...styles.lucro, ...(isDark ? styles.lucroDark : {}) }}>
+                {loadingVendas
+                  ? "Carregando..."
+                  : errorVendas
+                    ? "Indisponível"
+                    : formatarMoeda(faturamentoPeriodo)}
               </strong>
+              <span style={{ ...styles.metricCaption, ...(isDark ? styles.metricCaptionDark : {}) }}>
+                {descricaoPeriodoFaturamento}
+              </span>
+              {!loadingVendas && !errorVendas && (
+                <span style={{ ...styles.metricCaption, ...(isDark ? styles.metricCaptionDark : {}) }}>
+                  {vendasPeriodo.length} venda{vendasPeriodo.length === 1 ? "" : "s"} no período
+                </span>
+              )}
             </div>
           </div>
+        </section>
+
+        <section
+          style={{
+            ...styles.profitCard,
+            ...(isDark ? styles.largeCardDark : {}),
+          }}
+          aria-labelledby="faturamento-diario-titulo"
+        >
+          <div style={styles.profitHeader}>
+            <div>
+              <h3
+                id="faturamento-diario-titulo"
+                style={{
+                  ...styles.cardTitle,
+                  ...(isDark ? styles.cardTitleDark : {}),
+                }}
+              >
+                Faturamento diário
+              </h3>
+              <p
+                style={{
+                  ...styles.profitDescription,
+                  ...(isDark ? styles.profitDescriptionDark : {}),
+                }}
+              >
+                Valor total das vendas realizadas em cada dia.
+              </p>
+            </div>
+            <strong
+              style={{
+                ...styles.profitTotal,
+                ...(isDark ? styles.profitTotalDark : {}),
+              }}
+              aria-live="polite"
+            >
+              {loadingVendas
+                ? "Carregando..."
+                : errorVendas
+                  ? "Indisponível"
+                  : formatarMoeda(faturamentoGrafico)}
+            </strong>
+          </div>
+
+          {loadingVendas ? (
+            <div
+              style={{
+                ...styles.profitEmpty,
+                ...(isDark ? styles.profitEmptyDark : {}),
+              }}
+            >
+              Carregando vendas...
+            </div>
+          ) : errorVendas ? (
+            <div
+              style={{
+                ...styles.profitError,
+                ...(isDark ? styles.profitErrorDark : {}),
+              }}
+              role="alert"
+            >
+              {errorVendas}
+            </div>
+          ) : chartPoints.length > 0 ? (
+            <div
+              style={styles.lineChartContainer}
+              role="img"
+              aria-label={`Gráfico de linha do faturamento diário. Total vendido: ${formatarMoeda(faturamentoGrafico)}.`}
+            >
+              <svg
+                viewBox={`0 0 ${chart.width} ${chart.height}`}
+                style={styles.lineChart}
+                preserveAspectRatio="xMidYMid meet"
+              >
+                {chartGridTicks.map((tick, index) => (
+                  <g key={`grid-${index}`}>
+                    <line
+                      x1={chart.left}
+                      x2={chart.width - chart.right}
+                      y1={tick.y}
+                      y2={tick.y}
+                      stroke={isDark ? "#374151" : "#e2e8f0"}
+                      strokeWidth="1"
+                    />
+                    <text
+                      x={chart.left - 10}
+                      y={tick.y + 4}
+                      textAnchor="end"
+                      fill={isDark ? "#cbd5e1" : "#64748b"}
+                      fontSize="11"
+                    >
+                      {formatarMoeda(tick.value)}
+                    </text>
+                  </g>
+                ))}
+                <line
+                  x1={chart.left}
+                  x2={chart.width - chart.right}
+                  y1={yZero}
+                  y2={yZero}
+                  stroke={isDark ? "#94a3b8" : "#64748b"}
+                  strokeDasharray="4 4"
+                  strokeWidth="1.5"
+                />
+                {chartPoints.length > 1 && (
+                  <polyline
+                    points={linePoints}
+                    fill="none"
+                    stroke="#16a34a"
+                    strokeWidth="3"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                  />
+                )}
+                {chartPoints.map((point) => (
+                  <circle
+                    key={`${point.data}-${point.x}`}
+                    cx={point.x}
+                    cy={point.y}
+                    r="4"
+                    fill="#16a34a"
+                  >
+                    <title>
+                      {formatarDataGrafico(point.data)} — vendas do dia:{" "}
+                      {formatarMoeda(point.valor)}
+                    </title>
+                  </circle>
+                ))}
+                {chartDateTicks.map((point) => (
+                  <text
+                    key={`date-${point.data}`}
+                    x={point.x}
+                    y={chart.height - 18}
+                    textAnchor="middle"
+                    fill={isDark ? "#cbd5e1" : "#64748b"}
+                    fontSize="11"
+                  >
+                    {formatarDataGrafico(point.data)}
+                  </text>
+                ))}
+              </svg>
+            </div>
+          ) : (
+            <div
+              style={{
+                ...styles.profitEmpty,
+                ...(isDark ? styles.profitEmptyDark : {}),
+              }}
+            >
+              Ainda não há vendas registradas para exibir.
+            </div>
+          )}
         </section>
       </main>
     </div>
   );
 }
 
-// Card reutilizável do topo do painel
-// Aceita variações visuais através do `tipo` (error / warning)
 function DashboardCard({ titulo, valor, icone, tipo, dark }) {
   return (
     <div
@@ -252,11 +756,17 @@ function DashboardCard({ titulo, valor, icone, tipo, dark }) {
             <span className="material-symbols-outlined">{icone}</span>
           </div>
 
-          <h3 style={{ ...styles.cardLabel, ...(dark ? styles.cardLabelDark : {}) }}>{titulo}</h3>
+          <h3
+            style={{
+              ...styles.cardLabel,
+              ...(dark ? styles.cardLabelDark : {}),
+            }}
+          >
+            {titulo}
+          </h3>
         </div>
 
-        <span className="material-symbols-outlined" style={styles.arrow}>
-        </span>
+        <span className="material-symbols-outlined" style={styles.arrow}></span>
       </div>
 
       <strong
@@ -276,12 +786,12 @@ const styles = {
   layout: {
     display: "flex",
     minHeight: "100vh",
-    backgroundColor: "#f3f5f9",
+    backgroundColor: "var(--surface)",
     transition: "background-color 0.3s ease, color 0.3s ease",
   },
 
   layoutDark: {
-    backgroundColor: "#0f172a",
+    backgroundColor: "var(--app-background)",
   },
 
   page: {
@@ -294,7 +804,7 @@ const styles = {
   },
 
   pageDark: {
-    backgroundColor: "#111827",
+    backgroundColor: "var(--surface)",
     color: "#f3f4f6",
   },
 
@@ -303,16 +813,16 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#f9f9ff",
-    border: "1px solid #e2e8f0",
+    backgroundColor: "var(--surface)",
+    border: "1px solid var(--border-color)",
     borderRadius: "10px",
     color: "#44474c",
     fontWeight: "600",
   },
 
   loadingBoxDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#374151",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
     color: "#f3f4f6",
   },
 
@@ -369,15 +879,15 @@ const styles = {
 
   cards: {
     display: "grid",
-    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
     gap: "24px",
     marginBottom: "24px",
   },
 
   card: {
-    backgroundColor: "#f9f9ff",
+    backgroundColor: "var(--surface)",
     padding: "24px",
-    border: "1px solid #e2e8f0",
+    border: "1px solid var(--border-color)",
     borderRadius: "10px",
     minHeight: "155px",
     boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
@@ -385,8 +895,8 @@ const styles = {
   },
 
   cardDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#374151",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
   },
 
   errorCard: {
@@ -413,7 +923,7 @@ const styles = {
     width: "40px",
     height: "40px",
     borderRadius: "8px",
-    backgroundColor: "#d5e3fc",
+    backgroundColor: "var(--surface-muted)",
     color: "#303e51",
     display: "flex",
     alignItems: "center",
@@ -468,13 +978,13 @@ const styles = {
 
   bottom: {
     display: "grid",
-    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
     gap: "24px",
   },
 
   largeCard: {
-    backgroundColor: "#f9f9ff",
-    border: "1px solid #e2e8f0",
+    backgroundColor: "var(--surface)",
+    border: "1px solid var(--border-color)",
     borderRadius: "10px",
     padding: "24px",
     minHeight: "260px",
@@ -482,8 +992,8 @@ const styles = {
   },
 
   largeCardDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#374151",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
   },
 
   cardHeader: {
@@ -491,6 +1001,49 @@ const styles = {
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: "20px",
+  },
+
+  revenueHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: "14px",
+    marginBottom: "12px",
+  },
+
+  revenueControls: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    flexWrap: "wrap",
+    gap: "8px",
+  },
+
+  periodLabel: {
+    color: "#64748b",
+    fontSize: "13px",
+    fontWeight: 600,
+  },
+
+  periodLabelDark: {
+    color: "#cbd5e1",
+  },
+
+  periodSelect: {
+    maxWidth: "100%",
+    border: "1px solid var(--border-color)",
+    borderRadius: "8px",
+    backgroundColor: "var(--surface)",
+    color: "#243447",
+    padding: "8px 10px",
+    fontSize: "13px",
+  },
+
+  periodSelectDark: {
+    borderColor: "var(--border-color)",
+    backgroundColor: "var(--surface)",
+    color: "#f9fafb",
   },
 
   cardTitle: {
@@ -541,14 +1094,14 @@ const styles = {
     alignItems: "center",
     justifyContent: "space-between",
     padding: "14px 16px",
-    border: "1px solid #e2e8f0",
+    border: "1px solid var(--border-color)",
     borderRadius: "8px",
-    backgroundColor: "#ffffff",
+    backgroundColor: "var(--surface)",
   },
 
   vendaItemDark: {
-    borderColor: "#4b5563",
-    backgroundColor: "#111827",
+    borderColor: "var(--border-color)",
+    backgroundColor: "var(--surface)",
   },
 
   vendaInfo: {
@@ -590,10 +1143,103 @@ const styles = {
     color: "#06c100",
   },
 
+  lucroDark: {
+    color: "#86efac",
+  },
+
   lucroContainer: {
     minHeight: "170px",
     display: "flex",
+    flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
+    gap: "10px",
   },
+
+  metricCaption: {
+    color: "#718096",
+    fontSize: "13px",
+    textAlign: "center",
+  },
+
+  metricCaptionDark: {
+    color: "#cbd5e1",
+  },
+
+  profitCard: {
+    marginTop: "24px",
+    padding: "24px",
+    backgroundColor: "var(--surface)",
+    border: "1px solid var(--border-color)",
+    borderRadius: "10px",
+    boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
+  },
+
+  profitHeader: {
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: "16px",
+    marginBottom: "24px",
+  },
+
+  profitDescription: {
+    margin: "8px 0 0",
+    color: "#718096",
+    fontSize: "14px",
+  },
+
+  profitDescriptionDark: {
+    color: "#cbd5e1",
+  },
+
+  profitTotal: {
+    color: "#047857",
+    fontSize: "24px",
+    whiteSpace: "nowrap",
+  },
+
+  profitTotalDark: {
+    color: "#86efac",
+  },
+
+  lineChartContainer: {
+    width: "100%",
+    overflowX: "auto",
+  },
+
+  lineChart: {
+    display: "block",
+    width: "100%",
+    minWidth: "540px",
+    height: "auto",
+  },
+
+  profitEmpty: {
+    padding: "28px 16px",
+    border: "1px dashed var(--border-color)",
+    borderRadius: "8px",
+    color: "#64748b",
+    textAlign: "center",
+  },
+
+  profitEmptyDark: {
+    borderColor: "var(--border-color)",
+    color: "#cbd5e1",
+  },
+
+  profitError: {
+    padding: "16px",
+    borderRadius: "8px",
+    backgroundColor: "#fff1f2",
+    color: "#9f1239",
+    lineHeight: 1.6,
+  },
+
+  profitErrorDark: {
+    backgroundColor: "#3f1721",
+    color: "#fecdd3",
+  },
+
 };

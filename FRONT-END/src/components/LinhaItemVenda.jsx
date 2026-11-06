@@ -12,27 +12,14 @@ function getNomeProduto(produto) {
 
 function getPrecoProduto(produto) {
   return Number(
-    produto?.Preco ??
-      produto?.preco ??
-      produto?.Valor ??
-      produto?.valor ??
-      produto?.PrecoVenda ??
-      produto?.precoVenda ??
-      0
+    produto.Preco 
+    
   );
 }
 
 function getEstoqueProduto(produto) {
   return Number(
-    produto?.Quantidade ??
-      produto?.quantidade ??
-      produto?.Estoque ??
-      produto?.estoque ??
-      produto?.QuantidadeEstoque ??
-      produto?.quantidadeEstoque ??
-      produto?.Qtd ??
-      produto?.qtd ??
-      0
+    produto.Quantidade 
   );
 }
 
@@ -218,42 +205,42 @@ const styles = {
     width: "100%",
     boxSizing: "border-box",
     padding: "10px 12px",
-    border: "1px solid #cbd5e1",
+    border: "1px solid var(--border-color)",
     borderRadius: "8px",
     fontSize: "14px",
-    backgroundColor: "#ffffff",
+    backgroundColor: "var(--surface)",
     color: "#111c2d",
     fontFamily: "Inter, sans-serif",
   },
   selectDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#4b5563",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
     color: "#f9fafb",
   },
   input: {
     boxSizing: "border-box",
     padding: "10px 12px",
-    border: "1px solid #cbd5e1",
+    border: "1px solid var(--border-color)",
     borderRadius: "8px",
     fontSize: "14px",
-    backgroundColor: "#ffffff",
+    backgroundColor: "var(--surface)",
     color: "#111c2d",
     fontFamily: "Inter, sans-serif",
   },
   inputDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#4b5563",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
     color: "#f9fafb",
   },
   itemCard: {
-    border: "1px solid #e2e8f0",
+    border: "1px solid var(--border-color)",
     borderRadius: "10px",
     padding: "8px",
-    backgroundColor: "#f8fafc",
+    backgroundColor: "var(--surface)",
   },
   itemCardDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#374151",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
   },
   itemRow: {
     display: "grid",
@@ -263,7 +250,7 @@ const styles = {
   },
   removeButton: {
     border: "1px solid #fecaca",
-    backgroundColor: "#fff",
+    backgroundColor: "var(--surface)",
     color: "#b91c1c",
     padding: "10px 12px",
     borderRadius: "8px",
@@ -282,13 +269,13 @@ const styles = {
     justifyContent: "space-between",
     alignItems: "center",
     padding: "14px 16px",
-    backgroundColor: "#f1f5f9",
+    backgroundColor: "var(--surface-muted)",
     borderRadius: "10px",
-    border: "1px solid #e2e8f0",
+    border: "1px solid var(--border-color)",
   },
   totalBoxDark: {
-    backgroundColor: "#0b1220",
-    borderColor: "#334155",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
   },
   totalLabel: { color: "#303e51", fontWeight: 600, fontSize: "14px" },
   totalLabelDark: { color: "#cbd5e1" },

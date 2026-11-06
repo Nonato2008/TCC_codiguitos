@@ -269,7 +269,7 @@ const styles = {
   container: {
     minHeight: "100vh",
     width: "100%",
-    backgroundColor: "#f8fafc",
+    backgroundColor: "var(--surface)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -278,45 +278,53 @@ const styles = {
     boxSizing: "border-box",
     transition: "background-color 0.3s ease",
   },
+
   containerDark: {
-    backgroundColor: "#0f172a",
+    backgroundColor: "var(--app-background)",
   },
+
   card: {
     width: "420px",
     maxWidth: "100%",
-    backgroundColor: "#ffffff",
-    border: "1px solid #e2e8f0",
+    backgroundColor: "var(--surface)",
+    border: "1px solid var(--border-color)",
     borderRadius: "16px",
     padding: "40px",
     boxShadow: "0 10px 30px rgba(0, 0, 0, 0.06)",
     boxSizing: "border-box",
     transition: "background-color 0.3s ease, border-color 0.3s ease",
   },
+
   cardDark: {
-    backgroundColor: "#111827",
-    borderColor: "#374151",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
     boxShadow: "0 10px 30px rgba(0, 0, 0, 0.35)",
   },
+
   logoContainer: {
     display: "flex",
     justifyContent: "center",
     marginBottom: "20px",
   },
+
   logo: {
     width: "80px",
     height: "80px",
     borderRadius: "14px",
     overflow: "hidden",
-    border: "1px solid #e2e8f0",
+    border: "1px solid var(--border-color)",
   },
+
   logoDark: {
-    borderColor: "#4b5563",
+    borderColor: "var(--border-color)",
   },
+
   logoImage: {
     width: "100%",
     height: "100%",
     objectFit: "cover",
   },
+
   title: {
     margin: 0,
     textAlign: "center",
@@ -324,79 +332,94 @@ const styles = {
     fontWeight: 700,
     color: "#111827",
   },
+
   titleDark: {
     color: "#f9fafb",
   },
+
   subtitle: {
     margin: "12px 0 0",
     textAlign: "center",
     color: "#475569",
     fontSize: "15px",
   },
+
   subtitleDark: {
     color: "#d1d5db",
   },
+
   formTitle: {
     margin: "28px 0 18px",
     fontSize: "24px",
     fontWeight: 700,
     color: "#111827",
   },
+
   formTitleDark: {
     color: "#f9fafb",
   },
+
   form: {
     display: "flex",
     flexDirection: "column",
     gap: "18px",
   },
+
   inputGroup: {
     display: "flex",
     flexDirection: "column",
     gap: "8px",
   },
+
   label: {
     fontWeight: 600,
     color: "#303e51",
     fontSize: "14px",
   },
+
   labelDark: {
     color: "#e5e7eb",
   },
+
   input: {
     width: "100%",
     boxSizing: "border-box",
     borderRadius: "10px",
-    border: "1px solid #d7dfeb",
+    border: "1px solid var(--border-color)",
     padding: "12px 14px",
     fontSize: "14px",
-    backgroundColor: "#ffffff",
+    backgroundColor: "var(--surface)",
     color: "#111827",
     outline: "none",
   },
+
   inputDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#4b5563",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
     color: "#f9fafb",
   },
+
   button: {
     width: "100%",
     border: "none",
     borderRadius: "10px",
     padding: "12px 16px",
-    backgroundColor: "#303e51",
+    backgroundColor: "var(--accent-color)",
     color: "#ffffff",
     fontSize: "15px",
     fontWeight: 700,
     cursor: "pointer",
   },
+
   buttonDark: {
-    backgroundColor: "#2563eb",
+    backgroundColor: "var(--accent-color)",
   },
+
   buttonDisabled: {
     opacity: 0.7,
     cursor: "not-allowed",
   },
+
   alertError: {
     backgroundColor: "#fef2f2",
     border: "1px solid #fecaca",
@@ -406,11 +429,13 @@ const styles = {
     fontSize: "14px",
     marginBottom: "18px",
   },
+
   alertErrorDark: {
     backgroundColor: "#3f1721",
     borderColor: "#7f1d1d",
     color: "#fecdd3",
   },
+
   alertSuccess: {
     backgroundColor: "#ecfdf5",
     border: "1px solid #a7f3d0",
@@ -420,11 +445,13 @@ const styles = {
     fontSize: "14px",
     marginBottom: "18px",
   },
+
   alertSuccessDark: {
     backgroundColor: "#052e16",
     borderColor: "#14532d",
     color: "#bbf7d0",
   },
+
   registerText: {
     display: "flex",
     alignItems: "center",
@@ -434,9 +461,11 @@ const styles = {
     fontSize: "14px",
     color: "#475569",
   },
+
   registerTextDark: {
     color: "#d1d5db",
   },
+
   registerLink: {
     background: "transparent",
     border: "none",
@@ -445,6 +474,7 @@ const styles = {
     cursor: "pointer",
     padding: 0,
   },
+  
   registerLinkDark: {
     color: "#93c5fd",
   },

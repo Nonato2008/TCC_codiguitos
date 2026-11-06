@@ -13,6 +13,7 @@ const estadoInicial = {
     idFornecedor: "",
     nome: "",
     preco: "",
+    custo: "",
     quantidade: "",
     dataVenc: "",
     imagem: null,
@@ -130,6 +131,18 @@ export default function CadastroProdutos() {
             return;
         }
 
+        if (
+            form.custo === "" ||
+            !Number.isFinite(Number(form.custo)) ||
+            Number(form.custo) < 0
+        ) {
+            setMensagem({
+                type: "error",
+                text: "Informe um custo válido, maior ou igual a zero."
+            });
+            return;
+        }
+
         if (form.quantidade === "" || Number(form.quantidade) < 0) {
             setMensagem({ type: "error", text: "Informe a quantidade em estoque." });
             return;
@@ -170,6 +183,7 @@ export default function CadastroProdutos() {
             dados.append("idFornecedor", String(form.idFornecedor));
             dados.append("nome", form.nome.trim());
             dados.append("preco", String(form.preco));
+            dados.append("custo", String(form.custo));
             dados.append("quantidade", String(form.quantidade));
             dados.append("dataVenc", form.dataVenc);
             dados.append("imagem", form.imagem);
@@ -231,6 +245,17 @@ export default function CadastroProdutos() {
             setLoading(false);
         }
     }
+
+    const precoNumerico = Number(form.preco);
+    const custoNumerico = Number(form.custo);
+    const quantidadeNumerica = Number(form.quantidade);
+    const lucroUnitario = precoNumerico - custoNumerico;
+    const lucroEstoque = lucroUnitario * quantidadeNumerica;
+    const formatarMoeda = (valor) =>
+        valor.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL"
+        });
 
     return (
 
@@ -325,6 +350,19 @@ export default function CadastroProdutos() {
                             />
 
                             <FormField
+                                label="Custo unitário"
+                                name="custo"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                placeholder="0.00"
+                                value={form.custo}
+                                onChange={atualizarCampo}
+                                dark={isDark}
+                                required
+                            />
+
+                            <FormField
                                 label="Quantidade"
                                 name="quantidade"
                                 type="number"
@@ -362,6 +400,33 @@ export default function CadastroProdutos() {
                             </label>
 
                         </div>
+
+                        {form.preco !== "" && form.custo !== "" && (
+                            <div
+                                style={{
+                                    ...styles.lucroPreview,
+                                    ...(isDark ? styles.lucroPreviewDark : {}),
+                                    ...(lucroUnitario < 0
+                                        ? isDark
+                                            ? styles.prejuizoPreviewDark
+                                            : styles.prejuizoPreview
+                                        : {})
+                                }}
+                                aria-live="polite"
+                            >
+                                <strong>
+                                    {lucroUnitario < 0 ? "Prejuízo" : "Lucro"} estimado
+                                </strong>
+                                <span>
+                                    Por unidade: {formatarMoeda(lucroUnitario)}
+                                </span>
+                                {form.quantidade !== "" && (
+                                    <span>
+                                        No estoque: {formatarMoeda(lucroEstoque)}
+                                    </span>
+                                )}
+                            </div>
+                        )}
 
                         <div style={styles.actions}>
 
@@ -502,15 +567,14 @@ export default function CadastroProdutos() {
 }
 
 const styles = {
-
     layout: {
         display: "flex",
         minHeight: "100vh",
-        backgroundColor: "#f3f5f9",
+        backgroundColor: "var(--surface)",
     },
 
     layoutDark: {
-        backgroundColor: "#0f172a",
+        backgroundColor: "var(--app-background)",
     },
 
     page: {
@@ -522,7 +586,7 @@ const styles = {
     },
 
     pageDark: {
-        backgroundColor: "#111827",
+        backgroundColor: "var(--surface)",
         color: "#f3f4f6",
     },
 
@@ -551,8 +615,8 @@ const styles = {
     },
 
     card: {
-        backgroundColor: "#ffffff",
-        border: "1px solid #e2e8f0",
+        backgroundColor: "var(--surface)",
+        border: "1px solid var(--border-color)",
         borderRadius: "12px",
         padding: "24px",
         boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
@@ -560,8 +624,8 @@ const styles = {
     },
 
     cardDark: {
-        backgroundColor: "#111827",
-        borderColor: "#374151",
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)",
     },
 
     form: {
@@ -599,16 +663,16 @@ const styles = {
     fileInput: {
         width: "100%",
         boxSizing: "border-box",
-        border: "1px dashed #cbd5e1",
+        border: "1px dashed var(--border-color)",
         borderRadius: "10px",
         padding: "12px",
-        backgroundColor: "#f8fafc",
+        backgroundColor: "var(--surface)",
         color: "#111827",
     },
 
     fileInputDark: {
-        backgroundColor: "#1f2937",
-        borderColor: "#4b5563",
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)",
         color: "#f9fafb",
     },
 
@@ -617,30 +681,59 @@ const styles = {
         justifyContent: "flex-end",
     },
 
+    lucroPreview: {
+        display: "flex",
+        flexDirection: "column",
+        gap: "6px",
+        padding: "14px 16px",
+        border: "1px solid #86efac",
+        borderRadius: "10px",
+        backgroundColor: "#f0fdf4",
+        color: "#166534"
+    },
+
+    lucroPreviewDark: {
+        borderColor: "#166534",
+        backgroundColor: "#052e16",
+        color: "#bbf7d0"
+    },
+
+    prejuizoPreview: {
+        borderColor: "#fca5a5",
+        backgroundColor: "#fff1f2",
+        color: "#b91c1c"
+    },
+
+    prejuizoPreviewDark: {
+        borderColor: "#7f1d1d",
+        backgroundColor: "#3f1721",
+        color: "#fecdd3"
+    },
+
     nota: {
         marginTop: "32px",
         padding: "24px",
-        border: "2px solid #e2e8f0",
+        border: "2px solid var(--border-color)",
         borderRadius: "12px",
-        backgroundColor: "#f8fafc",
+        backgroundColor: "var(--surface)",
     },
 
     notaDark: {
-        backgroundColor: "#1f2937",
-        borderColor: "#4b5563",
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)",
     },
 
     notaHeader: {
         display: "flex",
         justifyContent: "space-between",
         alignItems: "flex-start",
-        borderBottom: "1px solid #e2e8f0",
+        borderBottom: "1px solid var(--border-color)",
         paddingBottom: "16px",
         marginBottom: "16px",
     },
 
     notaHeaderDark: {
-        borderBottomColor: "#4b5563",
+        borderBottomColor: "var(--border-color)",
     },
 
     notaTitle: {
@@ -681,7 +774,7 @@ const styles = {
         display: "flex",
         justifyContent: "space-between",
         padding: "12px 0",
-        borderBottom: "1px solid #e2e8f0",
+        borderBottom: "1px solid var(--border-color)",
         color: "#475569",
     },
 
@@ -721,17 +814,17 @@ const styles = {
     select: {
         width: "100%",
         boxSizing: "border-box",
-        border: "1px solid #cbd5e1",
+        border: "1px solid var(--border-color)",
         borderRadius: "8px",
         padding: "12px",
-        backgroundColor: "#f8fafc",
+        backgroundColor: "var(--surface)",
         color: "#111827",
         fontSize: "16px",
     },
-
+    
     selectDark: {
-        backgroundColor: "#1f2937",
-        borderColor: "#374151",
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)",
         color: "#f9fafb",
     },
 };

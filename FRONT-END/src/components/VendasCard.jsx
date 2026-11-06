@@ -78,13 +78,13 @@ const styles = {
         justifyContent: "space-between",
         alignItems: "center",
 
-        backgroundColor: "#ffffff",
+        backgroundColor: "var(--surface)",
 
         padding: "18px 22px",
         marginBottom: "14px",
 
         borderRadius: "10px",
-        border: "1px solid #e2e8f0",
+        border: "1px solid var(--border-color)",
 
         boxShadow: "0 2px 7px rgba(0, 0, 0, 0.04)",
 
@@ -107,8 +107,8 @@ const styles = {
 
         borderRadius: "9px",
 
-        backgroundColor: "#eef4ff",
-        color: "#303e51",
+        backgroundColor: "var(--surface-muted)",
+        color: "var(--text-primary)",
 
         fontSize: "15px",
         fontWeight: "700",
@@ -117,21 +117,21 @@ const styles = {
     title: {
         margin: "0 0 7px 0",
         fontSize: "17px",
-        color: "#243447",
+        color: "var(--text-primary)",
     },
 
     details: {
         display: "flex",
         gap: "25px",
 
-        color: "#718096",
+        color: "var(--text-primary)",
         fontSize: "13px",
     },
 
     price: {
         marginTop: "7px",
 
-        color: "#303e51",
+        color: "var(--text-primary)",
         fontSize: "16px",
         fontWeight: "700",
     },
@@ -142,7 +142,7 @@ const styles = {
 
         padding: "10px 17px",
 
-        backgroundColor: "#303e51",
+        backgroundColor: "var(--accent-color)",
         color: "#ffffff",
 
         fontSize: "14px",

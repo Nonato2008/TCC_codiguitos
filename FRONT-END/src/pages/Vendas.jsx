@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import React, { useEffect, useState, useContext } from "react";
 import Sidebar from "../components/Sidebar";
@@ -7,24 +8,19 @@ import VendasList from "../components/VendasList";
 import { ThemeContext } from "../contexts/ThemeContext";
 
 export default function Vendas() {
-
-    // Hook que carrega a lista de vendas
     const { vendas, loading, error } = useVendas();
 
     const { theme } = useContext(ThemeContext);
     const isDark = theme === "dark";
 
-    // Lista de vendedores (para mostrar o nome a partir do IdVendedor)
     const [vendedores, setVendedores] = useState([]);
 
-    // Filtro de data (input do tipo date)
     const [dataInicio, setDataInicio] = useState("");
     const [dataFim, setDataFim] = useState("");
     const [formaPagamentoFiltro, setFormaPagamentoFiltro] = useState("");
 
     const opcoesFormaPagamento = ["Crédito", "Débito", "Pix", "Dinheiro"];
 
-    // Busca os vendedores uma única vez ao montar o componente
     useEffect(() => {
         const carregarVendedores = async () => {
             try {
@@ -38,26 +34,33 @@ export default function Vendas() {
         carregarVendedores();
     }, []);
 
-    // Descobre o nome do vendedor a partir do id (aceita Id/id, Nome/nome)
     const encontrarNomeVendedor = (idVendedor) => {
-        const vendedor = vendedores.find((v) => v.Id === idVendedor || v.id === idVendedor);
-        return vendedor ? vendedor.Nome ?? vendedor.nome : `Vendedor #${idVendedor}`;
+        const vendedor = vendedores.find(
+            (v) => v.Id === idVendedor || v.id === idVendedor
+        );
+
+        return vendedor
+            ? vendedor.Nome ?? vendedor.nome
+            : `Vendedor #${idVendedor}`;
     };
 
-    // Enriquece cada venda com o nome do vendedor
-    const vendasComVendedor = (Array.isArray(vendas) ? vendas : []).map((venda) => ({
+    const vendasComVendedor = (
+        Array.isArray(vendas) ? vendas : []
+    ).map((venda) => ({
         ...venda,
         NomeVendedor: encontrarNomeVendedor(venda.IdVendedor),
     }));
 
-    // Converte uma data para o formato YYYY-MM-DD respeitando o fuso local
-    // (usado para comparar com o valor do input type="date")
     const formatarDataLocal = (data) => {
         const dataLocal = new Date(data);
+
         if (Number.isNaN(dataLocal.getTime())) return "";
 
         const offset = dataLocal.getTimezoneOffset();
-        const localDate = new Date(dataLocal.getTime() - offset * 60000);
+        const localDate = new Date(
+            dataLocal.getTime() - offset * 60000
+        );
+
         return localDate.toISOString().slice(0, 10);
     };
 
@@ -65,13 +68,21 @@ export default function Vendas() {
         return String(valor ?? "").trim().toLowerCase();
     };
 
-    // Filtra as vendas pela data selecionada (se houver filtro)
     const vendasFiltradas = vendasComVendedor.filter((venda) => {
         const dataVenda = venda.DataCad ?? venda.dataCad ?? venda.Data;
         const dataVendaFormatada = formatarDataLocal(dataVenda);
 
-        if (dataInicio && dataVendaFormatada && dataVendaFormatada < dataInicio) return false;
-        if (dataFim && dataVendaFormatada && dataVendaFormatada > dataFim) return false;
+        if (
+            dataInicio &&
+            dataVendaFormatada &&
+            dataVendaFormatada < dataInicio
+        ) return false;
+
+        if (
+            dataFim &&
+            dataVendaFormatada &&
+            dataVendaFormatada > dataFim
+        ) return false;
 
         if (formaPagamentoFiltro) {
             const pagamentoVenda =
@@ -81,7 +92,10 @@ export default function Vendas() {
                 venda.formaDePagamento ??
                 "";
 
-            if (normalizarFormaPagamento(pagamentoVenda) !== normalizarFormaPagamento(formaPagamentoFiltro)) {
+            if (
+                normalizarFormaPagamento(pagamentoVenda) !==
+                normalizarFormaPagamento(formaPagamentoFiltro)
+            ) {
                 return false;
             }
         }
@@ -99,7 +113,6 @@ export default function Vendas() {
         setFormaPagamentoFiltro("");
     };
 
-    // Estado de carregamento
     if (loading) {
         return (
             <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
@@ -108,27 +121,38 @@ export default function Vendas() {
                 <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
                     <header style={styles.header}>
                         <div>
-                            <h1 style={{ ...styles.title, ...(isDark ? styles.titleDark : {}) }}>Vendas</h1>
-                            <p style={{ ...styles.subtitle, ...(isDark ? styles.subtitleDark : {}) }}>Consulte as vendas realizadas na loja.</p>
+                            <h1 style={{ ...styles.title, ...(isDark ? styles.titleDark : {}) }}>
+                                Vendas
+                            </h1>
+
+                            <p style={{ ...styles.subtitle, ...(isDark ? styles.subtitleDark : {}) }}>
+                                Consulte as vendas realizadas na loja.
+                            </p>
                         </div>
 
-                        <div style={styles.headerRight}>
-                            <div style={{ ...styles.total, ...(isDark ? styles.totalDark : {}) }}>0 vendas</div>
+                        <div style={styles.headerActions}>
+                            <div style={{ ...styles.total, ...(isDark ? styles.totalDark : {}) }}>
+                                0 vendas
+                            </div>
+
                             <Link to="/vendas/cadastrar" style={{ textDecoration: "none" }}>
-                                <button style={{ ...styles.primaryButton, ...(isDark ? styles.primaryButtonDark : {}) }}>+ Nova venda</button>
+                                <button style={{ ...styles.primaryButton, ...(isDark ? styles.primaryButtonDark : {}) }}>
+                                    + Nova venda
+                                </button>
                             </Link>
                         </div>
                     </header>
 
                     <div style={styles.centerContent}>
-                        <p style={{ ...(isDark ? styles.textDark : {}) }}>Carregando vendas...</p>
+                        <p style={{ ...(isDark ? styles.textDark : {}) }}>
+                            Carregando vendas...
+                        </p>
                     </div>
                 </main>
             </div>
         );
     }
 
-    // Estado de erro
     if (error) {
         return (
             <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
@@ -137,20 +161,32 @@ export default function Vendas() {
                 <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
                     <header style={styles.header}>
                         <div>
-                            <h1 style={{ ...styles.title, ...(isDark ? styles.titleDark : {}) }}>Vendas</h1>
-                            <p style={{ ...styles.subtitle, ...(isDark ? styles.subtitleDark : {}) }}>Consulte as vendas realizadas na loja.</p>
+                            <h1 style={{ ...styles.title, ...(isDark ? styles.titleDark : {}) }}>
+                                Vendas
+                            </h1>
+
+                            <p style={{ ...styles.subtitle, ...(isDark ? styles.subtitleDark : {}) }}>
+                                Consulte as vendas realizadas na loja.
+                            </p>
                         </div>
 
-                        <div style={styles.headerRight}>
-                            <div style={{ ...styles.total, ...(isDark ? styles.totalDark : {}) }}>0 vendas</div>
+                        <div style={styles.headerActions}>
+                            <div style={{ ...styles.total, ...(isDark ? styles.totalDark : {}) }}>
+                                0 vendas
+                            </div>
+
                             <Link to="/vendas/cadastrar" style={{ textDecoration: "none" }}>
-                                <button style={{ ...styles.primaryButton, ...(isDark ? styles.primaryButtonDark : {}) }}>+ Nova venda</button>
+                                <button style={{ ...styles.primaryButton, ...(isDark ? styles.primaryButtonDark : {}) }}>
+                                    + Nova venda
+                                </button>
                             </Link>
                         </div>
                     </header>
 
                     <div style={styles.centerContent}>
-                        <div style={{ ...styles.error, ...(isDark ? styles.errorDark : {}) }}>Erro ao carregar as vendas.</div>
+                        <div style={{ ...styles.error, ...(isDark ? styles.errorDark : {}) }}>
+                            Erro ao carregar as vendas.
+                        </div>
                     </div>
                 </main>
             </div>
@@ -164,57 +200,60 @@ export default function Vendas() {
             <main style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
                 <header style={styles.header}>
                     <div>
-                        <h1 style={{ ...styles.title, ...(isDark ? styles.titleDark : {}) }}>Vendas</h1>
-                        <p style={{ ...styles.subtitle, ...(isDark ? styles.subtitleDark : {}) }}>Consulte as vendas realizadas na loja.</p>
+                        <h1 style={{ ...styles.title, ...(isDark ? styles.titleDark : {}) }}>
+                            Vendas
+                        </h1>
+
+                        <p style={{ ...styles.subtitle, ...(isDark ? styles.subtitleDark : {}) }}>
+                            Consulte as vendas realizadas na loja.
+                        </p>
                     </div>
 
-                    <div style={styles.headerRight}>
-                        <div style={{ ...styles.total, ...(isDark ? styles.totalDark : {}) }}>
-                            {vendasFiltradas.length} {" "}
+                    <div style={styles.headerActions}>
+                        <div
+                            style={{
+                                ...styles.total,
+                                ...(isDark ? styles.totalDark : {})
+                            }}
+                        >
+                            {vendasFiltradas.length}{" "}
                             {vendasFiltradas.length === 1 ? "venda" : "vendas"}
                         </div>
 
-                        <span>Data Início:</span>
-                        <input
-                            type="date"
-                            value={dataInicio}
-                            onChange={(event) => setDataInicio(event.target.value)}
-                            style={{
-                                ...styles.dateInput,
-                                ...(isDark ? styles.dateInputDark : {}),
-                            }}
-                            aria-label="Data inicial do filtro"
-                        />
+                        <Link to="/vendas/cadastrar" style={{ textDecoration: "none" }}>
+                            <button style={{ ...styles.primaryButton, ...(isDark ? styles.primaryButtonDark : {}) }}>
+                                + Nova venda
+                            </button>
+                        </Link>
+                    </div>
+                </header>
 
-                        <span>Data Fim:</span>
-                        <input
-                            type="date"
-                            value={dataFim}
-                            onChange={(event) => setDataFim(event.target.value)}
-                            style={{
-                                ...styles.dateInput,
-                                ...(isDark ? styles.dateInputDark : {}),
-                            }}
-                            aria-label="Data final do filtro"
-                        />
-
-                        <span>Forma de Pagamento:</span>
-                        <select
-                            value={formaPagamentoFiltro}
-                            onChange={(event) => setFormaPagamentoFiltro(event.target.value)}
-                            style={{
-                                ...styles.selectInput,
-                                ...(isDark ? styles.selectInputDark : {}),
-                            }}
-                            aria-label="Filtrar vendas por forma de pagamento"
-                        >
-                            <option value="">Todas as formas</option>
-                            {opcoesFormaPagamento.map((forma) => (
-                                <option key={forma} value={forma}>
-                                    {forma}
-                                </option>
-                            ))}
-                        </select>
+                <section
+                    style={{
+                        ...styles.filtersCard,
+                        ...(isDark ? styles.filtersCardDark : {}),
+                    }}
+                    aria-label="Filtros de vendas"
+                >
+                    <div style={styles.filtersHeader}>
+                        <div>
+                            <h2
+                                style={{
+                                    ...styles.filtersTitle,
+                                    ...(isDark ? styles.filtersTitleDark : {}),
+                                }}
+                            >
+                                Filtrar vendas
+                            </h2>
+                            <p
+                                style={{
+                                    ...styles.filtersDescription,
+                                    ...(isDark ? styles.filtersDescriptionDark : {}),
+                                }}
+                            >
+                                Escolha um período e/ou uma forma de pagamento.
+                            </p>
+                        </div>
 
                         {(dataInicio || dataFim || formaPagamentoFiltro) && (
                             <button
@@ -225,22 +264,89 @@ export default function Vendas() {
                                     ...(isDark ? styles.clearFilterButtonDark : {}),
                                 }}
                             >
-                                Limpar
+                                Limpar filtros
                             </button>
                         )}
-
-
-                        <Link to="/vendas/cadastrar" style={{ textDecoration: "none" }}>
-                            <button style={{ ...styles.primaryButton, ...(isDark ? styles.primaryButtonDark : {}) }}>+ Nova venda</button>
-                        </Link>
                     </div>
-                </header>
+
+                    <div style={styles.filtersGrid}>
+                        <label
+                            htmlFor="filtro-data-inicio"
+                            style={{
+                                ...styles.filterField,
+                                ...(isDark ? styles.filterFieldDark : {}),
+                            }}
+                        >
+                            <span>Data inicial</span>
+                            <input
+                                id="filtro-data-inicio"
+                                type="date"
+                                value={dataInicio}
+                                onChange={(event) => setDataInicio(event.target.value)}
+                                style={{
+                                    ...styles.dateInput,
+                                    ...(isDark ? styles.dateInputDark : {}),
+                                }}
+                            />
+                        </label>
+
+                        <label
+                            htmlFor="filtro-data-fim"
+                            style={{
+                                ...styles.filterField,
+                                ...(isDark ? styles.filterFieldDark : {}),
+                            }}
+                        >
+                            <span>Data final</span>
+                            <input
+                                id="filtro-data-fim"
+                                type="date"
+                                value={dataFim}
+                                onChange={(event) => setDataFim(event.target.value)}
+                                style={{
+                                    ...styles.dateInput,
+                                    ...(isDark ? styles.dateInputDark : {}),
+                                }}
+                            />
+                        </label>
+
+                        <label
+                            htmlFor="filtro-forma-pagamento"
+                            style={{
+                                ...styles.filterField,
+                                ...(isDark ? styles.filterFieldDark : {}),
+                            }}
+                        >
+                            <span>Forma de pagamento</span>
+                            <select
+                                id="filtro-forma-pagamento"
+                                value={formaPagamentoFiltro}
+                                onChange={(event) =>
+                                    setFormaPagamentoFiltro(event.target.value)
+                                }
+                                style={{
+                                    ...styles.selectInput,
+                                    ...(isDark ? styles.selectInputDark : {}),
+                                }}
+                            >
+                                <option value="">Todas as formas</option>
+
+                                {opcoesFormaPagamento.map((forma) => (
+                                    <option key={forma} value={forma}>
+                                        {forma}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                    </div>
+                </section>
 
                 <section style={styles.summaryBar}>
                     <div style={{ ...styles.summaryBox, ...(isDark ? styles.summaryBoxDark : {}) }}>
                         <span style={{ ...styles.summaryLabel, ...(isDark ? styles.summaryLabelDark : {}) }}>
                             Faturamento do período
                         </span>
+
                         <strong style={{ ...styles.summaryValue, ...(isDark ? styles.summaryValueDark : {}) }}>
                             R$ {faturamentoPeriodo.toFixed(2).replace(".", ",")}
                         </strong>
@@ -250,7 +356,10 @@ export default function Vendas() {
                 <section style={styles.content}>
                     {vendasFiltradas.length === 0 ? (
                         <div style={{ ...styles.empty, ...(isDark ? styles.emptyDark : {}) }}>
-                            <span className="material-symbols-outlined">point_of_sale</span>
+                            <span className="material-symbols-outlined">
+                                point_of_sale
+                            </span>
+
                             <p style={{ ...(isDark ? styles.textDark : {}) }}>
                                 {dataInicio || dataFim || formaPagamentoFiltro
                                     ? "Nenhuma venda encontrada para os filtros selecionados."
@@ -261,6 +370,7 @@ export default function Vendas() {
                         <VendasList vendas={vendasFiltradas} />
                     )}
                 </section>
+
             </main>
         </div>
     );
@@ -269,190 +379,297 @@ export default function Vendas() {
 const styles = {
     layout: {
         minHeight: "100vh",
-        backgroundColor: "#f5f6f8",
+        backgroundColor: "var(--surface)",
     },
+
     layoutDark: {
-        backgroundColor: "#0f172a",
+        backgroundColor: "var(--app-background)",
     },
+
     page: {
-        marginLeft: "363px",
+        marginLeft: "256px",
         minHeight: "100vh",
         padding: "30px 25px",
         boxSizing: "border-box",
     },
+
     pageDark: {
-        backgroundColor: "#111827",
+        backgroundColor: "var(--surface)",
     },
+
     header: {
         maxWidth: "1150px",
         margin: "0 0 25px 0",
         display: "flex",
         justifyContent: "space-between",
-        alignItems: "center",
+        alignItems: "flex-start",
+        flexWrap: "wrap",
+        gap: "16px",
     },
-    headerRight: {
+
+    headerActions: {
         display: "flex",
         alignItems: "center",
-        gap: 12,
+        gap: 10,
         flexWrap: "wrap",
+        justifyContent: "flex-end",
     },
+
     title: {
         margin: 0,
         fontSize: "32px",
         fontWeight: "700",
         color: "#243447",
     },
+
     titleDark: {
         color: "#f9fafb",
     },
+
     subtitle: {
         marginTop: "7px",
         marginBottom: 0,
         fontSize: "15px",
         color: "#718096",
     },
+
     subtitleDark: {
-        color: "#d1d5db",
+        color: "#ffffff",
     },
+
     total: {
-        backgroundColor: "#ffffff",
+        backgroundColor: "var(--surface)",
         padding: "10px 18px",
         borderRadius: "10px",
-        border: "1px solid #e2e8f0",
+        border: "1px solid var(--border-color)",
         color: "#243447",
         fontWeight: "600",
         fontSize: "15px",
         boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
     },
+
     totalDark: {
-        backgroundColor: "#1f2937",
-        borderColor: "#4b5563",
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)",
         color: "#f9fafb",
     },
+
     primaryButton: {
         border: "none",
-        backgroundColor: "#303e51",
+        backgroundColor: "var(--accent-color)",
         color: "#fff",
         padding: "10px 14px",
         borderRadius: "10px",
         fontWeight: 600,
         cursor: "pointer",
     },
+
     primaryButtonDark: {
-        backgroundColor: "#2563eb",
+        backgroundColor: "var(--accent-color)",
     },
+
+    filtersCard: {
+        maxWidth: "1150px",
+        margin: "0 0 20px",
+        padding: "18px 20px",
+        backgroundColor: "var(--surface)",
+        border: "1px solid var(--border-color)",
+        borderRadius: "12px",
+        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+        boxSizing: "border-box",
+    },
+
+    filtersCardDark: {
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)",
+    },
+
+    filtersHeader: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        flexWrap: "wrap",
+        gap: "12px",
+        marginBottom: "16px",
+    },
+
+    filtersTitle: {
+        margin: 0,
+        color: "#243447",
+        fontSize: "16px",
+        fontWeight: 700,
+    },
+
+    filtersTitleDark: {
+        color: "#f9fafb",
+    },
+
+    filtersDescription: {
+        margin: "4px 0 0",
+        color: "#718096",
+        fontSize: "13px",
+    },
+
+    filtersDescriptionDark: {
+        color: "#ffffff",
+    },
+
+    filtersGrid: {
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+        gap: "14px",
+    },
+
+    filterField: {
+        display: "flex",
+        flexDirection: "column",
+        gap: "7px",
+        color: "#475569",
+        fontSize: "13px",
+        fontWeight: 600,
+        minWidth: 0,
+    },
+
+    filterFieldDark: {
+        color: "#ffffff",
+    },
+
     content: {
         width: "100%",
         maxWidth: "1150px",
         margin: "0",
     },
+
     centerContent: {
         maxWidth: "1150px",
         margin: "0",
     },
+
     empty: {
-        backgroundColor: "#ffffff",
+        backgroundColor: "var(--surface)",
         borderRadius: "12px",
         padding: "50px",
         textAlign: "center",
         color: "#718096",
         boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
     },
+
     emptyDark: {
-        backgroundColor: "#1f2937",
-        color: "#d1d5db",
+        backgroundColor: "var(--surface)",
+        color: "#ffffff",
     },
+
     error: {
         backgroundColor: "#ffe5e5",
         color: "#b00020",
         padding: "20px",
         borderRadius: "10px",
     },
+
     errorDark: {
         backgroundColor: "#3f1721",
         color: "#fecdd3",
     },
+
     textDark: {
         color: "#e5e7eb",
     },
+
     dateInput: {
-        border: "1px solid #cbd5e1",
+        width: "100%",
+        boxSizing: "border-box",
+        border: "1px solid var(--border-color)",
         borderRadius: "8px",
         padding: "9px 10px",
-        backgroundColor: "#ffffff",
+        backgroundColor: "var(--surface)",
         color: "#243447",
         fontSize: "14px",
         fontFamily: "Inter, sans-serif",
         outline: "none",
     },
+
     dateInputDark: {
-        backgroundColor: "#1f2937",
-        borderColor: "#4b5563",
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)",
         color: "#f9fafb",
     },
+
     selectInput: {
-        border: "1px solid #cbd5e1",
+        width: "100%",
+        boxSizing: "border-box",
+        border: "1px solid var(--border-color)",
         borderRadius: "8px",
         padding: "9px 10px",
-        backgroundColor: "#ffffff",
+        backgroundColor: "var(--surface)",
         color: "#243447",
         fontSize: "14px",
         fontFamily: "Inter, sans-serif",
         outline: "none",
     },
+
     selectInputDark: {
-        backgroundColor: "#1f2937",
-        borderColor: "#4b5563",
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)",
         color: "#f9fafb",
     },
+
     clearFilterButton: {
-        border: "1px solid #cbd5e1",
+        border: "1px solid var(--border-color)",
         borderRadius: "8px",
-        padding: "9px 10px",
-        backgroundColor: "#f8fafc",
+        padding: "9px 12px",
+        backgroundColor: "var(--surface)",
         color: "#243447",
         fontWeight: 600,
         fontSize: "13px",
         cursor: "pointer",
     },
+
     clearFilterButtonDark: {
-        backgroundColor: "#1f2937",
-        borderColor: "#4b5563",
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)",
         color: "#f9fafb",
     },
+
     summaryBar: {
         maxWidth: "1150px",
         margin: "0 0 20px 0",
     },
+
     summaryBox: {
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
         gap: "12px",
-        backgroundColor: "#ffffff",
-        border: "1px solid #e2e8f0",
+        backgroundColor: "var(--surface)",
+        border: "1px solid var(--border-color)",
         borderRadius: "12px",
         padding: "18px 20px",
         boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
     },
+
     summaryBoxDark: {
-        backgroundColor: "#1f2937",
-        borderColor: "#4b5563",
+        backgroundColor: "var(--surface)",
+        borderColor: "var(--border-color)",
     },
+
     summaryLabel: {
         color: "#64748b",
         fontSize: "14px",
         fontWeight: 600,
     },
+
     summaryLabelDark: {
-        color: "#d1d5db",
+        color: "#ffffff",
     },
+
     summaryValue: {
         color: "#111827",
         fontSize: "22px",
         fontWeight: 700,
     },
+
     summaryValueDark: {
         color: "#f9fafb",
     },
+
 };

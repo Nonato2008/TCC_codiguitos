@@ -65,6 +65,13 @@ export default function ProfileProduto() {
   const getNome = (p) => p?.Nome ?? p?.nome ?? "";
   const getPreco = (p) =>
     Number(p?.Preco ?? p?.preco ?? p?.Valor ?? p?.valor ?? 0);
+  const getCusto = (p) => {
+    const custo = p?.Custo ?? p?.custo;
+    if (custo === undefined || custo === null || custo === "") return null;
+
+    const valor = Number(custo);
+    return Number.isFinite(valor) ? valor : null;
+  };
   const getQuantidade = (p) =>
     Number(p?.Quantidade ?? p?.quantidade ?? p?.Estoque ?? p?.estoque ?? 0);
   const getDataVenc = (p) =>
@@ -132,6 +139,8 @@ export default function ProfileProduto() {
 
   const nome = getNome(produto);
   const preco = getPreco(produto);
+  const custo = getCusto(produto);
+  const lucroUnitario = custo === null ? null : preco - custo;
   const quantidade = getQuantidade(produto);
   const dataVenc = getDataVenc(produto);
   const imagem = produto.imagem || produto.Imagem || produto.imagemUrl || null;
@@ -218,6 +227,68 @@ export default function ProfileProduto() {
                 }}
               >
                 {produto.Id ?? produto.id}
+              </strong>
+            </div>
+
+            <div style={styles.infoItem}>
+              <span
+                style={{
+                  ...styles.label,
+                  ...(isDark ? styles.labelDark : {}),
+                }}
+              >
+                Custo Unitário
+              </span>
+
+              <strong
+                style={{
+                  ...styles.value,
+                  ...(isDark ? styles.valueDark : {}),
+                }}
+              >
+                {custo === null
+                  ? "Não informado"
+                  : custo.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })}
+              </strong>
+            </div>
+
+            <div style={styles.infoItem}>
+              <span
+                style={{
+                  ...styles.label,
+                  ...(isDark ? styles.labelDark : {}),
+                }}
+              >
+                {lucroUnitario === null
+                  ? "Lucro por Unidade"
+                  : lucroUnitario < 0
+                    ? "Prejuízo por Unidade"
+                    : "Lucro por Unidade"}
+              </span>
+
+              <strong
+                style={{
+                  ...styles.totalValue,
+                  color: lucroUnitario === null
+                    ? isDark
+                      ? "#d1d5db"
+                      : "#64748b"
+                    : lucroUnitario < 0
+                    ? "#b91c1c"
+                    : isDark
+                      ? "#bbf7d0"
+                      : "#047857",
+                }}
+              >
+                {lucroUnitario === null
+                  ? "Não calculado (custo ausente)"
+                  : lucroUnitario.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })}
               </strong>
             </div>
 
@@ -362,6 +433,47 @@ export default function ProfileProduto() {
             })}
           </strong>
         </section>
+
+        <section
+          style={{
+            ...styles.summary,
+            ...styles.profitSummary,
+            ...(isDark ? styles.summaryDark : {}),
+          }}
+        >
+          <div>
+            <span
+              style={{
+                ...styles.summaryLabel,
+                ...(isDark ? styles.summaryLabelDark : {}),
+              }}
+            >
+              Lucro potencial do estoque
+            </span>
+          </div>
+
+          <strong
+            style={{
+              ...styles.summaryValue,
+              color: lucroUnitario === null
+                ? isDark
+                  ? "#d1d5db"
+                  : "#64748b"
+                : lucroUnitario * quantidade < 0
+                  ? "#b91c1c"
+                  : isDark
+                    ? "#bbf7d0"
+                    : "#047857",
+            }}
+          >
+            {lucroUnitario === null
+              ? "Não calculado (custo ausente)"
+              : (lucroUnitario * quantidade).toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                })}
+          </strong>
+        </section>
       </main>
     </div>
   );
@@ -370,11 +482,11 @@ export default function ProfileProduto() {
 const styles = {
   layout: {
     minHeight: "100vh",
-    backgroundColor: "#f5f6f8",
+    backgroundColor: "var(--surface)",
   },
 
   layoutDark: {
-    backgroundColor: "#0f172a",
+    backgroundColor: "var(--app-background)",
   },
 
   page: {
@@ -385,7 +497,7 @@ const styles = {
   },
 
   pageDark: {
-    backgroundColor: "#111827",
+    backgroundColor: "var(--surface)",
     color: "#f3f4f6",
   },
 
@@ -398,7 +510,7 @@ const styles = {
     padding: "7px 13px",
     border: "1px solid #ddd",
     borderRadius: "7px",
-    backgroundColor: "#fff",
+    backgroundColor: "var(--surface)",
     color: "#333",
     cursor: "pointer",
     fontSize: "14px",
@@ -406,8 +518,8 @@ const styles = {
   },
 
   backButtonDark: {
-    backgroundColor: "#1f2937",
-    borderColor: "#4b5563",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
     color: "#f9fafb",
   },
 
@@ -424,7 +536,7 @@ const styles = {
 
   infoCard: {
     maxWidth: "1150px",
-    backgroundColor: "#ffffff",
+    backgroundColor: "var(--surface)",
     borderRadius: "12px",
     padding: "30px",
     marginBottom: "20px",
@@ -435,7 +547,7 @@ const styles = {
   },
 
   infoCardDark: {
-    backgroundColor: "#1f2937",
+    backgroundColor: "var(--surface)",
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
   },
 
@@ -454,7 +566,7 @@ const styles = {
   noImage: {
     width: "100%",
     height: 200,
-    backgroundColor: "#f3f6fa",
+    backgroundColor: "var(--surface-muted)",
     borderRadius: 8,
     display: "flex",
     alignItems: "center",
@@ -463,8 +575,8 @@ const styles = {
   },
 
   noImageDark: {
-    backgroundColor: "#0b1220",
-    borderColor: "#4b5563",
+    backgroundColor: "var(--surface)",
+    borderColor: "var(--border-color)",
   },
 
   infoContent: {
@@ -513,7 +625,7 @@ const styles = {
 
   summary: {
     maxWidth: "1150px",
-    backgroundColor: "#ffffff",
+    backgroundColor: "var(--surface)",
     borderRadius: "12px",
     padding: "30px",
     display: "flex",
@@ -522,8 +634,13 @@ const styles = {
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
   },
 
+  profitSummary: {
+    marginTop: "16px",
+    border: "1px solid #86efac",
+  },
+
   summaryDark: {
-    backgroundColor: "#1f2937",
+    backgroundColor: "var(--surface)",
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
   },
 

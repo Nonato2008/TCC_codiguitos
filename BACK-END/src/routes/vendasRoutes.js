@@ -7,6 +7,7 @@ const vendasRoutes = Router();
 // Rota para criar uma nova venda
 vendasRoutes.post("/", vendaController.criar);
 vendasRoutes.get("/", vendaController.selecionar);
+vendasRoutes.get("/lucro-real", vendaController.selecionarLucroReal);
 vendasRoutes.get("/:id", vendaController.selecionarId);
 vendasRoutes.put("/:id", vendaController.editar);
 vendasRoutes.delete("/:id", vendaController.deletar);

@@ -1,8 +1,4 @@
-/*
-  Entry: App.jsx
-  - Define as rotas da aplicação e envolve tudo em `ThemeProvider`.
-  - Redireciona rotas desconhecidas para `/login`.
-*/
+
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import Home from "./pages/Home";
@@ -18,42 +14,38 @@ import CadastrarFornecedor from "./pages/CadastroFornecedor";
 import GerenciamentoEstoque from "./pages/GerenciamentoEstoque";
 import ProfileVenda from "./pages/ProfileVenda";
 import ProfileProduto from "./pages/ProfileProduto";
-import { ThemeProvider } from "./contexts/ThemeContext"
 
+import { ThemeProvider } from "./contexts/ThemeContext";
 
 export default function App() {
-  return (
-    <ThemeProvider>
+    return (
+        <ThemeProvider>
+            <BrowserRouter>
+                <Routes>
+                    <Route path="/" element={<Navigate to="/login" replace />} />
+                    <Route path="/home" element={<Home />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/cadastro" element={<Cadastro />} />
+                    <Route path="/painel" element={<Painel />} />
 
-      <BrowserRouter>
-        <Routes>
+                    <Route path="/vendas" element={<Vendas />} />
+                    <Route path="/Vendas" element={<Vendas />} />
 
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/home" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/cadastro" element={<Cadastro />} />
-          <Route path="/painel" element={<Painel />} />
+                    <Route path="/vendas/cadastrar" element={<CadastroVendas />} />
+                    <Route path="/vendas/:id" element={<ProfileVenda />} />
 
-          <Route path="/vendas" element={<Vendas />} />
-          <Route path="/Vendas" element={<Vendas />} />
+                    <Route path="/produtos" element={<Produtos />} />
+                    <Route path="/produtos/cadastrar" element={<CadastroProdutos />} />
+                    <Route path="/produtos/:id" element={<ProfileProduto />} />
 
-          <Route path="/vendas/cadastrar" element={<CadastroVendas />} />
-          <Route path="/vendas/:id" element={<ProfileVenda />} />
+                    <Route path="/fornecedores" element={<Fornecedores />} />
+                    <Route path="/cadastroProdutos" element={<CadastroProdutos />} />
+                    <Route path="/fornecedores/cadastrar" element={<CadastrarFornecedor />} />
+                    <Route path="/gerenciamentoEstoque" element={<GerenciamentoEstoque />} />
 
-          <Route path="/produtos" element={<Produtos />} />
-          <Route path="/produtos/cadastrar" element={<CadastroProdutos />} />
-          <Route path="/produtos/:id" element={<ProfileProduto />} />
-
-          <Route path="/fornecedores" element={<Fornecedores />} />
-          <Route path="/cadastroProdutos" element={<CadastroProdutos />} />
-          <Route path="/fornecedores/cadastrar" element={<CadastrarFornecedor />} />
-          <Route path="/gerenciamentoEstoque" element={<GerenciamentoEstoque />} />
-
-          <Route path="*" element={<Navigate to="/login" replace />} />
-
-        </Routes>
-      </BrowserRouter>
-    </ThemeProvider>
-
-  );
+                    <Route path="*" element={<Navigate to="/login" replace />} />
+                </Routes>
+            </BrowserRouter>
+        </ThemeProvider>
+    );
 }

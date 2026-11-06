@@ -8,7 +8,7 @@ const proprietarioRepository = {
         const sql = `
 
             SELECT *
-            FROM proprietarios
+            FROM Proprietarios
             WHERE Id = ?
         `;
 
@@ -22,8 +22,8 @@ const proprietarioRepository = {
         const [rows] = await connection.execute(`
 
             SELECT *
-            FROM proprietarios
-            ORDER BY proprietarios.Id    
+            FROM Proprietarios
+            ORDER BY Proprietarios.Id
         `)
 
         return rows
