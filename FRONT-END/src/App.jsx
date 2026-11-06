@@ -22,7 +22,7 @@ export default function App() {
         <ThemeProvider>
             <BrowserRouter>
                 <Routes>
-                    <Route path="/" element={<Navigate to="/login" replace />} />
+                    <Route path="/" element={<Navigate to="/home" replace />} />
                     <Route path="/home" element={<Home />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/cadastro" element={<Cadastro />} />
@@ -43,7 +43,7 @@ export default function App() {
                     <Route path="/fornecedores/cadastrar" element={<CadastrarFornecedor />} />
                     <Route path="/gerenciamentoEstoque" element={<GerenciamentoEstoque />} />
 
-                    <Route path="*" element={<Navigate to="/login" replace />} />
+                    <Route path="*" element={<Navigate to="/home" replace />} />
                 </Routes>
             </BrowserRouter>
         </ThemeProvider>
