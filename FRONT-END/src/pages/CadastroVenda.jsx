@@ -156,6 +156,64 @@ function encontrarProprietarioLogado(usuario, proprietarios) {
   );
 }
 
+const CHAVE_PRODUTOS_DESATIVADOS = "produtosDesativados";
+
+function lerProdutosDesativados() {
+  try {
+    const ids = JSON.parse(
+      localStorage.getItem(CHAVE_PRODUTOS_DESATIVADOS) || "[]"
+    );
+
+    return Array.isArray(ids) ? ids.map(String) : [];
+  } catch (error) {
+    console.error("Erro ao carregar produtos desativados:", error);
+    return [];
+  }
+}
+
+function getDataVencimentoProduto(produto) {
+  return (
+    produto?.DataVenc ??
+    produto?.dataVenc ??
+    produto?.dataVencimento ??
+    produto?.DataVencimento ??
+    produto?.data_venc ??
+    produto?.Data_venc ??
+    null
+  );
+}
+
+function isProdutoVencido(produto) {
+  const dataVencimento = getDataVencimentoProduto(produto);
+  if (!dataVencimento) return false;
+
+  const textoData = String(dataVencimento).trim();
+  const data = /^\d{4}-\d{2}-\d{2}$/.test(textoData)
+    ? new Date(
+        Number(textoData.slice(0, 4)),
+        Number(textoData.slice(5, 7)) - 1,
+        Number(textoData.slice(8, 10))
+      )
+    : new Date(textoData);
+
+  if (Number.isNaN(data.getTime())) return false;
+
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  return data < hoje;
+}
+
+function isProdutoDesativado(produto) {
+  const id = getIdProduto(produto);
+  if (id == null) return false;
+  return lerProdutosDesativados().includes(String(id));
+}
+
+function isProdutoDisponivelParaVenda(produto) {
+  return !isProdutoVencido(produto) && !isProdutoDesativado(produto);
+}
+
 export default function CadastroVendas() {
   const navigate = useNavigate();
   const { theme } = useContext(ThemeContext);
@@ -274,6 +332,21 @@ export default function CadastroVendas() {
     const id = getIdProduto(produto);
     const estoque = getEstoqueProduto(produto);
 
+    if (!produto || !isProdutoDisponivelParaVenda(produto)) {
+      const nome = getNomeProduto(produto);
+      const motivo = isProdutoVencido(produto)
+        ? "está vencido"
+        : isProdutoDesativado(produto)
+        ? "está desativado para venda"
+        : "não está disponível para venda";
+
+      setMensagem({
+        type: "error",
+        text: `O produto "${nome}" ${motivo} e não pode ser adicionado à venda.`,
+      });
+      return;
+    }
+
     if (estoque < 1) {
       setMensagem({
         type: "error",
@@ -360,7 +433,11 @@ export default function CadastroVendas() {
   // ---------- Resultados da pesquisa de produtos ----------
   const idsNaVenda = new Set(itens.map((item) => Number(item.idProduto)));
 
-  const produtosFiltrados = produtos.filter((produto) => {
+  const produtosDisponiveisParaVenda = produtos.filter((produto) =>
+    isProdutoDisponivelParaVenda(produto)
+  );
+
+  const produtosFiltrados = produtosDisponiveisParaVenda.filter((produto) => {
     const termo = buscaProduto.trim().toLowerCase();
     if (!termo) return true;
     const nome = getNomeProduto(produto).toLowerCase();
@@ -418,10 +495,18 @@ export default function CadastroVendas() {
       return;
     }
 
-    // Valida estoque
+    // Valida disponibilidade e estoque
     for (const item of itensValidos) {
       const produto = encontrarProduto(item.idProduto);
       const estoque = produto ? getEstoqueProduto(produto) : 0;
+
+      if (!produto || !isProdutoDisponivelParaVenda(produto)) {
+        setMensagem({
+          type: "error",
+          text: `O produto "${getNomeProduto(produto)}" está vencido ou desativado e não pode ser vendido.`,
+        });
+        return;
+      }
 
       if (Number(item.quantidade) > estoque) {
         setMensagem({

@@ -308,7 +308,12 @@ export default function GerenciamentoEstoque() {
               style={{
                 ...styles.tabButton,
                 ...(isDark ? styles.tabButtonDark : {}),
-                ...(abaProdutos === "ativos" ? styles.tabButtonActive : {}),
+                ...(abaProdutos === "ativos"
+                  ? styles.tabButtonActive
+                  : {
+                      color: isDark ? "#ffffff" : "#64748b",
+                      borderBottomColor: "transparent",
+                    }),
                 ...(isDark && abaProdutos === "ativos" ? styles.tabButtonActiveDark : {}),
               }}
             >
@@ -321,7 +326,12 @@ export default function GerenciamentoEstoque() {
               style={{
                 ...styles.tabButton,
                 ...(isDark ? styles.tabButtonDark : {}),
-                ...(abaProdutos === "desativados" ? styles.tabButtonActive : {}),
+                ...(abaProdutos === "desativados"
+                  ? styles.tabButtonActive
+                  : {
+                      color: isDark ? "#ffffff" : "#64748b",
+                      borderBottomColor: "transparent",
+                    }),
                 ...(isDark && abaProdutos === "desativados" ? styles.tabButtonActiveDark : {}),
               }}
             >

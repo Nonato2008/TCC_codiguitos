@@ -218,7 +218,10 @@ export default function Fornecedor() {
                             ...(isDark ? styles.tabButtonDark : {}),
                             ...(abaFornecedores === "ativos"
                                 ? styles.tabButtonActive
-                                : {}),
+                                : {
+                                    color: isDark ? "#ffffff" : "#64748b",
+                                    borderBottomColor: "transparent",
+                                  }),
                             ...(isDark && abaFornecedores === "ativos"
                                 ? styles.tabButtonActiveDark
                                 : {})
@@ -235,7 +238,10 @@ export default function Fornecedor() {
                             ...(isDark ? styles.tabButtonDark : {}),
                             ...(abaFornecedores === "desativados"
                                 ? styles.tabButtonActive
-                                : {}),
+                                : {
+                                    color: isDark ? "#ffffff" : "#64748b",
+                                    borderBottomColor: "transparent",
+                                  }),
                             ...(isDark && abaFornecedores === "desativados"
                                 ? styles.tabButtonActiveDark
                                 : {})

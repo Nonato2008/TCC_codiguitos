@@ -273,7 +273,7 @@ const styles = {
     },
 
     formTitleDark: {
-        color: "#000000"
+        color: "#ffffff"
     },
 
     form: {
