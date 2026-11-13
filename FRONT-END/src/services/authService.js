@@ -64,6 +64,15 @@ export function saveUser(usuario) {
     );
 }
 
+export function saveToken(token) {
+    if (typeof token === "string" && token.trim()) {
+        localStorage.setItem("auth_token", token.trim());
+        return;
+    }
+
+    localStorage.removeItem("auth_token");
+}
+
 export function getUser() {
 
     const usuario = localStorage.getItem("usuario");

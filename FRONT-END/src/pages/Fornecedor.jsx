@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
+import ConfirmacaoExclusao from "../components/ConfirmacaoExclusao";
 import { useFornecedores } from "../hooks/useFornecedores";
 import { useProdutos } from "../hooks/useProdutos";
 import { ThemeContext } from "../contexts/ThemeContext";
+import { deletarFornecedor } from "../services/fornecedoresService";
 
 const CHAVE_FORNECEDORES_DESATIVADOS = "fornecedoresDesativados";
 
@@ -50,6 +52,7 @@ export default function Fornecedor() {
     const [listaFornecedores, setListaFornecedores] = useState([]);
     const [fornecedorSelecionado, setFornecedorSelecionado] = useState(null);
     const [abaFornecedores, setAbaFornecedores] = useState("ativos");
+    const [confirmacaoExclusao, setConfirmacaoExclusao] = useState(null);
 
     useEffect(() => {
         setListaFornecedores(fornecedores);
@@ -98,6 +101,25 @@ export default function Fornecedor() {
                 "Não foi possível atualizar o status do fornecedor neste navegador."
             );
         }
+    };
+
+    const abrirConfirmacaoExclusaoFornecedor = (fornecedor) => {
+        const nome = fornecedor?.Nome ?? fornecedor?.nome ?? "este fornecedor";
+        setConfirmacaoExclusao({
+            nome,
+            titulo: "Excluir fornecedor",
+            onConfirm: async () => {
+                await deletarFornecedor(getIdFornecedor(fornecedor));
+                setListaFornecedores((listaAtual) =>
+                    listaAtual.filter(
+                        (item) => String(getIdFornecedor(item)) !== String(getIdFornecedor(fornecedor))
+                    )
+                );
+                setFornecedorSelecionado(null);
+                setConfirmacaoExclusao(null);
+            },
+            onCancel: () => setConfirmacaoExclusao(null),
+        });
     };
 
     if (loading) {
@@ -277,6 +299,7 @@ export default function Fornecedor() {
                                 fornecedor={fornecedor}
                                 onSelecionar={setFornecedorSelecionado}
                                 onAlterarStatus={alterarStatusFornecedor}
+                                onExcluir={abrirConfirmacaoExclusaoFornecedor}
                                 dark={isDark}
                             />
                         ))}
@@ -443,11 +466,19 @@ export default function Fornecedor() {
                 )}
 
             </main>
+
+            <ConfirmacaoExclusao
+                open={Boolean(confirmacaoExclusao)}
+                nome={confirmacaoExclusao?.nome || "este fornecedor"}
+                titulo={confirmacaoExclusao?.titulo || "Excluir item"}
+                onConfirm={confirmacaoExclusao?.onConfirm}
+                onCancel={confirmacaoExclusao?.onCancel || (() => setConfirmacaoExclusao(null))}
+            />
         </div>
     );
 }
 
-function FornecedorCard({ fornecedor, onSelecionar, onAlterarStatus, dark }) {
+function FornecedorCard({ fornecedor, onSelecionar, onAlterarStatus, onExcluir, dark }) {
     const nome = fornecedor.Nome ?? fornecedor.nome ?? "Fornecedor";
     const caminhoImagem = fornecedor.Imagem ?? fornecedor.imagem;
     const imagem = caminhoImagem
@@ -519,6 +550,19 @@ function FornecedorCard({ fornecedor, onSelecionar, onAlterarStatus, dark }) {
                     }}
                 >
                     {fornecedor.ativo ? "Desativar" : "Reativar"}
+                </button>
+                <button
+                    type="button"
+                    style={{
+                        ...styles.deleteButton,
+                        ...(dark ? styles.deleteButtonDark : {})
+                    }}
+                    onClick={(event) => {
+                        event.stopPropagation();
+                        onExcluir(fornecedor);
+                    }}
+                >
+                    Excluir
                 </button>
             </div>
         </article>
@@ -823,6 +867,22 @@ const styles = {
     tabButtonActiveDark: {
         color: "#ffffff",
         borderBottomColor: "#ffffff"
+    },
+
+    deleteButton: {
+        border: "1px solid #fecaca",
+        borderRadius: "8px",
+        padding: "10px 12px",
+        cursor: "pointer",
+        backgroundColor: "#fff1f2",
+        color: "#b91c1c",
+        fontWeight: 700
+    },
+
+    deleteButtonDark: {
+        backgroundColor: "#3f1721",
+        borderColor: "#7f1d1d",
+        color: "#fecdd3"
     },
 
     detailsButton: {

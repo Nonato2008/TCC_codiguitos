@@ -1,8 +1,9 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
+import ConfirmacaoExclusao from "../components/ConfirmacaoExclusao";
 import { ThemeContext } from "../contexts/ThemeContext";
-import { buscarProdutos } from "../services/produtosService";
+import { buscarProdutos, deletarProduto } from "../services/produtosService";
 import { buscarFornecedores } from "../services/fornecedoresService";
 
 export default function ProfileProduto() {
@@ -16,6 +17,7 @@ export default function ProfileProduto() {
   const [fornecedor, setFornecedor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [confirmacaoExclusao, setConfirmacaoExclusao] = useState(null);
 
   useEffect(() => {
     const carregarProduto = async () => {
@@ -89,6 +91,18 @@ export default function ProfileProduto() {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
+    });
+  };
+
+  const abrirConfirmacaoExclusao = () => {
+    setConfirmacaoExclusao({
+      nome: nome || "este produto",
+      onConfirm: async () => {
+        await deletarProduto(produto.Id ?? produto.id);
+        setConfirmacaoExclusao(null);
+        navigate("/produtos");
+      },
+      onCancel: () => setConfirmacaoExclusao(null),
     });
   };
 
@@ -174,6 +188,17 @@ export default function ProfileProduto() {
               Detalhes do produto
             </p>
           </div>
+
+          <button
+            type="button"
+            onClick={abrirConfirmacaoExclusao}
+            style={{
+              ...styles.deleteButton,
+              ...(isDark ? styles.deleteButtonDark : {}),
+            }}
+          >
+            Excluir produto
+          </button>
         </div>
 
         {/* INFORMAÇÕES DO PRODUTO */}
@@ -475,6 +500,14 @@ export default function ProfileProduto() {
           </strong>
         </section>
       </main>
+
+      <ConfirmacaoExclusao
+        open={Boolean(confirmacaoExclusao)}
+        nome={confirmacaoExclusao?.nome || "este produto"}
+        titulo="Excluir produto"
+        onConfirm={confirmacaoExclusao?.onConfirm}
+        onCancel={confirmacaoExclusao?.onCancel || (() => setConfirmacaoExclusao(null))}
+      />
     </div>
   );
 }
@@ -504,6 +537,16 @@ const styles = {
   header: {
     maxWidth: "1150px",
     marginBottom: "20px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    gap: "16px",
+  },
+
+  headerActions: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
   },
 
   backButton: {
@@ -521,6 +564,22 @@ const styles = {
     backgroundColor: "var(--surface)",
     borderColor: "var(--border-color)",
     color: "#f9fafb",
+  },
+
+  deleteButton: {
+    padding: "10px 16px",
+    borderRadius: "8px",
+    border: "1px solid #fecaca",
+    backgroundColor: "#fff1f2",
+    color: "#b91c1c",
+    cursor: "pointer",
+    fontWeight: 700,
+  },
+
+  deleteButtonDark: {
+    backgroundColor: "#3f1721",
+    borderColor: "#7f1d1d",
+    color: "#fecdd3",
   },
 
   subtitle: {

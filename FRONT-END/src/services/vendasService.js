@@ -31,3 +31,23 @@ export const buscarVendaId = async (id) => {
         throw error;
     }
 };
+
+export const deletarVenda = async (id) => {
+    try {
+        const response = await codiguitos_api.delete(`/vendas/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error("Erro ao deletar venda:", error);
+        throw error;
+    }
+};
+
+export const removerItemVenda = async (idVenda, idItem) => {
+    try {
+        const response = await codiguitos_api.delete(`/vendas/${idVenda}/item/${idItem}`);
+        return response.data;
+    } catch (error) {
+        console.error("Erro ao remover item da venda:", error);
+        throw error;
+    }
+};

@@ -1,8 +1,10 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useVendaById } from "../hooks/useVendasById";
 import Sidebar from "../components/Sidebar";
+import ConfirmacaoExclusao from "../components/ConfirmacaoExclusao";
 import { ThemeContext } from "../contexts/ThemeContext";
+import { deletarVenda, removerItemVenda } from "../services/vendasService";
 
 export default function ProfileVenda() {
 
@@ -13,6 +15,7 @@ export default function ProfileVenda() {
 
     const { theme } = useContext(ThemeContext);
     const isDark = theme === "dark";
+    const [confirmacaoExclusao, setConfirmacaoExclusao] = useState(null);
 
     // Hook customizado que busca a venda pelo id
     const {
@@ -69,6 +72,32 @@ export default function ProfileVenda() {
     // Lista de itens da venda (fallback para array vazio)
     const itens = venda.Itens || [];
 
+    const abrirConfirmacaoExclusaoVenda = () => {
+        setConfirmacaoExclusao({
+            nome: `venda #${venda.Id}`,
+            onConfirm: async () => {
+                await deletarVenda(venda.Id);
+                setConfirmacaoExclusao(null);
+                navigate("/vendas");
+            },
+            onCancel: () => setConfirmacaoExclusao(null),
+        });
+    };
+
+    const abrirConfirmacaoExclusaoItem = (item) => {
+        const nomeProduto = item?.NomeProduto || `Produto #${item?.IdProduto}`;
+        setConfirmacaoExclusao({
+            nome: nomeProduto,
+            titular: "Excluir item da venda",
+            onConfirm: async () => {
+                await removerItemVenda(venda.Id, item.Id);
+                setConfirmacaoExclusao(null);
+                window.location.reload();
+            },
+            onCancel: () => setConfirmacaoExclusao(null),
+        });
+    };
+
     return (
         <div style={{ ...styles.layout, ...(isDark ? styles.layoutDark : {}) }}>
 
@@ -91,6 +120,14 @@ export default function ProfileVenda() {
                             Detalhes da venda
                         </p>
                     </div>
+
+                    <button
+                        type="button"
+                        onClick={abrirConfirmacaoExclusaoVenda}
+                        style={{ ...styles.deleteButton, ...(isDark ? styles.deleteButtonDark : {}) }}
+                    >
+                        Excluir venda
+                    </button>
 
                 </div>
 
@@ -195,6 +232,10 @@ export default function ProfileVenda() {
                                         <th style={{ ...styles.th, ...(isDark ? styles.thDark : {}) }}>
                                             Subtotal
                                         </th>
+
+                                        <th style={{ ...styles.th, ...(isDark ? styles.thDark : {}) }}>
+                                            Ação
+                                        </th>
                                     </tr>
                                 </thead>
 
@@ -245,6 +286,16 @@ export default function ProfileVenda() {
                                                     R$ {formatarMoeda(subtotal)}
                                                 </td>
 
+                                                <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => abrirConfirmacaoExclusaoItem(item)}
+                                                        style={{ ...styles.deleteItemButton, ...(isDark ? styles.deleteItemButtonDark : {}) }}
+                                                    >
+                                                        Excluir
+                                                    </button>
+                                                </td>
+
                                             </tr>
                                         );
 
@@ -277,6 +328,14 @@ export default function ProfileVenda() {
                 </section>
 
             </main>
+
+            <ConfirmacaoExclusao
+                open={Boolean(confirmacaoExclusao)}
+                nome={confirmacaoExclusao?.nome || "este item"}
+                titulo={confirmacaoExclusao?.titulo || "Excluir item"}
+                onConfirm={confirmacaoExclusao?.onConfirm}
+                onCancel={confirmacaoExclusao?.onCancel || (() => setConfirmacaoExclusao(null))}
+            />
 
         </div>
     );
@@ -331,6 +390,10 @@ const styles = {
     header: {
         maxWidth: "1150px",
         marginBottom: "20px",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-end",
+        gap: "16px",
     },
 
     backButton: {
@@ -348,6 +411,22 @@ const styles = {
         backgroundColor: "var(--surface)",
         borderColor: "var(--border-color)",
         color: "#f9fafb",
+    },
+
+    deleteButton: {
+        padding: "10px 16px",
+        borderRadius: "8px",
+        border: "1px solid #fecaca",
+        backgroundColor: "#fff1f2",
+        color: "#b91c1c",
+        cursor: "pointer",
+        fontWeight: 700,
+    },
+
+    deleteButtonDark: {
+        backgroundColor: "#3f1721",
+        borderColor: "#7f1d1d",
+        color: "#fecdd3",
     },
 
     title: {
@@ -495,6 +574,22 @@ const styles = {
     tdDark: {
         borderBottomColor: "var(--border-color)",
         color: "#f9fafb",
+    },
+
+    deleteItemButton: {
+        padding: "7px 10px",
+        borderRadius: "7px",
+        border: "1px solid #fecaca",
+        backgroundColor: "#fff1f2",
+        color: "#b91c1c",
+        cursor: "pointer",
+        fontWeight: 700,
+    },
+
+    deleteItemButtonDark: {
+        backgroundColor: "#3f1721",
+        borderColor: "#7f1d1d",
+        color: "#fecdd3",
     },
 
     empty: {

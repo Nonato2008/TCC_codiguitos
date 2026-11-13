@@ -87,3 +87,13 @@ export async function ajustarQuantidadeEstoque(id, dados) {
     throw error;
   }
 }
+
+export async function deletarProduto(id) {
+  try {
+    const response = await codiguitos_api.delete(`/produtos/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao deletar produto:", error);
+    throw error;
+  }
+}

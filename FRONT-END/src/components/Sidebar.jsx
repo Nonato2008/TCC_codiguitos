@@ -2,6 +2,7 @@
 import React, { useContext } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { ThemeContext } from "../contexts/ThemeContext";
+import { logout } from "../services/authService.js";
 
 const menu = [
     {
@@ -82,7 +83,7 @@ export default function Sidebar() {
     );
 
     function sair() {
-        localStorage.removeItem("usuario");
+        logout();
         navigate("/login");
     }
 

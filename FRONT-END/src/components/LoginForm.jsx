@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     login as apiLogin,
+    saveToken,
     saveUser
 } from "../services/authService.js";
 
@@ -66,10 +67,7 @@ export default function LoginForm({ onTrocarModo, isDark }) {
             };
 
             saveUser(usuario);
-            localStorage.setItem(
-                "usuario",
-                JSON.stringify(usuario)
-            );
+            saveToken(result.data?.token);
 
             navigate("/painel");
 

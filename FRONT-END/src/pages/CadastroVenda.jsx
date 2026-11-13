@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import AlertMessage from "../components/AlertMessage";
 import PrimaryButton from "../components/PrimaryButton";
+import ConfirmacaoExclusao from "../components/ConfirmacaoExclusao";
 import { codiguitos_api } from "../services/tcc.api";
 import { buscarProdutos } from "../services/produtosService";
 import { ThemeContext } from "../contexts/ThemeContext";
@@ -237,6 +238,7 @@ export default function CadastroVendas() {
   const [carregandoVendedores, setCarregandoVendedores] = useState(false);
   const [carregandoProprietarios, setCarregandoProprietarios] = useState(false);
   const [mensagem, setMensagem] = useState({ type: "", text: "" });
+  const [confirmacaoExclusao, setConfirmacaoExclusao] = useState(null);
 
   // Guarda os dados do protótipo/comprovante da venda gerada
   const [prototipoVenda, setPrototipoVenda] = useState(null);
@@ -419,9 +421,24 @@ export default function CadastroVendas() {
     );
   }
 
+  function abrirConfirmacaoExclusaoItem(index) {
+    const item = itens[index];
+    const produto = item ? encontrarProduto(item.idProduto) : null;
+    const nomeProduto = produto ? getNomeProduto(produto) : "este item";
+
+    setConfirmacaoExclusao({
+      nome: nomeProduto,
+      onConfirm: () => {
+        setItens((anterior) => anterior.filter((_, i) => i !== index));
+        setMensagem({ type: "", text: "" });
+        setConfirmacaoExclusao(null);
+      },
+      onCancel: () => setConfirmacaoExclusao(null),
+    });
+  }
+
   function removerItem(index) {
-    setItens((anterior) => anterior.filter((_, i) => i !== index));
-    setMensagem({ type: "", text: "" });
+    abrirConfirmacaoExclusaoItem(index);
   }
 
   // ---------- Total geral ----------
@@ -1167,6 +1184,13 @@ export default function CadastroVendas() {
           )}
         </section>
       </main>
+
+      <ConfirmacaoExclusao
+        open={Boolean(confirmacaoExclusao)}
+        nome={confirmacaoExclusao?.nome || "este item"}
+        onConfirm={confirmacaoExclusao?.onConfirm}
+        onCancel={confirmacaoExclusao?.onCancel || (() => setConfirmacaoExclusao(null))}
+      />
     </div>
   );
 }

@@ -1,5 +1,50 @@
 ## Api reference 
 
+### Autenticação
+
+#### POST /login
+- **Descrição**: autentica um proprietário ou vendedor.
+- **Body**:
+```json
+{
+    "nome": "Maria",
+    "senha": "123456"
+}
+```
+- **Resposta (200)**:
+```json
+{
+    "message": "Login realizado com sucesso.",
+    "usuario": {
+        "id": 1,
+        "nome": "Maria",
+        "tipo": "PROPRIETARIO"
+    }
+}
+```
+
+#### POST /cadastro
+- **Descrição**: cadastra um proprietário ou vendedor. A senha deve ter pelo menos 6 caracteres.
+- **Body**:
+```json
+{
+    "nome": "Maria",
+    "senha": "123456",
+    "tipo": "PROPRIETARIO"
+}
+```
+- **Resposta (201)**:
+```json
+{
+    "message": "Proprietário cadastrado com sucesso.",
+    "usuario": {
+        "id": 1,
+        "nome": "Maria",
+        "tipo": "PROPRIETARIO"
+    }
+}
+```
+
 ### Produtos 
 
 #### GET/produtos
